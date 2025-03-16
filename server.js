@@ -19,6 +19,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Also serve static files from /public/ path for compatibility with Live Server
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
+
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -70,14 +76,14 @@ async function connectToDatabase() {
       
       // Connect to MongoDB with more detailed options
       const conn = await mongoose.connect(process.env.MONGODB_URI, {
-        serverSelectionTimeoutMS: 30000, // Increased timeout for Vercel
+        serverSelectionTimeoutMS: 10000, // Reduced timeout for serverless
         bufferCommands: false, // Disable mongoose buffering
-        connectTimeoutMS: 30000, // Connection timeout
-        socketTimeoutMS: 45000, // Socket timeout
+        connectTimeoutMS: 10000, // Reduced connection timeout for serverless
+        socketTimeoutMS: 20000, // Reduced socket timeout for serverless
         family: 4, // Use IPv4, skip trying IPv6
-        maxPoolSize: 10, // Limit connection pool size
+        maxPoolSize: 5, // Reduced pool size for serverless
         minPoolSize: 1, // Maintain at least one connection
-        maxIdleTimeMS: 30000, // Close idle connections after 30 seconds
+        maxIdleTimeMS: 10000, // Close idle connections after 10 seconds
         serverApi: {
           version: '1',
           strict: true,
@@ -270,6 +276,24 @@ const transporter = nodemailer.createTransport({
 });
 
 // API Routes
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  const healthData = {
+    status: 'online',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    mongodb: {
+      connection: mongoose.connection.readyState,
+      connectionStatus: ['disconnected', 'connected', 'connecting', 'disconnecting'][mongoose.connection.readyState] || 'unknown'
+    },
+    uptime: process.uptime(),
+    memory: process.memoryUsage()
+  };
+  
+  console.log('Health check:', healthData);
+  res.json(healthData);
+});
+
 // Get all products
 app.get('/api/products', async (req, res) => {
   try {
@@ -1002,14 +1026,33 @@ app.get('/api/rooms/title/:title', async (req, res) => {
 
 // Catch-all route to serve index.html
 app.get('*', (req, res) => {
-  // Skip API routes
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ message: 'API endpoint not found' });
+  try {
+    // Skip API routes
+    if (req.path.startsWith('/api/')) {
+      return res.status(404).json({ message: 'API endpoint not found' });
+    }
+    
+    // Handle both root and /public/ paths
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  } catch (error) {
+    console.error('Catch-all route error:', error);
+    res.status(500).json({ 
+      message: 'Server error',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'production' ? null : error.stack
+    });
   }
-  
-  // Handle both root and /public/ paths
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
+// Start server
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+} else {
+  // For production, we'll let Vercel handle the listening
+  console.log('Running in production mode - Vercel will handle the server');
+}
 
 // Connect to MongoDB when the server starts
 connectToDatabase()
@@ -1021,12 +1064,15 @@ connectToDatabase()
     console.error('Initial MongoDB connection failed:', err);
   });
 
-// Start server
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({
+    message: 'Internal server error',
+    error: err.message,
+    stack: process.env.NODE_ENV === 'production' ? null : err.stack
   });
-}
+});
 
 // Export the Express API for Vercel
 module.exports = app;
