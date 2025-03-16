@@ -5,7 +5,10 @@ const MONGODB_URI = "mongodb+srv://studxchangeUser:Saimansays-1@studxchange.o1ua
 // we'll need to create API endpoints on a server to handle database operations.
 // This file will contain common configuration settings for our API requests.
 
-const API_BASE_URL = "/api"; // Base URL for our API endpoints
+// Get the base URL dynamically based on the current environment
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    ? "/api" 
+    : "/api"; // Same for production since we're using relative paths
 
 // API Endpoints
 const API_ENDPOINTS = {
