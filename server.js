@@ -31,47 +31,78 @@ async function connectToDatabase() {
     return cachedDb;
   }
   
-  try {
-    // Ensure MONGODB_URI is defined
-    if (!process.env.MONGODB_URI) {
-      console.error('MONGODB_URI environment variable is not defined');
-      throw new Error('MongoDB connection string is not defined');
+  // Maximum number of connection attempts
+  const MAX_RETRIES = 3;
+  let retryCount = 0;
+  
+  while (retryCount < MAX_RETRIES) {
+    try {
+      // Ensure MONGODB_URI is defined
+      if (!process.env.MONGODB_URI) {
+        console.error('MONGODB_URI environment variable is not defined');
+        throw new Error('MongoDB connection string is not defined');
+      }
+      
+      console.log(`Connection attempt ${retryCount + 1}/${MAX_RETRIES}`);
+      console.log('Attempting to connect with URI:', process.env.MONGODB_URI.substring(0, 20) + '...');
+      
+      // Disconnect if there's an existing connection in a bad state
+      if (mongoose.connection.readyState !== 0) {
+        console.log('Closing existing mongoose connection');
+        await mongoose.connection.close();
+      }
+      
+      // Connect to MongoDB with more detailed options
+      const conn = await mongoose.connect(process.env.MONGODB_URI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 30000, // Increased timeout for Vercel
+        bufferCommands: false, // Disable mongoose buffering
+        connectTimeoutMS: 30000, // Connection timeout
+        socketTimeoutMS: 45000, // Socket timeout
+        family: 4 // Use IPv4, skip trying IPv6
+      });
+      
+      console.log('Connected to MongoDB successfully');
+      
+      // Verify we can access the database
+      const dbName = mongoose.connection.db.databaseName;
+      console.log('Database name:', dbName);
+      
+      // Test a simple operation to ensure the connection is working
+      const collections = await mongoose.connection.db.listCollections().toArray();
+      console.log('Available collections:', collections.map(c => c.name).join(', '));
+      
+      cachedDb = conn;
+      
+      // Set up event listeners
+      mongoose.connection.on('error', err => {
+        console.error('MongoDB connection error:', err);
+        cachedDb = null;
+      });
+      
+      mongoose.connection.on('disconnected', () => {
+        console.log('MongoDB disconnected');
+        cachedDb = null;
+      });
+      
+      return cachedDb;
+    } catch (error) {
+      retryCount++;
+      console.error(`Failed to connect to MongoDB (attempt ${retryCount}/${MAX_RETRIES}). Error details:`, error);
+      
+      if (retryCount >= MAX_RETRIES) {
+        console.error('Maximum connection attempts reached. Giving up.');
+        console.error('Connection string format correct? URI starts with:', 
+                     process.env.MONGODB_URI ? process.env.MONGODB_URI.substring(0, 20) + '...' : 'undefined');
+        throw error;
+      }
+      
+      // Wait before retrying (exponential backoff)
+      const delay = Math.pow(2, retryCount) * 1000;
+      console.log(`Retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
-    
-    console.log('Attempting to connect with URI:', process.env.MONGODB_URI.substring(0, 20) + '...');
-    
-    // Connect to MongoDB with more detailed options
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 30000, // Increased timeout for Vercel
-      bufferCommands: false, // Disable mongoose buffering
-      connectTimeoutMS: 30000, // Connection timeout
-      socketTimeoutMS: 45000, // Socket timeout
-      family: 4 // Use IPv4, skip trying IPv6
-    });
-    
-    console.log('Connected to MongoDB successfully');
-    console.log('Database name:', mongoose.connection.db.databaseName);
-    cachedDb = conn;
-    
-    // Set up event listeners
-    mongoose.connection.on('error', err => {
-      console.error('MongoDB connection error:', err);
-      cachedDb = null;
-    });
-    
-    mongoose.connection.on('disconnected', () => {
-      console.log('MongoDB disconnected');
-      cachedDb = null;
-    });
-    
-    return cachedDb;
-  } catch (error) {
-    console.error('Failed to connect to MongoDB. Error details:', error);
-    console.error('Connection string format correct? URI starts with:', 
-                 process.env.MONGODB_URI ? process.env.MONGODB_URI.substring(0, 20) + '...' : 'undefined');
-    throw error;
   }
 }
 
@@ -211,15 +242,47 @@ app.get('/api/rooms', async (req, res) => {
     console.log('GET /api/rooms - Fetching rooms');
     
     // Ensure database connection
-    await connectToDatabase();
+    const db = await connectToDatabase();
+    if (!db) {
+      console.error('GET /api/rooms - Database connection failed');
+      return res.status(500).json({ message: 'Database connection failed' });
+    }
+    
     initModels();
     
-    const rooms = await Room.find().sort({ createdAt: -1 });
+    // Check if Room model is properly initialized
+    if (!Room) {
+      console.error('GET /api/rooms - Room model not initialized');
+      return res.status(500).json({ message: 'Room model not initialized' });
+    }
+    
+    // Check if sellerEmail filter is provided
+    const { sellerEmail } = req.query;
+    let query = {};
+    
+    if (sellerEmail) {
+      console.log(`GET /api/rooms - Filtering by sellerEmail: ${sellerEmail}`);
+      query.sellerEmail = sellerEmail;
+    }
+    
+    // Perform the query with a timeout
+    const rooms = await Promise.race([
+      Room.find(query).sort({ createdAt: -1 }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Query timeout')), 15000)
+      )
+    ]);
+    
     console.log(`GET /api/rooms - Found ${rooms.length} rooms`);
     res.json(rooms);
   } catch (error) {
     console.error('GET /api/rooms - Error:', error.message);
-    res.status(500).json({ message: error.message, stack: error.stack });
+    console.error('GET /api/rooms - Stack:', error.stack);
+    res.status(500).json({ 
+      message: 'Failed to fetch rooms',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'production' ? null : error.stack
+    });
   }
 });
 
@@ -414,17 +477,27 @@ app.post('/api/users/verify-otp', async (req, res) => {
 // Google Authentication
 app.post('/api/auth/google', async (req, res) => {
   try {
+    console.log('POST /api/auth/google - Processing Google authentication');
+    
+    // Validate request body
+    if (!req.body || !req.body.email) {
+      console.error('POST /api/auth/google - Missing required fields');
+      return res.status(400).json({ message: 'Email is required' });
+    }
+    
     // Ensure database connection
     await connectToDatabase();
     initModels();
     
     const { name, email, phone } = req.body;
+    console.log(`POST /api/auth/google - Processing authentication for email: ${email}`);
     
     // Check if user exists
     let user = await User.findOne({ email });
     
     if (!user) {
       // Create new user if not found
+      console.log(`POST /api/auth/google - Creating new user for email: ${email}`);
       user = new User({
         name,
         email,
@@ -432,19 +505,29 @@ app.post('/api/auth/google', async (req, res) => {
         provider: 'google'
       });
       await user.save();
+      console.log(`POST /api/auth/google - New user created for email: ${email}`);
     } else if (phone && !user.phone) {
       // Update phone if provided and not already set
+      console.log(`POST /api/auth/google - Updating phone for existing user: ${email}`);
       user.phone = phone;
       await user.save();
+    } else {
+      console.log(`POST /api/auth/google - Found existing user: ${email}`);
     }
     
     const userResponse = user.toObject();
     delete userResponse.password;
     
+    console.log(`POST /api/auth/google - Authentication successful for: ${email}`);
     res.json(userResponse);
   } catch (error) {
     console.error('POST /api/auth/google - Error:', error.message);
-    res.status(500).json({ message: error.message, stack: error.stack });
+    console.error('POST /api/auth/google - Stack:', error.stack);
+    res.status(500).json({ 
+      message: 'Authentication failed',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'production' ? null : error.stack
+    });
   }
 });
 

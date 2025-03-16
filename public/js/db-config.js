@@ -66,19 +66,41 @@ async function apiRequest(endpoint, method = 'GET', data = null) {
     
     if (!response.ok) {
       let errorMessage = `HTTP error! status: ${response.status}`;
+      let errorData = null;
+      
       try {
-        const errorData = await response.json();
-        errorMessage = errorData.message || errorMessage;
+        errorData = await response.json();
+        errorMessage = errorData.message || errorData.error || errorMessage;
         console.error('API error details:', errorData);
-      } catch (e) {
-        console.error('Could not parse error response:', e);
+      } catch (parseError) {
+        console.error('Could not parse error response:', parseError);
+        // Try to get text response if JSON parsing fails
+        try {
+          const textResponse = await response.text();
+          console.error('Error response text:', textResponse);
+          errorMessage = textResponse || errorMessage;
+        } catch (textError) {
+          console.error('Could not get error response text:', textError);
+        }
       }
+      
       throw new Error(errorMessage);
     }
     
-    const responseData = await response.json();
-    console.log('Response data:', responseData);
-    return responseData;
+    // For empty responses (like 204 No Content)
+    if (response.status === 204) {
+      return { success: true };
+    }
+    
+    // Try to parse as JSON
+    try {
+      const responseData = await response.json();
+      console.log('Response data:', responseData);
+      return responseData;
+    } catch (parseError) {
+      console.warn('Response is not JSON, returning raw response');
+      return { success: true, raw: await response.text() };
+    }
   } catch (error) {
     console.error('API request error:', error);
     throw error;
