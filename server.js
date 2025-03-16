@@ -18,31 +18,48 @@ app.use(express.static(path.join(__dirname, 'public')));
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://studxchangeUser:Saimansays-1@studxchange.o1uay.mongodb.net/?retryWrites=true&w=majority&appName=Studxchange";
 
-console.log('Connecting to MongoDB...');
-mongoose.connect(MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 5000 // Timeout after 5s instead of 30s
-})
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => {
-    console.error('Failed to connect to MongoDB:', err);
-    // Don't crash the server if MongoDB connection fails
-    // Instead, we'll handle errors in the route handlers
-  });
+// Create a cached connection variable
+let cachedDb = null;
 
-// Connection error handling
-mongoose.connection.on('error', err => {
-  console.error('MongoDB connection error:', err);
-});
-
-mongoose.connection.on('disconnected', () => {
-  console.log('MongoDB disconnected. Attempting to reconnect...');
-});
-
-mongoose.connection.on('reconnected', () => {
-  console.log('MongoDB reconnected');
-});
+// Function to connect to MongoDB
+async function connectToDatabase() {
+  console.log('Connecting to MongoDB...');
+  
+  // If the connection is already established, reuse it
+  if (cachedDb && mongoose.connection.readyState === 1) {
+    console.log('Using cached database connection');
+    return cachedDb;
+  }
+  
+  try {
+    // Connect to MongoDB
+    const conn = await mongoose.connect(MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 30000, // Increased timeout for Vercel
+      bufferCommands: false // Disable mongoose buffering
+    });
+    
+    console.log('Connected to MongoDB');
+    cachedDb = conn;
+    
+    // Set up event listeners
+    mongoose.connection.on('error', err => {
+      console.error('MongoDB connection error:', err);
+      cachedDb = null;
+    });
+    
+    mongoose.connection.on('disconnected', () => {
+      console.log('MongoDB disconnected');
+      cachedDb = null;
+    });
+    
+    return cachedDb;
+  } catch (error) {
+    console.error('Failed to connect to MongoDB:', error);
+    throw error;
+  }
+}
 
 // Define MongoDB Schemas and Models
 const productSchema = new mongoose.Schema({
@@ -115,11 +132,27 @@ const soldItemSchema = new mongoose.Schema({
   soldDate: { type: Date, default: Date.now }
 });
 
-const Product = mongoose.model('Product', productSchema);
-const User = mongoose.model('User', userSchema);
-const OTP = mongoose.model('OTP', otpSchema);
-const SoldItem = mongoose.model('SoldItem', soldItemSchema);
-const Room = mongoose.model('Room', roomSchema);
+// Models are defined outside of route handlers to avoid model redefinition errors
+let Product, User, OTP, SoldItem, Room;
+
+// Initialize models function to avoid model compilation errors in serverless environment
+function initModels() {
+  if (!Product) {
+    Product = mongoose.models.Product || mongoose.model('Product', productSchema);
+  }
+  if (!User) {
+    User = mongoose.models.User || mongoose.model('User', userSchema);
+  }
+  if (!OTP) {
+    OTP = mongoose.models.OTP || mongoose.model('OTP', otpSchema);
+  }
+  if (!SoldItem) {
+    SoldItem = mongoose.models.SoldItem || mongoose.model('SoldItem', soldItemSchema);
+  }
+  if (!Room) {
+    Room = mongoose.models.Room || mongoose.model('Room', roomSchema);
+  }
+}
 
 // Configure Nodemailer for sending OTPs
 const transporter = nodemailer.createTransport({
@@ -135,6 +168,11 @@ const transporter = nodemailer.createTransport({
 app.get('/api/products', async (req, res) => {
   try {
     console.log('GET /api/products - Fetching products');
+    
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
     const products = await Product.find().sort({ createdAt: -1 });
     console.log(`GET /api/products - Found ${products.length} products`);
     res.json(products);
@@ -148,6 +186,11 @@ app.get('/api/products', async (req, res) => {
 app.get('/api/rooms', async (req, res) => {
   try {
     console.log('GET /api/rooms - Fetching rooms');
+    
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
     const rooms = await Room.find().sort({ createdAt: -1 });
     console.log(`GET /api/rooms - Found ${rooms.length} rooms`);
     res.json(rooms);
@@ -160,39 +203,70 @@ app.get('/api/rooms', async (req, res) => {
 // Get product by ID
 app.get('/api/products/:id', async (req, res) => {
   try {
+    console.log(`GET /api/products/${req.params.id} - Fetching product`);
+    
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: 'Product not found' });
+    
+    console.log(`GET /api/products/${req.params.id} - Found product: ${product.title}`);
     res.json(product);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(`GET /api/products/${req.params.id} - Error:`, error.message);
+    res.status(500).json({ message: error.message, stack: error.stack });
   }
 });
 
 // Add a new product
 app.post('/api/products', async (req, res) => {
   try {
+    console.log('POST /api/products - Adding new product');
+    
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
     const product = new Product(req.body);
     await product.save();
+    
+    console.log(`POST /api/products - Added product: ${product.title}`);
     res.status(201).json(product);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error('POST /api/products - Error:', error.message);
+    res.status(400).json({ message: error.message, stack: error.stack });
   }
 });
 
 // Add a new room
 app.post('/api/rooms', async (req, res) => {
   try {
+    console.log('POST /api/rooms - Adding new room');
+    
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
     const room = new Room(req.body);
     await room.save();
+    
+    console.log(`POST /api/rooms - Added room: ${room.title}`);
     res.status(201).json(room);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error('POST /api/rooms - Error:', error.message);
+    res.status(400).json({ message: error.message, stack: error.stack });
   }
 });
 
 // Register a new user
 app.post('/api/users/register', async (req, res) => {
   try {
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
     // Check if user already exists
     const existingUser = await User.findOne({ email: req.body.email });
     if (existingUser) {
@@ -209,13 +283,18 @@ app.post('/api/users/register', async (req, res) => {
     
     res.status(201).json(userResponse);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error('POST /api/users/register - Error:', error.message);
+    res.status(400).json({ message: error.message, stack: error.stack });
   }
 });
 
 // Login user
 app.post('/api/users/login', async (req, res) => {
   try {
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
     const { email, password } = req.body;
     
     // Find user
@@ -235,13 +314,18 @@ app.post('/api/users/login', async (req, res) => {
     
     res.json(userResponse);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('POST /api/users/login - Error:', error.message);
+    res.status(500).json({ message: error.message, stack: error.stack });
   }
 });
 
 // Send OTP
 app.post('/api/users/send-otp', async (req, res) => {
   try {
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
     const { email, name } = req.body;
     
     // Generate 6-digit OTP
@@ -273,13 +357,18 @@ app.post('/api/users/send-otp', async (req, res) => {
     
     res.json({ message: 'OTP sent successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('POST /api/users/send-otp - Error:', error.message);
+    res.status(500).json({ message: error.message, stack: error.stack });
   }
 });
 
 // Verify OTP
 app.post('/api/users/verify-otp', async (req, res) => {
   try {
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
     const { email, otp } = req.body;
     
     // Find OTP in database
@@ -294,13 +383,18 @@ app.post('/api/users/verify-otp', async (req, res) => {
     
     res.json({ verified: true });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('POST /api/users/verify-otp - Error:', error.message);
+    res.status(500).json({ message: error.message, stack: error.stack });
   }
 });
 
 // Google Authentication
 app.post('/api/auth/google', async (req, res) => {
   try {
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
     const { name, email } = req.body;
     
     // Check if user exists
@@ -321,25 +415,35 @@ app.post('/api/auth/google', async (req, res) => {
     
     res.json(userResponse);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('POST /api/auth/google - Error:', error.message);
+    res.status(500).json({ message: error.message, stack: error.stack });
   }
 });
 
 // Add endpoint to get sold items
 app.get('/api/sold-items', async (req, res) => {
   try {
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
     const { sellerEmail } = req.query;
     const query = sellerEmail ? { sellerEmail } : {};
     const soldItems = await SoldItem.find(query).sort({ soldDate: -1 });
     res.json(soldItems);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('GET /api/sold-items - Error:', error.message);
+    res.status(500).json({ message: error.message, stack: error.stack });
   }
 });
 
 // Add endpoint to mark a product as sold
 app.post('/api/products/mark-sold', async (req, res) => {
   try {
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
     const { productId } = req.body;
     
     // Find the product
@@ -365,13 +469,18 @@ app.post('/api/products/mark-sold', async (req, res) => {
     
     res.json({ message: 'Product marked as sold' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('POST /api/products/mark-sold - Error:', error.message);
+    res.status(500).json({ message: error.message, stack: error.stack });
   }
 });
 
 // Add endpoint to update user
 app.put('/api/users/update', async (req, res) => {
   try {
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
     const { email, phone } = req.body;
     
     // Find and update the user
@@ -393,7 +502,8 @@ app.put('/api/users/update', async (req, res) => {
     
     res.json(userResponse);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('PUT /api/users/update - Error:', error.message);
+    res.status(500).json({ message: error.message, stack: error.stack });
   }
 });
 
@@ -402,7 +512,22 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Connect to MongoDB when the server starts
+connectToDatabase()
+  .then(() => {
+    console.log('Initial MongoDB connection successful');
+    initModels();
+  })
+  .catch(err => {
+    console.error('Initial MongoDB connection failed:', err);
+  });
+
 // Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+// Export the Express API for Vercel
+module.exports = app;

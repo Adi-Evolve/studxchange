@@ -6,9 +6,7 @@ const MONGODB_URI = "mongodb+srv://studxchangeUser:Saimansays-1@studxchange.o1ua
 // This file will contain common configuration settings for our API requests.
 
 // Get the base URL dynamically based on the current environment
-const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-    ? "/api" 
-    : "/api"; // Same for production since we're using relative paths
+const API_BASE_URL = "/api"; // Use relative path for all environments
 
 console.log("API_BASE_URL:", API_BASE_URL);
 
