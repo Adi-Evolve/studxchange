@@ -32,15 +32,27 @@ async function connectToDatabase() {
   }
   
   try {
-    // Connect to MongoDB
-    const conn = await mongoose.connect(MONGODB_URI, {
+    // Ensure MONGODB_URI is defined
+    if (!process.env.MONGODB_URI) {
+      console.error('MONGODB_URI environment variable is not defined');
+      throw new Error('MongoDB connection string is not defined');
+    }
+    
+    console.log('Attempting to connect with URI:', process.env.MONGODB_URI.substring(0, 20) + '...');
+    
+    // Connect to MongoDB with more detailed options
+    const conn = await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       serverSelectionTimeoutMS: 30000, // Increased timeout for Vercel
-      bufferCommands: false // Disable mongoose buffering
+      bufferCommands: false, // Disable mongoose buffering
+      connectTimeoutMS: 30000, // Connection timeout
+      socketTimeoutMS: 45000, // Socket timeout
+      family: 4 // Use IPv4, skip trying IPv6
     });
     
-    console.log('Connected to MongoDB');
+    console.log('Connected to MongoDB successfully');
+    console.log('Database name:', mongoose.connection.db.databaseName);
     cachedDb = conn;
     
     // Set up event listeners
@@ -56,7 +68,9 @@ async function connectToDatabase() {
     
     return cachedDb;
   } catch (error) {
-    console.error('Failed to connect to MongoDB:', error);
+    console.error('Failed to connect to MongoDB. Error details:', error);
+    console.error('Connection string format correct? URI starts with:', 
+                 process.env.MONGODB_URI ? process.env.MONGODB_URI.substring(0, 20) + '...' : 'undefined');
     throw error;
   }
 }
