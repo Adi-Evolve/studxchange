@@ -10,6 +10,10 @@ const API_BASE_URL = "/api"; // Use relative path for all environments
 
 console.log("API_BASE_URL:", API_BASE_URL);
 
+// Image Upload Configuration
+const IMGBB_API_KEY = '272785e1c6e6221d927bad99483ff9ed';
+const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload';
+
 // API Endpoints
 const API_ENDPOINTS = {
   // Products

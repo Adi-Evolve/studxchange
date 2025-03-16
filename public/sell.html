@@ -643,10 +643,12 @@
   <script src="js/navbar.js"></script>
   <script>
     // Configuration
+    let userCoordinates = null;
+    let userLocationName = '';
+    
+    // ImgBB Configuration
     const IMGBB_API_KEY = '272785e1c6e6221d927bad99483ff9ed';
     const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload';
-    let userCoordinates = null;
-let userLocationName = '';
 
     // Toggle between regular and room forms based on category selection
     document.getElementById('category').addEventListener('change', function() {
@@ -679,7 +681,7 @@ let userLocationName = '';
         element.setAttribute('required', '');
       } else {
         element.removeAttribute('required');
-      }
+        }
         }
       });
       
@@ -819,6 +821,26 @@ document.getElementById('getLocationBtn').addEventListener('click', async () => 
     }
     }
     
+    // Single image upload function
+    async function uploadImage(file) {
+      try {
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        const response = await fetch(`${IMGBB_UPLOAD_URL}?key=${IMGBB_API_KEY}`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await response.json();
+        if (!data.success) throw new Error(data.error.message || 'Image upload failed');
+        return data.data.url;
+      } catch (error) {
+        console.error("Image upload error:", error);
+        throw new Error('Image upload failed: ' + error.message);
+      }
+    }
+    
     // Regular product image preview
 document.getElementById('imageUpload').addEventListener('change', function(e) {
     const previewContainer = document.getElementById('imagePreviews');
@@ -902,41 +924,60 @@ document.getElementById('imageUpload').addEventListener('change', function(e) {
     
     // Remove image function
     function removeImage(index, isRoom) {
-      const fileInputId = isRoom ? 'roomImageUpload' : 'imageUpload';
-      const files = Array.from(document.getElementById(fileInputId).files);
-    files.splice(index, 1);
-    
-    // Create new DataTransfer object and update files
-    const newFiles = new DataTransfer();
-    files.forEach(file => newFiles.items.add(file));
-      document.getElementById(fileInputId).files = newFiles.files;
-    
-    // Trigger change event to update previews
-      document.getElementById(fileInputId).dispatchEvent(new Event('change'));
-}
+      try {
+        const fileInputId = isRoom ? 'roomImageUpload' : 'imageUpload';
+        const files = Array.from(document.getElementById(fileInputId).files);
+        files.splice(index, 1);
+        
+        // Check if DataTransfer API is available
+        if (typeof DataTransfer === 'undefined') {
+          console.error("DataTransfer API not available");
+          alert("Your browser doesn't support image removal. Please try uploading all images at once.");
+          return;
+        }
+        
+        // Create new DataTransfer object and update files
+        const newFiles = new DataTransfer();
+        files.forEach(file => newFiles.items.add(file));
+        document.getElementById(fileInputId).files = newFiles.files;
+        
+        // Trigger change event to update previews
+        document.getElementById(fileInputId).dispatchEvent(new Event('change'));
+      } catch (error) {
+        console.error("Error removing image:", error);
+        alert("Failed to remove image. Please try uploading all images at once.");
+      }
+    }
 
     // Form submission
     document.getElementById('sellForm').addEventListener('submit', async function(event) {
       event.preventDefault();
       console.log("Form submission started");
 
-      // Check if user has coordinates
-        if (!userCoordinates) {
-        alert("Please provide your location to continue.");
-        console.log("Location not provided");
-        return;
-    }
-      
-      // Check if user has phone number
-      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-      if (!currentUser || !currentUser.phone) {
-        // Show error modal
-        document.getElementById('phoneErrorModal').style.display = 'block';
-        console.log("Phone number not provided");
-        return;
-      }
-      
       try {
+        // Check if API endpoints are defined
+        if (typeof API_ENDPOINTS === 'undefined' || !API_ENDPOINTS.ADD_PRODUCT || !API_ENDPOINTS.ADD_ROOM) {
+          console.error("API endpoints not defined");
+          alert("Error: API configuration not loaded. Please refresh the page and try again.");
+          return;
+        }
+        
+        // Check if user has coordinates
+        if (!userCoordinates) {
+          alert("Please provide your location to continue.");
+          console.log("Location not provided");
+          return;
+        }
+        
+        // Check if user has phone number
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser || !currentUser.phone) {
+          // Show error modal
+          document.getElementById('phoneErrorModal').style.display = 'block';
+          console.log("Phone number not provided");
+          return;
+        }
+        
         const category = document.getElementById('category').value;
         console.log("Form type:", category);
         
@@ -945,6 +986,7 @@ document.getElementById('imageUpload').addEventListener('change', function(e) {
         
         // Check if it's a room listing
         if (category === 'Room') {
+          console.log("Processing room listing");
           // Validate room fields
           const hostelName = document.getElementById('hostelName').value;
           if (!hostelName) {
@@ -974,10 +1016,10 @@ document.getElementById('imageUpload').addEventListener('change', function(e) {
           // Show upload status
           document.getElementById('roomImageUploadStatus').style.display = 'flex';
           
+          console.log("Uploading room images...");
           // Upload images to ImgBB
-          const uploadedRoomImages = await Promise.all(
-            Array.from(roomImages).map(file => uploadImage(file))
-          );
+          const uploadedRoomImages = await uploadImages(true);
+          console.log("Room images uploaded:", uploadedRoomImages);
           
           // Create room object
           const room = {
@@ -1006,6 +1048,8 @@ document.getElementById('imageUpload').addEventListener('change', function(e) {
             sellerEmail: currentUser.email
           };
           
+          console.log("Submitting room data:", room);
+          
           // Save room to MongoDB
           const response = await fetch(API_ENDPOINTS.ADD_ROOM, {
             method: 'POST',
@@ -1015,25 +1059,32 @@ document.getElementById('imageUpload').addEventListener('change', function(e) {
             body: JSON.stringify(room)
           });
           
+          console.log("Room submission response status:", response.status);
+          
           if (!response.ok) {
             const errorData = await response.json();
+            console.error("Room submission error:", errorData);
             throw new Error(errorData.message || 'Failed to save room listing');
           }
+          
+          const responseData = await response.json();
+          console.log("Room submission successful:", responseData);
           
           alert('Room listed successfully!');
           window.location.href = 'index.html';
         } else {
-          // Regular product submission (existing code)
-        const files = document.getElementById('imageUpload').files;
-    if (files.length < 1) {
-        alert('Please select at least 1 image');
-        return;
-    }
+          console.log("Processing regular product listing");
+          // Regular product submission
+          const files = document.getElementById('imageUpload').files;
+          if (files.length < 1) {
+            alert('Please select at least 1 image');
+            return;
+          }
           
-    if (files.length > 5) {
-        alert('Maximum 5 images allowed');
-        return;
-    }
+          if (files.length > 5) {
+            alert('Maximum 5 images allowed');
+            return;
+          }
           
           // Validate required fields
           const title = document.getElementById('title').value;
@@ -1043,56 +1094,64 @@ document.getElementById('imageUpload').addEventListener('change', function(e) {
           if (!title || !price || !description) {
             alert('Please fill in all required fields');
             return;
-        }
+          }
 
           // Show upload status
           document.getElementById('imageUploadStatus').style.display = 'flex';
-            
+          
+          console.log("Uploading product images...");
           // Upload images
           const imageUrls = await uploadImages(false);
-            
-            // Create product object
-            const product = {
+          console.log("Product images uploaded:", imageUrls);
+          
+          // Create product object
+          const product = {
             college: document.getElementById('college').value,
-                title: document.getElementById('title').value,
-                category: document.getElementById('category').value,
-                price: document.getElementById('price').value,
-                images: imageUrls,
-                description: document.getElementById('description').value,
-                condition: document.getElementById('condition').value,
-                sellerPhone: currentUser.phone,
-                sellerEmail: currentUser.email,
+            title: document.getElementById('title').value,
+            category: document.getElementById('category').value,
+            price: document.getElementById('price').value,
+            images: imageUrls,
+            description: document.getElementById('description').value,
+            condition: document.getElementById('condition').value,
+            sellerPhone: currentUser.phone,
+            sellerEmail: currentUser.email,
             createdAt: new Date().toISOString(),
-                location: userLocationName,
+            location: userLocationName,
             coordinates: userCoordinates
-            };
+          };
 
           console.log('Submitting product:', product);
 
           // Save product to MongoDB via the API
           const response = await fetch(API_ENDPOINTS.ADD_PRODUCT, {
             method: 'POST',
-                headers: {
+            headers: {
               'Content-Type': 'application/json'
-                },
+            },
             body: JSON.stringify(product)
-            });
+          });
 
+          console.log("Product submission response status:", response.status);
+          
           if (!response.ok) {
             const errorData = await response.json();
+            console.error("Product submission error:", errorData);
             throw new Error(errorData.message || 'Failed to save product');
           }
-            
-            alert('Product listed successfully!');
-            window.location.href = 'index.html';
+          
+          const responseData = await response.json();
+          console.log("Product submission successful:", responseData);
+          
+          alert('Product listed successfully!');
+          window.location.href = 'index.html';
         }
-        } catch (error) {
-            console.error("Form submission error:", error);
+      } catch (error) {
+        console.error("Form submission error:", error);
         alert(error.message || 'Failed to submit listing');
-        } finally {
+      } finally {
         document.getElementById('imageUploadStatus').style.display = 'none';
         document.getElementById('roomImageUploadStatus').style.display = 'none';
-        }
+      }
     });
 
 
@@ -1109,6 +1168,8 @@ document.getElementById('imageUpload').addEventListener('change', function(e) {
 
     // Initialize form state
     document.addEventListener('DOMContentLoaded', () => {
+      console.log("Initializing form state");
+      
       // Hide room form by default
       document.getElementById('roomForm').style.display = 'none';
       
@@ -1117,11 +1178,12 @@ document.getElementById('imageUpload').addEventListener('change', function(e) {
       document.getElementById('roomImageUpload').removeAttribute('required');
       
       // Check for draft data
-        const draftData = JSON.parse(localStorage.getItem('draftListing'));
-        if (draftData) {
+      const draftData = JSON.parse(localStorage.getItem('draftListing'));
+      if (draftData) {
+        console.log("Found draft data:", draftData);
         // Populate form fields from draft
         document.getElementById('college').value = draftData.college || '';
-            document.getElementById('category').value = draftData.category || '';
+        document.getElementById('category').value = draftData.category || '';
         
         // Trigger change event to show/hide appropriate form
         const event = new Event('change');
@@ -1151,9 +1213,9 @@ document.getElementById('imageUpload').addEventListener('change', function(e) {
         } else {
           // Populate regular form fields
           document.getElementById('title').value = draftData.title || '';
-            document.getElementById('price').value = draftData.price || '';
+          document.getElementById('price').value = draftData.price || '';
           document.getElementById('condition').value = draftData.condition || 'used';
-            document.getElementById('description').value = draftData.description || '';
+          document.getElementById('description').value = draftData.description || '';
         }
         
         // Set coordinates if available
@@ -1166,6 +1228,17 @@ document.getElementById('imageUpload').addEventListener('change', function(e) {
           locationStatus.style.color = '#28a745';
         }
       }
+      
+      // Check if user is logged in
+      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+      if (!currentUser) {
+        console.log("User not logged in, redirecting to login page");
+        alert("Please log in to list items for sale");
+        window.location.href = 'login.html?redirect=sell.html';
+        return;
+      }
+      
+      console.log("Form initialized successfully");
     });
     
     // Make the map modal and initialization more robust
@@ -1182,29 +1255,33 @@ document.getElementById('imageUpload').addEventListener('change', function(e) {
       mapInitAttempts = 0;
       
       // Ensure the scripts are loaded
-      const leafletLoaded = typeof L !== 'undefined';
-      const geocoderLoaded = leafletLoaded && typeof L.Control.Geocoder !== 'undefined';
-      
-      if (!leafletLoaded) {
+      if (typeof L === 'undefined') {
         console.error("Leaflet library not loaded");
-        mapLoading.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Map library not loaded. Please refresh the page.';
+        mapLoading.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Map library not loaded. Please refresh the page or use the "Use Current Location" button instead.';
+        
+        // Add a close button to dismiss the modal
+        const closeButton = document.createElement('button');
+        closeButton.textContent = 'Close';
+        closeButton.style.marginTop = '15px';
+        closeButton.style.padding = '8px 15px';
+        closeButton.style.background = '#dc3545';
+        closeButton.style.color = 'white';
+        closeButton.style.border = 'none';
+        closeButton.style.borderRadius = '4px';
+        closeButton.onclick = closeMapModal;
+        mapLoading.appendChild(closeButton);
         return;
-      }
-      
-      if (!geocoderLoaded) {
-        console.warn("Geocoder plugin not loaded - search functionality may be limited");
       }
       
       // Wait for the modal to be visible before initializing the map
       setTimeout(() => {
         try {
+          initMap();
           // Focus the search input after map loads
           setTimeout(() => {
             const searchInput = document.getElementById('mapSearchInput');
             if (searchInput) searchInput.focus();
           }, 800);
-          
-          initMap();
         } catch (error) {
           console.error("Error initializing map:", error);
           mapLoading.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error loading map: ' + error.message;
@@ -1231,6 +1308,14 @@ document.getElementById('imageUpload').addEventListener('change', function(e) {
         
         mapInitAttempts++;
         setTimeout(initMap, 300); // Try again after a short delay
+        return;
+      }
+      
+      // Check if Leaflet is available
+      if (typeof L === 'undefined') {
+        console.error("Leaflet library not available");
+        document.getElementById('mapLoading').innerHTML = 
+          '<i class="fas fa-exclamation-triangle"></i> Map library not loaded. Please refresh the page.';
         return;
       }
       
