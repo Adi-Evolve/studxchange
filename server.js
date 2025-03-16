@@ -192,7 +192,18 @@ const roomSchema = new mongoose.Schema({
 const userSchema = new mongoose.Schema({
   name: String,
   email: { type: String, unique: true },
-  phone: { type: String, minlength: 10, maxlength: 10 },
+  phone: { 
+    type: String, 
+    minlength: [10, 'Phone number must be at least 10 characters long'],
+    maxlength: [10, 'Phone number must be at most 10 characters long'],
+    validate: {
+      validator: function(v) {
+        // Allow empty string or null for Google sign-in users
+        return v === '' || v === null || v === undefined || /^\d{10}$/.test(v);
+      },
+      message: props => `${props.value} is not a valid phone number!`
+    }
+  },
   password: String,
   provider: String
 });
@@ -681,16 +692,35 @@ app.post('/api/auth/google', async (req, res) => {
     if (!user) {
       // Create new user if not found
       console.log(`POST /api/auth/google - Creating new user for email: ${email}`);
+      
+      // Only set phone if it's a valid 10-digit number
+      const phoneToSave = phone && phone.length === 10 && /^\d{10}$/.test(phone) ? phone : null;
+      
       user = new User({
         name,
         email,
-        phone: phone || '',
+        phone: phoneToSave,
         provider: 'google'
       });
-      await user.save();
-      console.log(`POST /api/auth/google - New user created for email: ${email}`);
-    } else if (phone && !user.phone) {
-      // Update phone if provided and not already set
+      
+      try {
+        await user.save();
+        console.log(`POST /api/auth/google - New user created for email: ${email}`);
+      } catch (saveError) {
+        console.error(`POST /api/auth/google - Error creating user: ${saveError.message}`);
+        
+        // If validation error, try again with null phone
+        if (saveError.name === 'ValidationError' && saveError.message.includes('phone')) {
+          console.log(`POST /api/auth/google - Retrying with null phone for email: ${email}`);
+          user.phone = null;
+          await user.save();
+          console.log(`POST /api/auth/google - New user created with null phone for email: ${email}`);
+        } else {
+          throw saveError;
+        }
+      }
+    } else if (phone && phone.length === 10 && /^\d{10}$/.test(phone) && (!user.phone || user.phone.length === 0)) {
+      // Update phone if provided, valid, and not already set
       console.log(`POST /api/auth/google - Updating phone for existing user: ${email}`);
       user.phone = phone;
       await user.save();
@@ -698,19 +728,15 @@ app.post('/api/auth/google', async (req, res) => {
       console.log(`POST /api/auth/google - Found existing user: ${email}`);
     }
     
+    // Create user response without password
     const userResponse = user.toObject();
     delete userResponse.password;
     
-    console.log(`POST /api/auth/google - Authentication successful for: ${email}`);
     res.json(userResponse);
   } catch (error) {
     console.error('POST /api/auth/google - Error:', error.message);
     console.error('POST /api/auth/google - Stack:', error.stack);
-    res.status(500).json({ 
-      message: 'Authentication failed',
-      error: error.message,
-      stack: process.env.NODE_ENV === 'production' ? null : error.stack
-    });
+    res.status(500).json({ message: error.message, stack: error.stack });
   }
 });
 
