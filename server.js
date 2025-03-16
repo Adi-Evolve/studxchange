@@ -182,20 +182,53 @@ let Product, User, OTP, SoldItem, Room;
 
 // Initialize models function to avoid model compilation errors in serverless environment
 function initModels() {
-  if (!Product) {
-    Product = mongoose.models.Product || mongoose.model('Product', productSchema);
-  }
-  if (!User) {
-    User = mongoose.models.User || mongoose.model('User', userSchema);
-  }
-  if (!OTP) {
-    OTP = mongoose.models.OTP || mongoose.model('OTP', otpSchema);
-  }
-  if (!SoldItem) {
-    SoldItem = mongoose.models.SoldItem || mongoose.model('SoldItem', soldItemSchema);
-  }
-  if (!Room) {
-    Room = mongoose.models.Room || mongoose.model('Room', roomSchema);
+  try {
+    console.log('Initializing models...');
+    
+    if (!Product) {
+      console.log('Initializing Product model...');
+      Product = mongoose.models.Product || mongoose.model('Product', productSchema);
+      console.log('Product model initialized successfully');
+    }
+    
+    if (!User) {
+      console.log('Initializing User model...');
+      User = mongoose.models.User || mongoose.model('User', userSchema);
+      console.log('User model initialized successfully');
+    }
+    
+    if (!OTP) {
+      console.log('Initializing OTP model...');
+      OTP = mongoose.models.OTP || mongoose.model('OTP', otpSchema);
+      console.log('OTP model initialized successfully');
+    }
+    
+    if (!SoldItem) {
+      console.log('Initializing SoldItem model...');
+      SoldItem = mongoose.models.SoldItem || mongoose.model('SoldItem', soldItemSchema);
+      console.log('SoldItem model initialized successfully');
+    }
+    
+    if (!Room) {
+      console.log('Initializing Room model...');
+      try {
+        Room = mongoose.models.Room || mongoose.model('Room', roomSchema);
+        console.log('Room model initialized successfully');
+      } catch (roomError) {
+        console.error('Error initializing Room model:', roomError);
+        // Try to recreate the model
+        if (mongoose.models.Room) {
+          delete mongoose.models.Room;
+        }
+        Room = mongoose.model('Room', roomSchema);
+        console.log('Room model recreated successfully');
+      }
+    }
+    
+    console.log('All models initialized successfully');
+  } catch (error) {
+    console.error('Error initializing models:', error);
+    throw error;
   }
 }
 
@@ -242,19 +275,20 @@ app.get('/api/rooms', async (req, res) => {
     console.log('GET /api/rooms - Fetching rooms');
     
     // Ensure database connection
-    const db = await connectToDatabase();
-    if (!db) {
-      console.error('GET /api/rooms - Database connection failed');
-      return res.status(500).json({ message: 'Database connection failed' });
-    }
+    await connectToDatabase();
+    console.log('GET /api/rooms - Database connection successful');
     
+    // Initialize models
     initModels();
+    console.log('GET /api/rooms - Models initialized');
     
     // Check if Room model is properly initialized
     if (!Room) {
       console.error('GET /api/rooms - Room model not initialized');
       return res.status(500).json({ message: 'Room model not initialized' });
     }
+    
+    console.log('GET /api/rooms - Room model is properly initialized');
     
     // Check if sellerEmail filter is provided
     const { sellerEmail } = req.query;
@@ -265,15 +299,18 @@ app.get('/api/rooms', async (req, res) => {
       query.sellerEmail = sellerEmail;
     }
     
-    // Perform the query with a timeout
-    const rooms = await Promise.race([
-      Room.find(query).sort({ createdAt: -1 }),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Query timeout')), 15000)
-      )
-    ]);
+    console.log('GET /api/rooms - Executing query:', JSON.stringify(query));
+    
+    // Perform the query directly without Promise.race
+    const rooms = await Room.find(query).sort({ createdAt: -1 });
     
     console.log(`GET /api/rooms - Found ${rooms.length} rooms`);
+    
+    // Log the first room if available
+    if (rooms.length > 0) {
+      console.log('GET /api/rooms - First room:', JSON.stringify(rooms[0]));
+    }
+    
     res.json(rooms);
   } catch (error) {
     console.error('GET /api/rooms - Error:', error.message);

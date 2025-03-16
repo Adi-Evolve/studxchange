@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    button {
+      padding: 10px;
+      margin: 5px;
+      background-color: #2a3d56;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    pre {
+      background-color: #f4f4f9;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>API Test</h1>
+  
+  <div>
+    <button onclick="testProducts()">Test Products API</button>
+    <button onclick="testRooms()">Test Rooms API</button>
+    <button onclick="testSoldItems()">Test Sold Items API</button>
+  </div>
+  
+  <h2>Results:</h2>
+  <pre id="results">Click a button to test an API endpoint</pre>
+  
+  <script>
+    async function testProducts() {
+      const resultsElement = document.getElementById('results');
+      resultsElement.textContent = 'Loading products...';
+      
+      try {
+        const response = await fetch('/api/products');
+        console.log('Products response status:', response.status);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Products data:', data);
+        
+        resultsElement.textContent = `Found ${data.length} products.\n\nFirst product: ${JSON.stringify(data[0], null, 2)}`;
+      } catch (error) {
+        console.error('Error testing products API:', error);
+        resultsElement.textContent = `Error: ${error.message}`;
+      }
+    }
+    
+    async function testRooms() {
+      const resultsElement = document.getElementById('results');
+      resultsElement.textContent = 'Loading rooms...';
+      
+      try {
+        const response = await fetch('/api/rooms');
+        console.log('Rooms response status:', response.status);
+        
+        if (!response.ok) {
+          let errorMessage = `HTTP error! status: ${response.status}`;
+          
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorData.error || errorMessage;
+          } catch (e) {
+            console.error('Could not parse error response:', e);
+            
+            try {
+              const textResponse = await response.text();
+              console.error('Error response text:', textResponse);
+              errorMessage = textResponse || errorMessage;
+            } catch (textError) {
+              console.error('Could not get error response text:', textError);
+            }
+          }
+          
+          throw new Error(errorMessage);
+        }
+        
+        const data = await response.json();
+        console.log('Rooms data:', data);
+        
+        resultsElement.textContent = `Found ${data.length} rooms.\n\nFirst room: ${JSON.stringify(data[0], null, 2)}`;
+      } catch (error) {
+        console.error('Error testing rooms API:', error);
+        resultsElement.textContent = `Error: ${error.message}`;
+      }
+    }
+    
+    async function testSoldItems() {
+      const resultsElement = document.getElementById('results');
+      resultsElement.textContent = 'Loading sold items...';
+      
+      try {
+        const response = await fetch('/api/sold-items');
+        console.log('Sold items response status:', response.status);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Sold items data:', data);
+        
+        resultsElement.textContent = `Found ${data.length} sold items.\n\nFirst sold item: ${JSON.stringify(data[0], null, 2)}`;
+      } catch (error) {
+        console.error('Error testing sold items API:', error);
+        resultsElement.textContent = `Error: ${error.message}`;
+      }
+    }
+  </script>
+</body>
+</html> 
