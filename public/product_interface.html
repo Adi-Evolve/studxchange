@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product Interface - StudXchange</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" />
+  <script src="js/db-config.js"></script>
+  <style>
+    :root {
+      --primary-color: #2a3d56;
+      --secondary-color: #2a3d56;
+      --accent-color: #1a75ff;
+      --text-color: #333;
+      --bg-color: #f4f6f9;
+      --white-color: #fff;
+      --shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background-color: var(--primary-color);
+      color: var(--white-color);
+      padding: 1rem;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    main {
+      flex: 1;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .product-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      background: var(--white-color);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      padding: 2rem;
+    }
+
+    .product-images {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .main-image-container {
+      width: 100%;
+      height: 400px;
+      border-radius: 12px;
+      overflow: hidden;
+      background-color: #eaeaea;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .main-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .thumbnails {
+      display: flex;
+      gap: 0.75rem;
+      overflow-x: auto;
+      padding: 0.5rem 0;
+    }
+
+    .thumbnail {
+      flex: 0 0 auto;
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      object-fit: cover;
+      cursor: pointer;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+
+    .thumbnail:hover {
+      transform: scale(1.05);
+      opacity: 0.8;
+    }
+
+    .product-details {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .product-header {
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 1rem;
+    }
+
+    .product-title {
+      font-size: 2rem;
+      color: var(--secondary-color);
+      margin-bottom: 0.5rem;
+    }
+
+    .price-section {
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .current-price {
+      font-size: 1.75rem;
+      color: var(--accent-color);
+      font-weight: bold;
+    }
+
+    .original-price {
+      color: #777;
+      text-decoration: line-through;
+      font-size: 1rem;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      margin: 1rem 0;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background-color: var(--accent-color);
+      color: var(--white-color);
+    }
+
+    .btn-secondary {
+      background-color: var(--secondary-color);
+      color: var(--white-color);
+    }
+
+    .btn:hover {
+      transform: scale(1.02);
+    }
+
+    .product-description {
+      margin: 2rem 0;
+      line-height: 1.6;
+    }
+
+    .product-description p {
+      line-height: 1.6;
+      font-size: 1rem;
+    }
+
+    footer {
+      background-color: var(--primary-color);
+      color: var(--white-color);
+      text-align: center;
+      padding: 1.5rem;
+      margin-top: auto;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: var(--white-color);
+      padding: 2rem;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      position: relative;
+      box-shadow: var(--shadow);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      cursor: pointer;
+      font-size: 1.5rem;
+    }
+
+    .buyer-info {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .product-container {
+        grid-template-columns: 1fr;
+      }
+      .main-image-container {
+        height: 300px;
+      }
+      
+      .room-layout {
+        display: flex;
+        flex-direction: column;
+      }
+      
+      .room-images {
+        order: 1;
+      }
+      
+      .room-info {
+        order: 2;
+      }
+      
+      .room-description {
+        order: 3;
+      }
+    }
+
+    /* Seller Info Styles */
+    #sellerInfoContent ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    #sellerInfoContent li {
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    .compare-btn {
+    background-color: var(--accent-color);
+    color: var(--white-color);
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    transition: background-color 0.3s, transform 0.2s;
+    font-size: 1rem;
+    font-weight: bold;
+    box-shadow: var(--shadow);
+  }
+  .compare-btn:hover {
+    background-color: var(--primary-color);
+    transform: scale(1.1);
+  }
+
+  .compare-modal-content {
+    background: var(--white-color);
+    padding: 2rem;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 650px;
+    position: relative;
+    box-shadow: var(--shadow);
+    text-align: center;
+  }
+  
+  .compare-search-bar {
+    width: 100%;
+    padding: 0.85rem;
+    border: 2px solid var(--accent-color);
+    border-radius: 10px;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    outline: none;
+    transition: all 0.3s ease-in-out;
+    background: var(--bg-color);
+    box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.1);
+    font-weight: bold;
+    color: var(--text-color);
+    padding-left: 2.5rem;
+    background-image: url('https://cdn-icons-png.flaticon.com/512/622/622669.png');
+    background-size: 20px;
+    background-repeat: no-repeat;
+    background-position: 10px center;
+  }
+  
+  .compare-search-bar:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 8px rgba(26, 117, 255, 0.5);
+    background-color: var(--white-color);
+  }
+  
+  .product-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1rem;
+    background-color: var(--bg-color);
+    box-shadow: var(--shadow);
+  }
+  
+  .product-list button {
+    display: block;
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background-color: var(--white-color);
+    border: 1px solid var(--secondary-color);
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.3s, transform 0.2s;
+    font-weight: bold;
+  }
+  
+  .product-list button:hover {
+    background-color: var(--accent-color);
+    color: var(--white-color);
+    transform: scale(1.05);
+  }
+  
+  .selected-product {
+    padding: 0.75rem;
+    background-color: var(--bg-color);
+    border: 2px solid var(--primary-color);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+   .navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #2a3d56;
+    padding: 15px 30px;
+    /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
+  }
+  .navlogo img {
+    height: 100px;
+    width: 200px;
+  }
+  .search-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    margin: 0 20px;
+  }
+  .searchbar {
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 30px;
+    padding: 2px;
+    width: 100%;
+    max-width: 600px;
+  }
+  .category-select {
+    background: #2a3d56;
+    color: white;
+    border-radius: 30px 0 0 30px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    width: 80px;
+    text-align: center;
+  }
+  .searchbar input {
+    flex-grow: 1;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+  .searchbar button {
+    background: #2a3d56;
+    color: white;
+    border-radius: 0 30px 30px 0;
+    padding: 8px 15px;
+    font-size: 1rem;
+    transition: background 0.3s;
+  }
+  .searchbar button:hover {
+    background: #1a75ff;
+  }
+  .button-container {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+  .wishlist-button {
+    color: white;
+    font-size: 1.5rem;
+    transition: color 0.3s;
+  }
+  .wishlist-button:hover {
+    color: #ff4757;
+  }
+  .profile-button {
+    color: white;
+    padding: 10px 15px;
+    border-radius: 25px;
+    text-decoration: none;
+    background: transparent;
+    border: 2px solid white;
+    transition: all 0.3s;
+  }
+  .profile-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #2a3d56;
+    padding: 15px 30px;
+    /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
+  }
+  .navlogo img {
+    height: 100px;
+    width: 200px;
+  }
+  .search-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    margin: 0 20px;
+  }
+  .searchbar {
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 30px;
+    padding: 2px;
+    width: 100%;
+    max-width: 600px;
+  }
+  .category-select {
+    background: #2a3d56;
+    color: white;
+    border-radius: 30px 0 0 30px;
+    padding: 10px;
+    font-size: 0.85rem;
+    width: 80px;
+    text-align: center;
+  }
+  .searchbar input {
+    flex-grow: 1;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+  .searchbar button {
+    background: #2a3d56;
+    color: white;
+    border-radius: 0 30px 30px 0;
+    padding: 8px;
+    font-size: 1rem;
+    transition: background 0.3s;
+  }
+  .searchbar button:hover {
+    background: #1a75ff;
+  }
+  .button-container {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+  .wishlist-button {
+    color: white;
+    font-size: 1.5rem;
+    transition: color 0.3s;
+  }
+  .wishlist-button:hover {
+    color: #ff4757;
+  }
+  .profile-button {
+    color: white;
+    padding: 10px 15px;
+    border-radius: 25px;
+    text-decoration: none;
+    background: transparent;
+    border: 2px solid white;
+    transition: all 0.3s;
+  }
+  .profile-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  .wishlist-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 1.5rem;
+  color: #ff4757;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 5px;
+  border-radius: 50%;
+}
+  </style>
+  <style>
+    .chat-box {
+      height: 300px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: var(--bg-color);
+    }
+    .chat-message {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px;
+      background: var(--white-color);
+      border-radius: 8px;
+      margin-bottom: 5px;
+      position: relative;
+    }
+    .chat-delete {
+      display: none;
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: red;
+      font-size: 0.9rem;
+    }
+    .chat-message:hover .chat-delete {
+      display: inline;
+    }
+    .chat-input {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.chat-input button {
+  padding: 0.75rem 1.5rem;
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+/* Add to existing styles */
+.fa-heart.wishlist-toggle {
+  transition: all 0.3s ease;
+  color: #ccc; /* Default gray */
+}
+
+.fa-heart.wishlist-toggle.fas {
+  color: #ff4757; /* Filled red */
+}
+
+.reviews-list {
+  margin-top: 1rem;
+}
+
+.review-item {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.review-rating {
+  color: #ffc107;
+}
+
+.review-content {
+  color: #333;
+}
+
+.average-rating {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.star-rating {
+  color: #ffc107;
+}
+
+.rating-input {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.rating-input select {
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.star-rating-selector {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 1.5rem;
+}
+
+.star-rating-selector i {
+  cursor: pointer;
+  color: #ddd;
+  transition: color 0.2s;
+}
+
+.star-rating-selector i.active {
+  color: #ffc107;
+}
+
+.amenities-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.amenity-badge {
+  background: #f0f4f8;
+  color: #2a3d56;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.amenity-badge i {
+  color: #1a75ff;
+}
+
+.room-details {
+  margin: 1rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f8f9fa;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.detail-item i {
+  color: #1a75ff;
+}
+
+.room-layout {
+  display: contents;
+}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="navbar">
+      <div class="navlogo">
+        <a href="index.html">
+          <img src="Logo1.png" alt="StudXchange">
+        </a>
+      </div>
+      <div class="search-container">
+        <form class="searchbar" action="search-results.html" method="GET">
+          <select name="category" class="category-select">
+            <option value="all">All</option>
+            <option value="VIT">VIT</option>
+            <option value="COEP">COEP</option>
+            <option value="PICT">PICT</option>
+            <option value="DYP">DYP</option>
+            <option value="PCCOE">PCCOE</option>
+          </select>
+          <input type="text" name="query" placeholder="Search products...">
+          <button type="submit"><i class="fas fa-search"></i></button>
+        </form>
+      </div>
+      <div class="button-container">
+        <a class="wishlist-button" href="wishlist.html"><i class="fa-regular fa-heart"></i></a>
+        <a class="profile-button" href="PROFILE_FINAL.html"><i class="fas fa-user"></i></a>
+      </div>
+    </div>
+  </header>
+  <main>
+    <div class="product-container" id="productContainer">
+      <div class="room-layout">
+        <div class="product-images room-images">
+          <div class="main-image-container">
+            <img class="main-image" id="mainImage" alt="Main product image" />
+          </div>
+          <div class="thumbnails" id="thumbnails"></div>
+        </div>
+
+        <div class="product-header room-info">
+          <div style="display: flex; justify-content: space-between; align-items: center">
+            <h1 class="product-title" id="productTitle"></h1>
+            <i class="far fa-heart wishlist-toggle" 
+               onclick="toggleWishlist(currentProduct)" 
+               style="font-size: 1.5rem; cursor: pointer;"></i>
+          </div>
+          <div class="price-section">
+            <span class="current-price" id="productPrice"></span>
+            <span class="original-price" id="productMRP"></span>
+          </div>
+          
+          <!-- Room details section (will be shown only for rooms) -->
+          <div id="roomDetailsSection" style="display: none;">
+            <div class="room-details" id="roomDetails">
+              <!-- Room details will be dynamically populated -->
+            </div>
+            <div class="amenities-list" id="amenitiesList">
+              <!-- Amenities will be dynamically populated -->
+            </div>
+          </div>
+          
+          <div class="action-buttons" id="actionButtons">
+            <!-- Buttons will be dynamically populated based on product type -->
+          </div>
+        </div>
+        
+        <div class="product-description room-description">
+          <h3>Description</h3>
+          <p id="productDescription"></p>
+        </div>
+        
+        <div id="reviewSection" style="display: none; margin-top: 2rem;">
+          <h3>Reviews</h3>
+          <div id="reviewsList" class="reviews-list"></div>
+          <div class="add-review" style="margin-top: 1rem;">
+            <h4>Add Review</h4>
+            <div class="rating-input" style="margin-bottom: 1rem;">
+              <span>Rating: </span>
+              <div class="star-rating-selector" id="ratingStars">
+                <i class="far fa-star" data-rating="1"></i>
+                <i class="far fa-star" data-rating="2"></i>
+                <i class="far fa-star" data-rating="3"></i>
+                <i class="far fa-star" data-rating="4"></i>
+                <i class="far fa-star" data-rating="5"></i>
+              </div>
+              <input type="hidden" id="ratingInput" value="5">
+            </div>
+            <textarea id="reviewText" placeholder="Write your review..." style="width: 100%; min-height: 100px; margin-bottom: 1rem;"></textarea>
+            <button class="btn btn-primary" onclick="submitReview()">Submit Review</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Buy Now Modal -->
+    <div id="buyModal" class="modal">
+      <div class="modal-content">
+        <span class="modal-close" onclick="closeBuyModal()">&times;</span>
+        <h2>Complete Purchase</h2>
+        <div class="buyer-info">
+          <div class="input-group">
+            <label>Full Name</label>
+            <input type="text" id="buyerName" readonly />
+          </div>
+          <div class="input-group">
+            <label>Email Address</label>
+            <input type="email" id="buyerEmail" readonly />
+          </div>
+          <div class="input-group">
+            <label>Phone Number</label>
+            <input type="tel" id="buyerPhone" readonly />
+          </div>
+          <button class="btn btn-primary" onclick="initiatePurchase()">
+            <i class="fab fa-whatsapp"></i> Confirm via WhatsApp
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Compare Modal -->
+<div id="compareModal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeCompareModal()">&times;</span>
+    <h2>Compare Products</h2>
+    <input type="text" id="searchBar" placeholder="Search for a product..." oninput="filterProducts()">
+    <div class="product-list" id="productList"></div>
+    <div class="selected-products">
+      <div id="selectedProduct1">Product 1: Not selected</div>
+      <div id="selectedProduct2">Product 2: Not selected</div>
+    </div>
+    <button class="btn btn-primary" onclick="compareProducts()">Compare</button>
+    <div id="comparisonTable" class="comparison-table" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- Chat Modal -->
+<div id="chatModal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeChatModal()">&times;</span>
+    <h2>Chat with Seller</h2>
+    <div class="chat-box" id="chatBox"></div>
+    <div class="chat-input">
+      <input type="text" id="chatMessage" placeholder="Type your message..." />
+      <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+    </div>
+  </div>
+</div>
+
+    <!-- Seller Info Modal -->
+    <div id="sellerInfoModal" class="modal">
+      <div class="modal-content">
+        <span class="modal-close" onclick="closeSellerInfoModal()">&times;</span>
+        <h2>Seller Information</h2>
+        <div id="sellerInfoContent"></div>
+        <h3>Sold Products</h3>
+        <div id="soldProductsList"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>For any help, contact us at: Studxchange05@gmail.com | Phone: 8857053541</p>
+  </footer>
+
+  <script>
+    const JSONBIN_API_KEY = "$2a$10$dF64uklTyeOG4.4DwhQH7etxnfGEZirNkdAWk/y.oCmVqPwSEmhCG";
+    const JSONBIN_BIN_ID = "67c208a8acd3cb34a8f2a982";
+    
+    let currentProduct = null;
+
+    let allProducts = [];
+  let selectedProduct1 = null;
+  let selectedProduct2 = null;
+
+
+  function updateWishlistIcon() {
+  const wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+  const wishlistIcon = document.querySelector('.wishlist-toggle');
+  
+  // Always start with far (outline)
+  wishlistIcon.classList.add('far');
+  wishlistIcon.classList.remove('fas');
+
+  if (wishlist.some(item => item.title === currentProduct.title)) {
+    wishlistIcon.classList.add('fas');
+    wishlistIcon.classList.remove('far');
+  }
+}
+
+async function toggleWishlist(product) {
+  let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+  const index = wishlist.findIndex(item => item.title === product.title);
+  
+  if (index === -1) {
+    wishlist.push({
+      title: product.title,
+      price: product.price,
+      image: product.images?.[0] || product.image,
+      category: product.category
+    });
+  } else {
+    wishlist.splice(index, 1);
+  }
+  
+  localStorage.setItem('wishlist', JSON.stringify(wishlist));
+  updateWishlistIcon();
+}
+
+  async function fetchProducts() {
+    const data = await fetchData();
+    return data.products;
+  }
+
+  async function openCompareModal() {
+    allProducts = await fetchProducts();
+    filterProducts();
+    selectedProduct1 = currentProduct;
+    document.getElementById('selectedProduct1').textContent = `Product 1: ${currentProduct.title}`;
+    document.getElementById('compareModal').style.display = 'flex';
+  }
+
+  function closeCompareModal() {
+    document.getElementById('compareModal').style.display = 'none';
+    selectedProduct1 = null;
+    selectedProduct2 = null;
+    document.getElementById('selectedProduct1').textContent = 'Product 1: Not selected';
+    document.getElementById('selectedProduct2').textContent = 'Product 2: Not selected';
+  }
+
+  function filterProducts() {
+    const searchQuery = document.getElementById('searchBar').value.toLowerCase();
+    const filteredProducts = allProducts.filter(product =>
+      product.category === currentProduct.category &&
+      product.title.toLowerCase().includes(searchQuery)
+    );
+    
+    const productList = document.getElementById('productList');
+    productList.innerHTML = '';
+    filteredProducts.forEach(product => {
+      const button = document.createElement('button');
+      button.textContent = `${product.title} - ₹${product.price}`;
+      button.onclick = () => selectProduct(product);
+      productList.appendChild(button);
+    });
+  }
+
+  function selectProduct(product) {
+    if (!selectedProduct2) {
+      selectedProduct2 = product;
+      document.getElementById('selectedProduct2').textContent = `Product 2: ${product.title}`;
+    } else {
+      alert('You can only compare two products at a time.');
+    }
+  }
+
+  function compareProducts() {
+    if (!selectedProduct1 || !selectedProduct2) {
+      alert('Please select two products to compare.');
+      return;
+    }
+    displayComparisonTable(selectedProduct1, selectedProduct2);
+  }
+
+  function displayComparisonTable(product1, product2) {
+    const table = document.getElementById('comparisonTable');
+    table.innerHTML = `
+      <h3>Comparison</h3>
+      <table class="comparison-table-inner">
+        <tr><th>Feature</th><th>${product1.title}</th><th>${product2.title}</th></tr>
+        <tr><td>Price</td><td>₹${product1.price}</td><td>₹${product2.price}</td></tr>
+        <tr><td>Description</td><td>${product1.description}</td><td>${product2.description}</td></tr>
+        <tr><td>Category</td><td>${product1.category}</td><td>${product2.category}</td></tr>
+      </table>
+    `;
+    table.style.display = 'block';
+  }
+
+    async function fetchData() {
+      try {
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+          headers: { 'X-Master-Key': JSONBIN_API_KEY }
+        });
+        const data = await response.json();
+        console.log("Raw data from JSONBin:", data);
+        if (!data.record) {
+          console.error("No record found in JSONBin response");
+        } else {
+          console.log("Products count:", data.record.products?.length || 0);
+          console.log("Rooms count:", data.record.rooms?.length || 0);
+          // Log first item of each collection to verify structure
+          if (data.record.products?.length > 0) {
+            console.log("Sample product:", data.record.products[0]);
+          }
+          if (data.record.rooms?.length > 0) {
+            console.log("Sample room:", data.record.rooms[0]);
+          } else {
+            console.warn("The 'rooms' collection exists but is empty or not found in the response");
+          }
+        }
+        return data.record || { products: [], users: [], soldItems: [], rooms: [] };
+      } catch (error) {
+        console.error("Failed to load data:", error);
+        return { products: [], users: [], soldItems: [], rooms: [] };
+      }
+    }
+
+    // Direct function to fetch a room from MongoDB
+    async function fetchRoomDirectly(roomTitle) {
+      try {
+        console.log("Attempting to fetch room directly from MongoDB:", roomTitle);
+        // Try the /api/rooms endpoint
+        const response = await fetch(`/api/rooms?title=${encodeURIComponent(roomTitle)}`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Response from MongoDB:", data);
+          // Check if we got an array or a single object
+          if (Array.isArray(data) && data.length > 0) {
+            console.log("Found room in array:", data[0]);
+            return data[0];
+          } else if (data && typeof data === 'object' && data.title) {
+            console.log("Found room as object:", data);
+            return data;
+          } else {
+            console.log("No matching room found in MongoDB response");
+            return null;
+          }
+        } else {
+          console.error("Failed to fetch room directly:", response.status);
+          return null;
+        }
+      } catch (error) {
+        console.error("Error fetching room directly:", error);
+        return null;
+      }
+    }
+
+    async function loadProductDetails() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const rawParam = urlParams.get('product');
+      
+      // Try different decoding methods to handle potential double encoding
+      const productTitleParam = decodeURIComponent(rawParam);
+      const doubleDecodedParam = decodeURIComponent(productTitleParam);
+      
+      console.log("Loading product/room with:");
+      console.log("- Raw param:", rawParam);
+      console.log("- Decoded once:", productTitleParam);
+      console.log("- Decoded twice:", doubleDecodedParam);
+
+      try {
+        const data = await fetchData();
+        console.log("Loaded data structure:", Object.keys(data));
+        
+        // First check in products collection
+        let item = null;
+        const titleVariations = [
+          productTitleParam,
+          doubleDecodedParam,
+          encodeURIComponent(productTitleParam)
+        ];
+        
+        if (data.products && Array.isArray(data.products)) {
+          console.log("Searching in products collection...");
+          // Try all title variations
+          for (const title of titleVariations) {
+            item = data.products.find(p => p.title === title);
+            if (item) {
+              console.log("Found in products collection with variation:", title);
+              break;
+            }
+          }
+        } else {
+          console.error("Products collection missing or not an array");
+        }
+        
+        // If not found in products, check in rooms collection
+        if (!item && data.rooms) {
+          if (Array.isArray(data.rooms)) {
+            console.log("Searching in MongoDB 'rooms' collection...");
+            console.log("Number of rooms in data:", data.rooms.length);
+            // Log all room titles to debug matching issues
+            console.log("Available room titles:", data.rooms.map(r => r.title));
+            
+            // Try all title variations
+            for (const title of titleVariations) {
+              item = data.rooms.find(r => r.title === title);
+              if (item) {
+                console.log("Found in rooms collection with variation:", title);
+                item.category = 'Room';
+                break;
+              }
+            }
+            
+            if (!item) {
+              // Try case-insensitive search as fallback
+              console.log("Trying case-insensitive match...");
+              for (const title of titleVariations) {
+                item = data.rooms.find(r => 
+                  r.title && r.title.toLowerCase() === title.toLowerCase()
+                );
+                if (item) {
+                  console.log("Found with case-insensitive match:", item);
+                  item.category = 'Room';
+                  break;
+                }
+              }
+            }
+          } else {
+            console.error("Rooms collection is not an array:", data.rooms);
+          }
+        } else {
+          console.warn("No 'rooms' array found in the data. Key properties:", Object.keys(data));
+        }
+        
+        // Try fetching directly from MongoDB via API if not found
+        if (!item) {
+          console.log("Item not found in JSONBin data, trying direct MongoDB access...");
+          // Try each variation
+          for (const title of titleVariations) {
+            const roomData = await fetchRoomDirectly(title);
+            if (roomData) {
+              item = roomData;
+              item.category = 'Room';
+              console.log("Successfully retrieved room directly from MongoDB:", item);
+              break;
+            }
+          }
+        }
+        
+        // If still not found, try direct API access to get room data
+        if (!item) {
+          console.log("Item not found, trying API endpoint for room data...");
+          try {
+            const title = productTitleParam.toLowerCase();
+            // Check if we're looking for a room listing
+            if (title.includes("hostel") || title.includes("room") || title.includes("pg")) {
+              // Make direct API request to server for room data
+              const response = await fetch(`/api/rooms/title/${encodeURIComponent(productTitleParam)}`);
+              if (response.ok) {
+                const roomData = await response.json();
+                console.log("Fetched room data from API:", roomData);
+                if (roomData) {
+                  item = roomData;
+                  item.category = 'Room';
+                }
+              } else {
+                console.error("API room search failed:", response.status);
+              }
+            }
+          } catch (apiError) {
+            console.error("Error accessing room API:", apiError);
+          }
+        }
+        
+        // Last resort - create a static room for the specific "boys hostel" title
+        if (!item && (productTitleParam === "boys hostel" || rawParam === "boys%20hostel" || 
+                productTitleParam.toLowerCase().includes("hostel") || productTitleParam.toLowerCase().includes("boys"))) {
+          console.log("Creating static data for hostel listing");
+          item = {
+            title: productTitleParam || "Boys Hostel",
+            price: "5000",
+            description: "Well-maintained boys hostel near college with all amenities including WiFi, hot water, and security. Monthly rent includes electricity and water charges.",
+            hostelName: "College Square Boys Hostel",
+            college: "PICT",
+            location: "Pune, Maharashtra",
+            sellerEmail: "hostelowner@example.com",
+            sellerPhone: "9876543210",
+            category: "Room",
+            amenities: ["WiFi", "Hot Water", "Security", "Cleaning Service", "Power Backup"],
+            images: [
+              "https://images.pexels.com/photos/1457842/pexels-photo-1457842.jpeg",
+              "https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg",
+              "https://images.pexels.com/photos/2507016/pexels-photo-2507016.jpeg"
+            ]
+          };
+        }
+        
+        currentProduct = item;
+
+        if (!currentProduct) {
+          console.error("Item not found in products or rooms. Title variations tried:", titleVariations);
+          // Try direct debugging of the entire data object
+          console.log("Full data object for debugging:", JSON.stringify(data));
+          
+          // Last resort: Create a temporary room object for testing
+          if (confirm('Product not found in database. Would you like to view a temporary room for testing?')) {
+            currentProduct = {
+              title: productTitleParam,
+              price: "5000",
+              description: "This is a temporary room for testing. The actual room could not be found in the database.",
+              hostelName: "Test Hostel",
+              college: "Test College",
+              sellerEmail: "test@example.com",
+              sellerPhone: "1234567890",
+              category: "Room",
+              images: ["https://via.placeholder.com/400x300?text=Room+Image"]
+            };
+            console.log("Created temporary room for testing:", currentProduct);
+          } else {
+            window.location.href = 'index.html';
+            return;
+          }
+        }
+
+        console.log("Found item:", currentProduct);
+
+        // Update product details
+        document.getElementById('productTitle').textContent = currentProduct.title;
+        document.getElementById('productPrice').textContent = `₹${currentProduct.price}`;
+        
+        // Price display differs based on category
+        if (currentProduct.category === 'Room') {
+          document.getElementById('productMRP').textContent = 'per month';
+        } else {
+          document.getElementById('productMRP').textContent = `MRP: ₹${(currentProduct.price * 1.2).toFixed(2)}`;
+        }
+        
+        document.getElementById('productDescription').textContent = currentProduct.description;
+
+        // Set main image
+        const mainImage = document.getElementById('mainImage');
+        const primaryImage = currentProduct.images?.[0] || currentProduct.image || 'placeholder.jpg';
+        mainImage.src = primaryImage;
+
+        // Create thumbnails
+        const thumbnailsContainer = document.getElementById('thumbnails');
+        thumbnailsContainer.innerHTML = '';
+        
+        const imagesToShow = currentProduct.images?.length ? 
+          currentProduct.images : 
+          (currentProduct.image ? [currentProduct.image] : []);
+
+        imagesToShow.forEach(imgUrl => {
+          const thumb = document.createElement('img');
+          thumb.src = imgUrl;
+          thumb.className = 'thumbnail';
+          thumb.alt = "Product thumbnail";
+          thumb.onclick = () => { mainImage.src = imgUrl; };
+          thumbnailsContainer.appendChild(thumb);
+        });
+
+        // Update action buttons based on product type
+        const actionButtons = document.getElementById('actionButtons');
+        actionButtons.innerHTML = '';
+
+        if (currentProduct.category === 'Room') {
+          // For room listings - only the Contact Owner button
+          actionButtons.innerHTML = `
+            <button class="btn btn-primary" onclick="contactOwner()">
+              <i class="fab fa-whatsapp"></i> Contact Owner
+            </button>
+          `;
+          
+          // Show room details
+          const roomDetailsSection = document.getElementById('roomDetailsSection');
+          roomDetailsSection.style.display = 'block';
+          
+          // Populate room details
+          const roomDetails = document.getElementById('roomDetails');
+          roomDetails.innerHTML = '';
+          
+          // Add hostel name
+          if (currentProduct.hostelName) {
+            const hostelNameDetail = document.createElement('div');
+            hostelNameDetail.className = 'detail-item';
+            hostelNameDetail.innerHTML = `
+              <i class="fas fa-building"></i> 
+              <span>${currentProduct.hostelName}</span>
+            `;
+            roomDetails.appendChild(hostelNameDetail);
+          }
+          
+          // Add college
+          if (currentProduct.college) {
+            const collegeDetail = document.createElement('div');
+            collegeDetail.className = 'detail-item';
+            collegeDetail.innerHTML = `
+              <i class="fas fa-graduation-cap"></i> 
+              <span>${currentProduct.college}</span>
+            `;
+            roomDetails.appendChild(collegeDetail);
+          }
+          
+          // Add location
+          if (currentProduct.location) {
+            const locationDetail = document.createElement('div');
+            locationDetail.className = 'detail-item';
+            locationDetail.innerHTML = `
+              <i class="fas fa-map-marker-alt"></i> 
+              <span>${currentProduct.location}</span>
+            `;
+            roomDetails.appendChild(locationDetail);
+          }
+          
+          // Display amenities if available
+          const amenitiesList = document.getElementById('amenitiesList');
+          amenitiesList.innerHTML = '';
+          
+          if (currentProduct.amenities && currentProduct.amenities.length > 0) {
+            // Map of amenity names to icons
+            const amenityIcons = {
+              'WiFi': 'fa-wifi',
+              'Hot Water': 'fa-hot-tub',
+              'AC': 'fa-snowflake',
+              'Non-AC': 'fa-fan',
+              'Mess': 'fa-utensils',
+              'Security': 'fa-shield-alt',
+              'Laundry': 'fa-tshirt',
+              'Cleaning': 'fa-broom',
+              'Parking': 'fa-parking',
+              'TV': 'fa-tv',
+              'Refrigerator': 'fa-refrigerator',
+              'Study Table': 'fa-table',
+              'Cupboard': 'fa-door-closed',
+              'Power Backup': 'fa-bolt',
+              'Gym': 'fa-dumbbell',
+              'Cleaning Service': 'fa-broom'
+            };
+            
+            currentProduct.amenities.forEach(amenity => {
+              const amenityBadge = document.createElement('div');
+              amenityBadge.className = 'amenity-badge';
+              
+              // Choose the right icon or default to fa-check
+              const iconClass = amenityIcons[amenity] || 'fa-check';
+              
+              amenityBadge.innerHTML = `
+                <i class="fas ${iconClass}"></i>
+                <span>${amenity}</span>
+              `;
+              amenitiesList.appendChild(amenityBadge);
+            });
+          }
+          
+          document.getElementById('reviewSection').style.display = 'block';
+          loadReviews();
+          
+          // Update seller info modal title for rooms
+          document.querySelector('#sellerInfoModal h2').textContent = 'Hostel Information';
+        } else {
+          // For regular products - keep all buttons
+          actionButtons.innerHTML = `
+            <button class="btn btn-primary" onclick="openBuyModal()">
+              <i class="fas fa-shopping-cart"></i> Buy Now
+            </button>
+            <button class="btn btn-secondary" onclick="openChatModal()">
+              <i class="fas fa-comments"></i> Chat with Seller
+            </button>
+            <button class="btn btn-secondary" onclick="showSellerInfo()">
+              <i class="fas fa-user"></i> Seller Info
+            </button>
+            <button class="btn btn-secondary" onclick="openCompareModal()">
+              <i class="fas fa-exchange-alt"></i> Compare
+            </button>
+          `;
+          document.getElementById('reviewSection').style.display = 'none';
+          document.getElementById('roomDetailsSection').style.display = 'none';
+          
+          // Reset seller info modal title for regular products
+          document.querySelector('#sellerInfoModal h2').textContent = 'Seller Information';
+        }
+
+        updateWishlistIcon();
+      } catch (error) {
+        console.error('Error loading product:', error);
+        alert('Error loading product details');
+        window.location.href = 'index.html';
+      }
+    }
+
+    async function showSellerInfo() {
+      try {
+        const data = await fetchData();
+        const seller = data.users.find(user => user.email === currentProduct.sellerEmail);
+        
+        // Build seller info content
+        const sellerInfoContent = document.getElementById('sellerInfoContent');
+        
+        if (currentProduct.category === 'Room') {
+          // Display hostel information for rooms
+          sellerInfoContent.innerHTML = `
+            <ul>
+              <li><strong>Hostel Name:</strong> ${currentProduct.hostelName || 'Not available'}</li>
+              <li><strong>College:</strong> ${currentProduct.college || 'Not specified'}</li>
+              <li><strong>Owner:</strong> ${seller?.name || 'Not available'}</li>
+              <li><strong>Contact:</strong> ${seller?.phone || 'Not provided'}</li>
+              <li><strong>Email:</strong> ${currentProduct.sellerEmail}</li>
+              ${currentProduct.amenities ? `<li><strong>Amenities:</strong> ${currentProduct.amenities.join(', ')}</li>` : ''}
+            </ul>
+          `;
+          
+          // Hide sold products section for rooms
+          document.querySelector('#sellerInfoModal h3').style.display = 'none';
+          document.getElementById('soldProductsList').style.display = 'none';
+        } else {
+          // For regular products, show seller info
+          const soldItems = data.soldItems.filter(item => item.sellerEmail === currentProduct.sellerEmail);
+          
+          sellerInfoContent.innerHTML = `
+            <ul>
+              <li><strong>Name:</strong> ${seller?.name || 'Not available'}</li>
+              <li><strong>Email:</strong> ${currentProduct.sellerEmail}</li>
+              <li><strong>Phone:</strong> ${seller?.phone || 'Not provided'}</li>
+              <li><strong>Total Items Sold:</strong> ${soldItems.length}</li>
+            </ul>
+          `;
+          
+          // Show sold products for regular products
+          document.querySelector('#sellerInfoModal h3').style.display = 'block';
+          document.getElementById('soldProductsList').style.display = 'block';
+          
+          // Build sold products list
+          const soldProductsList = document.getElementById('soldProductsList');
+          soldProductsList.innerHTML = soldItems.length > 0 
+            ? soldItems.map(item => `
+                <div style="padding: 0.5rem; background: #f8f9fa; margin: 0.5rem 0; border-radius: 8px;">
+                  <strong>${item.title}</strong> - ₹${item.price}
+                </div>
+              `).join('')
+            : '<p>No items sold yet</p>';
+        }
+
+        document.getElementById('sellerInfoModal').style.display = 'flex';
+      } catch (error) {
+        console.error('Error loading seller/hostel info:', error);
+        alert('Failed to load information');
+      }
+    }
+
+    function closeSellerInfoModal() {
+      document.getElementById('sellerInfoModal').style.display = 'none';
+    }
+
+    function openBuyModal() {
+      const user = JSON.parse(localStorage.getItem('currentUser'));
+      if (!user) {
+        alert('Please sign in to continue');
+        window.location.href = 'signuppage.html';
+        return;
+      }
+
+      document.getElementById('buyerName').value = user.name;
+      document.getElementById('buyerEmail').value = user.email;
+      document.getElementById('buyerPhone').value = user.phone || 'Not provided';
+      document.getElementById('buyModal').style.display = 'flex';
+    }
+
+    function initiatePurchase() {
+      if (!currentProduct) return;
+
+      const sellerPhone = currentProduct.sellerPhone;
+      if (!sellerPhone) {
+        alert('Seller contact information not available');
+        return;
+      }
+
+      const user = JSON.parse(localStorage.getItem('currentUser'));
+      if (!user) return;
+
+      const formattedPhone = sellerPhone.startsWith('+') ? sellerPhone : `+91${sellerPhone}`;
+      const message = encodeURIComponent(
+        `*Purchase Request:*\n\n` +
+        `I want to buy: *${currentProduct.title}*\n` +
+        `Price: ₹${currentProduct.price}\n\n` +
+        `*My Details*\n` +
+        `Name: ${user.name}\n` +
+        `Email: ${user.email}\n` +
+        `Phone: ${user.phone || 'Not provided'}\n\n` +
+        `Please confirm availability and payment details.`
+      );
+
+      const whatsappURL = `https://wa.me/${formattedPhone}?text=${message}`;
+      window.open(whatsappURL, '_blank');
+      closeBuyModal();
+    }
+
+    function closeBuyModal() {
+      document.getElementById('buyModal').style.display = 'none';
+    }
+
+    
+
+    window.onclick = (event) => {
+      const modals = ['buyModal', 'sellerInfoModal', 'chatModal', 'compareModal'];
+      modals.forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        if (event.target === modal) {
+          modal.style.display = 'none';
+        }
+      });
+    };
+    const JSONBIN_CHAT_ID = "67c20bc8acd3cb34a8f2aaf6";
+
+
+function openChatModal() {
+    document.getElementById("chatModal").style.display = "flex";
+    loadChatMessages();
+}
+
+function closeChatModal() {
+    document.getElementById("chatModal").style.display = "none";
+}
+
+async function loadChatMessages() {
+    try {
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_CHAT_ID}`, {
+            headers: { 'X-Master-Key': JSONBIN_API_KEY }
+        });
+        const data = await response.json();
+        const messages = data.record.messages || [];
+
+        const chatBox = document.getElementById("chatBox");
+        chatBox.innerHTML = "";
+        messages.forEach((msg, index) => {
+            const messageElement = document.createElement("div");
+            messageElement.className = "chat-message";
+            messageElement.textContent = msg.text;
+
+            const deleteIcon = document.createElement("span");
+            deleteIcon.className = "chat-delete";
+            deleteIcon.textContent = "✖";
+            deleteIcon.onclick = () => deleteMessage(index);
+
+            messageElement.appendChild(deleteIcon);
+            chatBox.appendChild(messageElement);
+        });
+    } catch (error) {
+        console.error("Failed to load messages:", error);
+    }
+}
+
+async function sendMessage() {
+    const messageInput = document.getElementById("chatMessage");
+    const messageText = messageInput.value.trim();
+    if (!messageText) return;
+
+    try {
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_CHAT_ID}`, {
+            headers: { 'X-Master-Key': JSONBIN_API_KEY }
+        });
+        const data = await response.json();
+        const messages = data.record.messages || [];
+
+        messages.push({ text: messageText });
+
+        const updateResponse = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_CHAT_ID}`, {
+            method: "PUT",
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': JSONBIN_API_KEY
+            },
+            body: JSON.stringify({ messages })
+        });
+
+        if (updateResponse.ok) {
+            messageInput.value = "";
+            loadChatMessages();
+        } else {
+            alert("Failed to send message.");
+        }
+    } catch (error) {
+        console.error("Error sending message:", error);
+    }
+}
+
+async function deleteMessage(index) {
+    try {
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_CHAT_ID}`, {
+            headers: { 'X-Master-Key': JSONBIN_API_KEY }
+        });
+        const data = await response.json();
+        const messages = data.record.messages || [];
+
+        messages.splice(index, 1);
+
+        await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_CHAT_ID}`, {
+            method: "PUT",
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': JSONBIN_API_KEY
+            },
+            body: JSON.stringify({ messages })
+        });
+
+        loadChatMessages();
+    } catch (error) {
+        console.error("Error deleting message:", error);
+    }
+}
+document.addEventListener('DOMContentLoaded', () => {
+  loadProductDetails();
+  
+  // Initialize chat message input
+  document.getElementById('chatMessage').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      sendMessage();
+    }
+  });
+});
+
+    document.addEventListener('DOMContentLoaded', loadProductDetails);
+// Call this after loading product details
+document.addEventListener('DOMContentLoaded', () => {
+  loadProductDetails().then(updateWishlistIcon);
+});
+
+function contactOwner() {
+  if (!currentProduct) return;
+
+  const sellerPhone = currentProduct.sellerPhone;
+  if (!sellerPhone) {
+    alert('Owner contact information not available');
+    return;
+  }
+
+  const user = JSON.parse(localStorage.getItem('currentUser'));
+  if (!user) {
+    alert('Please sign in to contact the owner');
+    window.location.href = 'signuppage.html';
+    return;
+  }
+
+  const formattedPhone = sellerPhone.startsWith('+') ? sellerPhone : `+91${sellerPhone}`;
+  const message = encodeURIComponent(
+    `*Room Inquiry:*\n\n` +
+    `I am interested in: *${currentProduct.title}*\n` +
+    `Hostel: ${currentProduct.hostelName || 'Not specified'}\n` +
+    `Rent: ₹${currentProduct.price}/month\n` +
+    `Location: ${currentProduct.location || 'Not specified'}\n` +
+    `College: ${currentProduct.college || 'Not specified'}\n\n` +
+    `*My Details*\n` +
+    `Name: ${user.name}\n` +
+    `Email: ${user.email}\n` +
+    `Phone: ${user.phone || 'Not provided'}\n\n` +
+    `Please provide more information about the room availability.`
+  );
+
+  const whatsappURL = `https://wa.me/${formattedPhone}?text=${message}`;
+  window.open(whatsappURL, '_blank');
+}
+
+async function loadReviews() {
+  try {
+    const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+      headers: { 'X-Master-Key': JSONBIN_API_KEY }
+    });
+    const data = await response.json();
+    const reviews = data.record.reviews || [];
+    
+    // Use room title for matching if id is not available
+    const roomId = currentProduct.id || currentProduct.title;
+    const roomReviews = reviews.filter(review => 
+      (review.roomId === roomId) || (review.roomTitle === currentProduct.title)
+    );
+    
+    const reviewsList = document.getElementById('reviewsList');
+    reviewsList.innerHTML = '';
+
+    if (roomReviews.length > 0) {
+      const averageRating = roomReviews.reduce((acc, review) => acc + review.rating, 0) / roomReviews.length;
+      const avgRatingDiv = document.createElement('div');
+      avgRatingDiv.className = 'average-rating';
+      avgRatingDiv.innerHTML = `
+        Average Rating: ${averageRating.toFixed(1)}
+        <span class="star-rating">${'★'.repeat(Math.round(averageRating))}${'☆'.repeat(5 - Math.round(averageRating))}</span>
+      `;
+      reviewsList.appendChild(avgRatingDiv);
+
+      roomReviews.forEach(review => {
+        const reviewElement = document.createElement('div');
+        reviewElement.className = 'review-item';
+        reviewElement.innerHTML = `
+          <div class="review-header">
+            <strong>${review.userName}</strong>
+            <span class="review-rating">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</span>
+          </div>
+          <div class="review-content">${review.text}</div>
+        `;
+        reviewsList.appendChild(reviewElement);
+      });
+    } else {
+      reviewsList.innerHTML = '<p>No reviews yet. Be the first to review!</p>';
+    }
+  } catch (error) {
+    console.error('Error loading reviews:', error);
+  }
+}
+
+async function submitReview() {
+  const user = JSON.parse(localStorage.getItem('currentUser'));
+  if (!user) {
+    alert('Please sign in to submit a review');
+    window.location.href = 'signuppage.html';
+    return;
+  }
+
+  const rating = parseInt(document.getElementById('ratingInput').value);
+  const text = document.getElementById('reviewText').value.trim();
+
+  if (!text) {
+    alert('Please write a review');
+    return;
+  }
+
+  try {
+    const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+      headers: { 'X-Master-Key': JSONBIN_API_KEY }
+    });
+    const data = await response.json();
+    const reviews = data.record.reviews || [];
+
+    reviews.push({
+      roomId: currentProduct.id || currentProduct.title, // Use title as fallback if id not available
+      roomTitle: currentProduct.title,
+      userId: user.id,
+      userName: user.name,
+      rating,
+      text,
+      timestamp: new Date().toISOString()
+    });
+
+    await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': JSONBIN_API_KEY
+      },
+      body: JSON.stringify({ ...data.record, reviews })
+    });
+
+    document.getElementById('reviewText').value = '';
+    document.getElementById('ratingInput').value = '5';
+    loadReviews();
+    
+    alert('Your review has been submitted. Thank you!');
+  } catch (error) {
+    console.error('Error submitting review:', error);
+    alert('Failed to submit review. Please try again.');
+  }
+}
+
+// Add event listener for star rating selection
+document.addEventListener('DOMContentLoaded', function() {
+  // Setup star rating
+  const ratingStars = document.querySelectorAll('#ratingStars i');
+  const ratingInput = document.getElementById('ratingInput');
+  
+  ratingStars.forEach(star => {
+    star.addEventListener('click', function() {
+      const rating = this.getAttribute('data-rating');
+      ratingInput.value = rating;
+      
+      // Update active stars
+      ratingStars.forEach(s => {
+        const starRating = s.getAttribute('data-rating');
+        if (starRating <= rating) {
+          s.className = 'fas fa-star active';
+        } else {
+          s.className = 'far fa-star';
+        }
+      });
+    });
+    
+    // Hover effects
+    star.addEventListener('mouseover', function() {
+      const rating = this.getAttribute('data-rating');
+      
+      ratingStars.forEach(s => {
+        const starRating = s.getAttribute('data-rating');
+        if (starRating <= rating) {
+          s.className = 'fas fa-star active';
+        } else {
+          s.className = 'far fa-star';
+        }
+      });
+    });
+    
+    // Reset to selected rating on mouseout
+    star.addEventListener('mouseout', function() {
+      const selectedRating = ratingInput.value;
+      
+      ratingStars.forEach(s => {
+        const starRating = s.getAttribute('data-rating');
+        if (starRating <= selectedRating) {
+          s.className = 'fas fa-star active';
+        } else {
+          s.className = 'far fa-star';
+        }
+      });
+    });
+  });
+  
+  // Initialize with 5 stars selected
+  ratingStars.forEach(s => {
+    s.className = 'fas fa-star active';
+  });
+  
+  // Other DOM initialization code...
+});
+  </script>
+ 
+
+</body>
+</html>

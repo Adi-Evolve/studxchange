@@ -1,0 +1,102 @@
+
+  /* Existing styles ... */
+
+  /* Add styles from product_interface.html */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px;
+  }
+
+  .close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+  }
+
+  .close:hover,
+  .close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  /* Add the relevant styles from product_interface.html */
+  .image-section img {
+    width: 100%;
+    height: auto;
+  }
+
+  .image-thumbnails {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+  .thumbnail {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    cursor: pointer;
+  }
+
+  .info-section h1 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+  }
+
+  .info-section .price {
+    color: #003366;
+    font-size: 1.1em;
+    margin: 10px 0;
+  }
+
+  .info-section .availability,
+  .info-section .product-condition,
+  .info-section .product-description {
+    margin-bottom: 10px;
+  }
+
+  .info-section .additional-info ul,
+  .offers ul,
+  .payment-options ul {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  .info-section .additional-info ul li,
+  .offers ul li,
+  .payment-options ul li {
+    margin-bottom: 5px;
+  }
+
+  .action-buttons button {
+    background-color: #124559;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 5px;
+    cursor: pointer;
+  }
+
+  .action-buttons button:hover {
+    background-color: #0d3a46;
+  }
+

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - StudXchange</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" />
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="js/db-config.js"></script>
+  
+  <style>
+    /* Basic Reset and Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      color: #333;
+    }
+    header {
+      background-color: #124559;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .login-container {
+      max-width: 400px;
+      margin: 20px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .login-container h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #2a3d56;
+    }
+    .login-form label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: bold;
+      color: #2a3d56;
+    }
+    .login-form input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    .login-form button {
+      width: 100%;
+      padding: 10px;
+      background-color: #2a3d56;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .login-form button:hover {
+      background-color: #4d6a88;
+    }
+    .google-signin-container {
+      margin: 20px 0;
+      text-align: center;
+    }
+    .divider {
+      margin: 20px 0;
+      display: flex;
+      align-items: center;
+      text-align: center;
+      color: #666;
+    }
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid #ddd;
+    }
+    .divider-text {
+      padding: 0 10px;
+    }
+    .error {
+      color: red;
+      font-size: 0.9em;
+      margin-top: 10px;
+      display: none;
+    }
+    .signup-link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.9rem;
+    }
+    .signup-link a {
+      color: #1a75ff;
+      text-decoration: none;
+    }
+    .signup-link a:hover {
+      text-decoration: underline;
+    }
+    .loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    .loading::after {
+      content: "";
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1.2rem;
+      height: 1.2rem;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>StudXchange</h1>
+  </header>
+
+  <div class="login-container">
+    <h1>Login</h1>
+    
+    <!-- Google Sign-In -->
+    <div class="google-signin-container">
+      <div id="g_id_signin" data-type="standard" data-theme="outline" data-size="large"></div>
+    </div>
+
+    <div class="divider">
+      <span class="divider-text">or</span>
+    </div>
+
+    <!-- Login Form -->
+    <form class="login-form" id="loginForm">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" placeholder="Enter your email" required>
+      
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" placeholder="Enter your password" required>
+      
+      <button type="submit" id="loginBtn">Login</button>
+      
+      <div class="error" id="formError"></div>
+    </form>
+    
+    <div class="signup-link">
+      <p>Don't have an account? <a href="Signuppage.html">Sign up</a></p>
+    </div>
+  </div>
+
+  <script>
+    // Google Sign-In Initialization
+    function initGoogleSignIn() {
+      google.accounts.id.initialize({
+        client_id: "26642122071-ekdopa6ljd6orkti9j8jadaf30bqmnv2.apps.googleusercontent.com",
+        callback: handleGoogleResponse
+      });
+      google.accounts.id.renderButton(
+        document.getElementById('g_id_signin'),
+        { theme: "outline", size: "large", width: 300 }
+      );
+    }
+
+    async function handleGoogleResponse(response) {
+      try {
+        const userData = parseJwt(response.credential);
+        
+        // Call API to handle Google auth
+        const result = await fetch(API_ENDPOINTS.GOOGLE_AUTH, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: userData.name,
+            email: userData.email
+          })
+        });
+        
+        if (!result.ok) {
+          const errorData = await result.json();
+          throw new Error(errorData.message || 'Google authentication failed');
+        }
+        
+        const user = await result.json();
+        
+        // Save user data to localStorage
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        
+        // Redirect to profile page
+        window.location.href = 'PROFILE_FINAL.html';
+      } catch (error) {
+        showError(error.message || 'Google sign-in failed');
+      }
+    }
+
+    // Parse JWT token
+    function parseJwt(token) {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      return JSON.parse(atob(base64));
+    }
+
+    // Show error message
+    function showError(message) {
+      const errorDiv = document.getElementById('formError');
+      errorDiv.textContent = message;
+      errorDiv.style.display = 'block';
+      setTimeout(() => { errorDiv.style.display = 'none'; }, 5000);
+    }
+
+    // Handle login form submission
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const loginBtn = document.getElementById('loginBtn');
+      loginBtn.classList.add('loading');
+      
+      try {
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        
+        const response = await fetch(API_ENDPOINTS.LOGIN_USER, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, password })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Login failed');
+        }
+        
+        const user = await response.json();
+        
+        // Save user data to localStorage
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        
+        // Redirect to profile page
+        window.location.href = 'PROFILE_FINAL.html';
+      } catch (error) {
+        showError(error.message || 'Login failed. Please check your credentials.');
+      } finally {
+        loginBtn.classList.remove('loading');
+      }
+    });
+
+    // Initialize Google Sign-In on load
+    window.onload = initGoogleSignIn;
+  </script>
+</body>
+</html> 

@@ -1,0 +1,322 @@
+*{
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    border: border-box;
+    
+}
+
+
+.navbar{
+    background-color: #124559;
+    justify-content: space-evenly;
+    height: 70px;
+    display: flex;
+    color: white;
+    align-items: center;
+}
+
+.navlogo {
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    height: 60px;
+    width: 100px;
+}
+
+
+.border {
+    border: 1.5px solid  transparent;
+}
+
+.border:hover{
+    border: 1.5px solid white;
+}
+
+
+.firstadd {
+    color: #cccccc;
+    font-size: 0.8rem;
+    margin-left: 15px;
+}
+.add-icon {
+    display: flex;
+    align-items: center;
+    
+}
+.secadd{
+    font-size: 1rem;
+    margin-left: 3px ;
+}
+.searchbar {
+    background-color: aquamarine;
+    justify-content: space-evenly;
+    display: flex;
+    width: 620px;
+    height: 40pxx;
+    border-radius: 4px;
+}
+.options{
+    background-color: #f3f3f3;
+    width: 50px;
+    text-align: center;
+    border-top-left-radius: 4px;    
+    border-bottom-left-radius: 4px;
+    border: none;
+}
+
+
+
+.searchbarr{
+    width: 100%;
+    font-size: 1rem;
+}
+.search-icon{
+width: 45px;
+display: flex;
+justify-content: center;
+align-items: center;
+font-size: 1.2rem;
+background-color: rgb(255, 170, 0);
+border-top-right-radius: 4px;
+border-bottom-right-radius: 4px ;
+}
+
+.signin{
+    background-color: #124559;
+    color: #000000;
+}
+
+.signin button {
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+
+/**hero section**/
+.hero-section{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-evenly;
+    background-color: #aec3b0 ;
+    width: 100%;
+}
+.box {
+/**border: 2px solid #000000; **/
+margin-top: 15px;
+margin-bottom: 15px;
+ height: 150px;
+ width: 23%;
+background-color:  white;
+padding: 20px 0px 15px ;
+
+}
+.box1-img{
+    height: 100px ;
+    background-size: cover;
+    margin-left: 1rem;
+    margin-right: 1rem ;
+    
+
+}
+.box-content{
+   margin-right: 1rem;
+    margin-left: 1rem;
+    
+}
+.box-content p{
+    font-size: 0.6rem;
+    color: rgb(47, 109, 190);
+}
+  .Footpanel1{
+    background-color: #37475a;
+    color: white;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.5rem;
+  }
+  .Footpanel2{
+    background-color: #c7f9cc;
+    height: 100%;
+    color: #000000;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+  }
+   
+footer{
+margin-top: 15px;
+
+  }
+
+  /* .outerbox{
+    height: 300px;
+    width: 300px;
+    
+    border: 2px solid black;
+    align-items: center;
+ justify-content: center;
+    margin-top: 5rem;
+   margin-left: auto;
+   margin-right: auto; 
+
+  } */
+
+  input[type="email"], input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    padding-right: 1px;
+}
+
+input[type="submit"] {
+    width: 100%;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+input[type="submit"]:hover {
+    background-color: #45a049;
+}
+
+.forgot-password {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.forgot-password a {
+    font-size: 14px;
+    color: #4CAF50;
+    text-decoration: none;
+}
+
+.forgot-password a:hover {
+    text-decoration: underline;
+}
+
+.signup-link {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.signup-link a {
+    font-size: 14px;
+    color: #333;
+    text-decoration: none;
+}
+
+.signup-link a:hover {
+    text-decoration: underline;
+}
+   .login-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 50px;
+        }
+
+
+
+
+
+
+
+        /* * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        
+        .account-container {
+            max-width: 1000px;
+            margin: auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .account-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .account-header h1 {
+            font-size: 24px;
+        }
+        
+        .account-actions button {
+            padding: 10px 20px;
+            background-color: #0073e6;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .account-actions button:hover {
+            background-color: #005bb5;
+        }
+        
+        .account-details {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        
+        .profile-info, .order-history, .settings {
+            background-color: #fafafa;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .profile-info h2, .order-history h2, .settings h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        
+        ul {
+            list-style-type: none;
+        }
+        
+        button {
+            padding: 12px 20px;
+            background-color: #0073e6;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background-color: #005bb5;
+        }
+         */
