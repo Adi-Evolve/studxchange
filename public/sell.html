@@ -642,905 +642,913 @@
   
   <script src="js/navbar.js"></script>
   <script>
-    // Configuration
-    let userCoordinates = null;
-    let userLocationName = '';
-    
-    // ImgBB Configuration
-    const IMGBB_API_KEY = '272785e1c6e6221d927bad99483ff9ed';
-    const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload';
-
-    // Toggle between regular and room forms based on category selection
-    document.getElementById('category').addEventListener('change', function() {
-      const isRoom = this.value === 'Room';
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check if user is logged in
+      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+      if (!currentUser) {
+        alert('Please log in to sell or donate items.');
+        window.location.href = 'login.html';
+        return;
+      }
       
-    // Toggle display of form sections
-  document.getElementById('regularForm').style.display = isRoom ? 'none' : 'block';
-  document.getElementById('regularFormCont').style.display = isRoom ? 'none' : 'block';
-  document.getElementById('roomForm').style.display = isRoom ? 'block' : 'none';
-  
+      // Initialize the form
+      initForm();
+    });
+    
+    function initForm() {
+      // Configuration
+      let userCoordinates = null;
+      let userLocationName = '';
+      let uploadedImages = [];
+      let imageUrls = [];
+      
+      // ImgBB Configuration
+      const IMGBB_API_KEY = '272785e1c6e6221d927bad99483ff9ed';
+      const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload';
+
+      // Toggle between regular and room forms based on category selection
+      document.getElementById('category').addEventListener('change', function() {
+        const isRoom = this.value === 'Room';
+        
+      // Toggle display of form sections
+    document.getElementById('regularForm').style.display = isRoom ? 'none' : 'block';
+    document.getElementById('regularFormCont').style.display = isRoom ? 'none' : 'block';
+    document.getElementById('roomForm').style.display = isRoom ? 'block' : 'none';
+    
       // Toggle required attributes for regular product fields
       const regularFields = ['title', 'price', 'condition', 'description'];
-  regularFields.forEach(field => {
-    const element = document.getElementById(field);
-    if (element) {
-      if (isRoom) {
-        element.removeAttribute('required');
-      } else {
-        element.setAttribute('required', 'required');
+    regularFields.forEach(field => {
+      const element = document.getElementById(field);
+      if (element) {
+        if (isRoom) {
+          element.removeAttribute('required');
+        } else {
+          element.setAttribute('required', 'required');
+        }
       }
-    }
-  });
+    });
       
       // Toggle required attributes for room fields
       const roomFields = ['roomPrice'];
-  roomFields.forEach(field => {
-    const element = document.getElementById(field);
-    if (element) {
-      if (isRoom) {
-        element.setAttribute('required', '');
-      } else {
-        element.removeAttribute('required');
-        }
-        }
-      });
-      
+    roomFields.forEach(field => {
+      const element = document.getElementById(field);
+      if (element) {
+        if (isRoom) {
+          element.setAttribute('required', '');
+        } else {
+          element.removeAttribute('required');
+          }
+          }
+        });
+        
       // Toggle required attribute for image upload
       const regularImageUpload = document.getElementById('imageUpload');
-  const roomImageUpload = document.getElementById('roomImageUpload');
-  
-  if (isRoom) {
-    regularImageUpload.removeAttribute('required');
-    roomImageUpload.setAttribute('required', 'required');
-  } else {
-    regularImageUpload.setAttribute('required', 'required');
-    roomImageUpload.removeAttribute('required');
-  }
-    });
+    const roomImageUpload = document.getElementById('roomImageUpload');
     
-    // Toggle mess price input based on mess checkbox
-    document.getElementById('mess').addEventListener('change', function() {
-      document.getElementById('messSection').style.display = this.checked ? 'block' : 'none';
-    });
-    
-    // Location handling for regular products
-async function getAddressFromCoords(lat, lon) {
-    try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&email=your@email.com`
-        );
-        const data = await response.json();
-        return data.display_name || 'Location obtained';
-    } catch (error) {
-        console.error('Reverse geocoding error:', error);
-        return 'Approximate location';
+    if (isRoom) {
+      regularImageUpload.removeAttribute('required');
+      roomImageUpload.setAttribute('required', 'required');
+    } else {
+      regularImageUpload.setAttribute('required', 'required');
+      roomImageUpload.removeAttribute('required');
     }
-}
-
-document.getElementById('getLocationBtn').addEventListener('click', async () => {
-    try {
-        document.getElementById('locationStatus').textContent = 'Getting location...';
-        const position = await new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject);
-        });
-        
-        userCoordinates = {
-            lat: position.coords.latitude,
-            lon: position.coords.longitude
-        };
-        
-        userLocationName = await getAddressFromCoords(userCoordinates.lat, userCoordinates.lon);
-        
-        // Update the location status with an icon and location name
-        const locationStatus = document.getElementById('locationStatus');
-        locationStatus.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${userLocationName}`;
-        locationStatus.style.color = '#28a745';
-    } catch (error) {
-        console.error('Location error:', error);
-        document.getElementById('locationStatus').textContent = 'Failed to get location';
-        document.getElementById('locationStatus').style.color = '#dc3545';
-      }
-    });
-    
-    // Current location for room
-    document.getElementById('currentLocationBtn').addEventListener('click', async () => {
-      try {
-        document.getElementById('roomLocationStatus').textContent = 'Getting location...';
-        const position = await new Promise((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject);
-        });
-        
-        userCoordinates = {
-          lat: position.coords.latitude,
-          lon: position.coords.longitude
-        };
-        
-        userLocationName = await getAddressFromCoords(userCoordinates.lat, userCoordinates.lon);
-        
-        // Update the location status with an icon and location name
-        const locationStatus = document.getElementById('roomLocationStatus');
-        locationStatus.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${userLocationName}`;
-        locationStatus.style.color = '#28a745';
+      });
+      
+      // Toggle mess price input based on mess checkbox
+      document.getElementById('mess').addEventListener('change', function() {
+        document.getElementById('messSection').style.display = this.checked ? 'block' : 'none';
+      });
+      
+      // Location handling for regular products
+    async function getAddressFromCoords(lat, lon) {
+        try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&email=your@email.com`
+            );
+            const data = await response.json();
+            return data.display_name || 'Location obtained';
         } catch (error) {
-        console.error('Location error:', error);
-        document.getElementById('roomLocationStatus').textContent = 'Failed to get location';
-        document.getElementById('roomLocationStatus').style.color = '#dc3545';
-      }
-    });
-    
-    // Google Maps location for room (placeholder - would need Google Maps API integration)
-    document.getElementById('mapLocationBtn').addEventListener('click', openMapModal);
-    
-    // Image upload handling for regular products
-    async function uploadImages(isRoom = false) {
-      const fileInput = isRoom ? document.getElementById('roomImageUpload') : document.getElementById('imageUpload');
-    const files = Array.from(fileInput.files);
-    
-    if (files.length === 0) throw new Error('No images selected');
-      if (!isRoom && files.length > 5) throw new Error('Maximum 5 images allowed');
-      if (isRoom && files.length > 10) throw new Error('Maximum 10 images allowed');
-
-      const statusElement = isRoom ? document.getElementById('roomImageUploadStatus') : document.getElementById('imageUploadStatus');
-      const progressElement = isRoom ? document.getElementById('roomUploadProgress') : document.getElementById('uploadProgress');
-    const uploadedUrls = [];
-
-      // Check file size limit for room images (50MB total)
-      if (isRoom) {
-        const totalSize = files.reduce((sum, file) => sum + file.size, 0);
-        const MAX_SIZE = 50 * 1024 * 1024; // 50MB
-        if (totalSize > MAX_SIZE) {
-          throw new Error('Total file size exceeds 50MB limit');
+            console.error('Reverse geocoding error:', error);
+            return 'Approximate location';
         }
-      }
+    }
 
-    try {
-        statusElement.style.display = 'flex';
-        
-        for (let i = 0; i < files.length; i++) {
-            progressElement.textContent = `Uploading images (${i+1}/${files.length})...`;
+    document.getElementById('getLocationBtn').addEventListener('click', async () => {
+        try {
+            document.getElementById('locationStatus').textContent = 'Getting location...';
+            const position = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject);
+            });
             
-            const formData = new FormData();
-            formData.append('image', files[i]);
+            userCoordinates = {
+                lat: position.coords.latitude,
+                lon: position.coords.longitude
+            };
+            
+            userLocationName = await getAddressFromCoords(userCoordinates.lat, userCoordinates.lon);
+            
+            // Update the location status with an icon and location name
+            const locationStatus = document.getElementById('locationStatus');
+            locationStatus.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${userLocationName}`;
+            locationStatus.style.color = '#28a745';
+        } catch (error) {
+            console.error('Location error:', error);
+            document.getElementById('locationStatus').textContent = 'Failed to get location';
+            document.getElementById('locationStatus').style.color = '#dc3545';
+          }
+        });
+        
+        // Current location for room
+        document.getElementById('currentLocationBtn').addEventListener('click', async () => {
+          try {
+            document.getElementById('roomLocationStatus').textContent = 'Getting location...';
+            const position = await new Promise((resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject);
+            });
+            
+            userCoordinates = {
+              lat: position.coords.latitude,
+              lon: position.coords.longitude
+            };
+            
+            userLocationName = await getAddressFromCoords(userCoordinates.lat, userCoordinates.lon);
+            
+            // Update the location status with an icon and location name
+            const locationStatus = document.getElementById('roomLocationStatus');
+            locationStatus.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${userLocationName}`;
+            locationStatus.style.color = '#28a745';
+            } catch (error) {
+            console.error('Location error:', error);
+            document.getElementById('roomLocationStatus').textContent = 'Failed to get location';
+            document.getElementById('roomLocationStatus').style.color = '#dc3545';
+          }
+        });
+        
+        // Google Maps location for room (placeholder - would need Google Maps API integration)
+        document.getElementById('mapLocationBtn').addEventListener('click', openMapModal);
+        
+        // Image upload handling for regular products
+        async function uploadImages(isRoom = false) {
+          const fileInput = isRoom ? document.getElementById('roomImageUpload') : document.getElementById('imageUpload');
+        const files = Array.from(fileInput.files);
+        
+        if (files.length === 0) throw new Error('No images selected');
+          if (!isRoom && files.length > 5) throw new Error('Maximum 5 images allowed');
+          if (isRoom && files.length > 10) throw new Error('Maximum 10 images allowed');
 
+        const statusElement = isRoom ? document.getElementById('roomImageUploadStatus') : document.getElementById('imageUploadStatus');
+        const progressElement = isRoom ? document.getElementById('roomUploadProgress') : document.getElementById('uploadProgress');
+        const uploadedUrls = [];
+
+        // Check file size limit for room images (50MB total)
+        if (isRoom) {
+          const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+          const MAX_SIZE = 50 * 1024 * 1024; // 50MB
+          if (totalSize > MAX_SIZE) {
+            throw new Error('Total file size exceeds 50MB limit');
+          }
+        }
+
+        try {
+            statusElement.style.display = 'flex';
+            
+            for (let i = 0; i < files.length; i++) {
+                progressElement.textContent = `Uploading images (${i+1}/${files.length})...`;
+                
+                const formData = new FormData();
+                formData.append('image', files[i]);
+
+                const response = await fetch(`${IMGBB_UPLOAD_URL}?key=${IMGBB_API_KEY}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error.message || 'Image upload failed');
+                uploadedUrls.push(data.data.url);
+            }
+
+            return uploadedUrls;
+        } catch (error) {
+            console.error("Image upload error:", error);
+            throw new Error('Image upload failed: ' + error.message);
+        } finally {
+            statusElement.style.display = 'none';
+        }
+        }
+        
+        // Single image upload function
+        async function uploadImage(file) {
+          try {
+            const formData = new FormData();
+            formData.append('image', file);
+            
             const response = await fetch(`${IMGBB_UPLOAD_URL}?key=${IMGBB_API_KEY}`, {
-                method: 'POST',
-                body: formData
+              method: 'POST',
+              body: formData
             });
             
             const data = await response.json();
             if (!data.success) throw new Error(data.error.message || 'Image upload failed');
-            uploadedUrls.push(data.data.url);
-        }
-
-        return uploadedUrls;
-    } catch (error) {
-        console.error("Image upload error:", error);
-        throw new Error('Image upload failed: ' + error.message);
-    } finally {
-        statusElement.style.display = 'none';
-    }
-    }
-    
-    // Single image upload function
-    async function uploadImage(file) {
-      try {
-        const formData = new FormData();
-        formData.append('image', file);
-        
-        const response = await fetch(`${IMGBB_UPLOAD_URL}?key=${IMGBB_API_KEY}`, {
-          method: 'POST',
-          body: formData
-        });
-        
-        const data = await response.json();
-        if (!data.success) throw new Error(data.error.message || 'Image upload failed');
-        return data.data.url;
-      } catch (error) {
-        console.error("Image upload error:", error);
-        throw new Error('Image upload failed: ' + error.message);
-      }
-    }
-    
-    // Regular product image preview
-document.getElementById('imageUpload').addEventListener('change', function(e) {
-    const previewContainer = document.getElementById('imagePreviews');
-    previewContainer.innerHTML = '';
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    const invalidFiles = Array.from(this.files).filter(file => 
-        !allowedTypes.includes(file.type)
-    );
-      
-    if (invalidFiles.length > 0) {
-        alert('Only JPG, PNG, and WEBP images are allowed');
-        this.value = '';
-        return;
-    }
-      
-    if (this.files.length > 5) {
-        alert('Maximum 5 images allowed');
-        this.value = '';
-        return;
-    }
-
-    Array.from(this.files).forEach((file, index) => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const preview = document.createElement('div');
-            preview.className = 'image-preview';
-            preview.innerHTML = `
-                <img src="${e.target.result}" alt="Preview ${index + 1}">
-            <div class="remove-image" onclick="removeImage(${index}, false)">×</div>
-            `;
-            previewContainer.appendChild(preview);
-        }
-        reader.readAsDataURL(file);
-    });
-});
-    
-    // Room image preview
-    document.getElementById('roomImageUpload').addEventListener('change', function(e) {
-      const previewContainer = document.getElementById('roomImagePreviews');
-      previewContainer.innerHTML = '';
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-      const invalidFiles = Array.from(this.files).filter(file => 
-        !allowedTypes.includes(file.type)
-      );
-      
-      if (invalidFiles.length > 0) {
-        alert('Only JPG, PNG, and WEBP images are allowed');
-        this.value = '';
-        return;
-      }
-      
-      if (this.files.length > 10) {
-        alert('Maximum 10 images allowed');
-        this.value = '';
-        return;
-      }
-      
-      // Check total size
-      const totalSize = Array.from(this.files).reduce((sum, file) => sum + file.size, 0);
-      const MAX_SIZE = 50 * 1024 * 1024; // 50MB
-      if (totalSize > MAX_SIZE) {
-        alert('Total file size exceeds 50MB limit');
-        this.value = '';
-        return;
-      }
-
-      Array.from(this.files).forEach((file, index) => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const preview = document.createElement('div');
-          preview.className = 'image-preview';
-          preview.innerHTML = `
-            <img src="${e.target.result}" alt="Preview ${index + 1}">
-            <div class="remove-image" onclick="removeImage(${index}, true)">×</div>
-          `;
-          previewContainer.appendChild(preview);
-        }
-        reader.readAsDataURL(file);
-      });
-    });
-    
-    // Remove image function
-    function removeImage(index, isRoom) {
-      try {
-        const fileInputId = isRoom ? 'roomImageUpload' : 'imageUpload';
-        const files = Array.from(document.getElementById(fileInputId).files);
-        files.splice(index, 1);
-        
-        // Check if DataTransfer API is available
-        if (typeof DataTransfer === 'undefined') {
-          console.error("DataTransfer API not available");
-          alert("Your browser doesn't support image removal. Please try uploading all images at once.");
-          return;
+            return data.data.url;
+          } catch (error) {
+            console.error("Image upload error:", error);
+            throw new Error('Image upload failed: ' + error.message);
+          }
         }
         
-        // Create new DataTransfer object and update files
-        const newFiles = new DataTransfer();
-        files.forEach(file => newFiles.items.add(file));
-        document.getElementById(fileInputId).files = newFiles.files;
-        
-        // Trigger change event to update previews
-        document.getElementById(fileInputId).dispatchEvent(new Event('change'));
-      } catch (error) {
-        console.error("Error removing image:", error);
-        alert("Failed to remove image. Please try uploading all images at once.");
-      }
-    }
-
-    // Form submission
-    document.getElementById('sellForm').addEventListener('submit', async function(event) {
-      event.preventDefault();
-      console.log("Form submission started");
-
-      try {
-        // Check if API endpoints are defined
-        if (typeof API_ENDPOINTS === 'undefined' || !API_ENDPOINTS.ADD_PRODUCT || !API_ENDPOINTS.ADD_ROOM) {
-          console.error("API endpoints not defined");
-          alert("Error: API configuration not loaded. Please refresh the page and try again.");
-          return;
-        }
-        
-        // Check if user has coordinates
-        if (!userCoordinates) {
-          alert("Please provide your location to continue.");
-          console.log("Location not provided");
-          return;
-        }
-        
-        // Check if user has phone number
-        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-        if (!currentUser || !currentUser.phone) {
-          // Show error modal
-          document.getElementById('phoneErrorModal').style.display = 'block';
-          console.log("Phone number not provided");
-          return;
-        }
-        
-        const category = document.getElementById('category').value;
-        console.log("Form type:", category);
-        
-        // Get common fields
-        const college = document.getElementById('college').value;
-        
-        // Check if it's a room listing
-        if (category === 'Room') {
-          console.log("Processing room listing");
-          // Validate room fields
-          const hostelName = document.getElementById('hostelName').value;
-          if (!hostelName) {
-            alert("Please enter a hostel/PG name");
+        // Regular product image preview
+    document.getElementById('imageUpload').addEventListener('change', function(e) {
+        const previewContainer = document.getElementById('imagePreviews');
+        previewContainer.innerHTML = '';
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        const invalidFiles = Array.from(this.files).filter(file => 
+            !allowedTypes.includes(file.type)
+        );
+          
+        if (invalidFiles.length > 0) {
+            alert('Only JPG, PNG, and WEBP images are allowed');
+            this.value = '';
             return;
-          }
+        }
           
-          const roomPrice = document.getElementById('roomPrice').value;
-          if (!roomPrice) {
-            alert("Please enter a price");
-            return;
-          }
-          
-          // Check if at least one image is uploaded
-          const roomImages = document.getElementById('roomImageUpload').files;
-          if (roomImages.length === 0) {
-            alert("Please upload at least one image");
-            return;
-          }
-          
-          // Check if more than 10 images are uploaded
-          if (roomImages.length > 10) {
-            alert("You can upload a maximum of 10 images");
-            return;
-          }
-          
-          // Show upload status
-          document.getElementById('roomImageUploadStatus').style.display = 'flex';
-          
-          console.log("Uploading room images...");
-          // Upload images to ImgBB
-          const uploadedRoomImages = await uploadImages(true);
-          console.log("Room images uploaded:", uploadedRoomImages);
-          
-          // Create room object
-          const room = {
-            college,
-            title: hostelName, // Use hostelName as the title
-            category,
-            hostelName,
-            ownerName: document.getElementById('ownerName').value,
-            contact1: document.getElementById('contact1').value,
-            contact2: document.getElementById('contact2').value || null,
-            images: uploadedRoomImages,
-            coordinates: userCoordinates,
-            location: userLocationName,
-            collegeDistance: parseFloat(document.getElementById('collegeDistance').value) || null,
-            occupancy: parseInt(document.getElementById('occupancy').value) || null,
-            amenities: Array.from(document.querySelectorAll('input[name="amenities"]:checked')).map(el => el.value),
-            hasAC: document.getElementById('ac').checked,
-            hasWifi: document.getElementById('wifi').checked,
-            hasWashingMachine: document.getElementById('washingMachine').checked,
-            hasMess: document.getElementById('mess').checked,
-            messPrice: document.getElementById('mess').checked ? parseFloat(document.getElementById('messPrice').value) || null : null,
-            hasInstallment: document.getElementById('installment').checked,
-            price: roomPrice,
-            priceType: document.getElementById('priceType').value,
-            sellerPhone: currentUser.phone,
-            sellerEmail: currentUser.email
-          };
-          
-          console.log("Submitting room data:", room);
-          
-          // Save room to MongoDB
-          const response = await fetch(API_ENDPOINTS.ADD_ROOM, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(room)
-          });
-          
-          console.log("Room submission response status:", response.status);
-          
-          if (!response.ok) {
-            const errorData = await response.json();
-            console.error("Room submission error:", errorData);
-            throw new Error(errorData.message || 'Failed to save room listing');
-          }
-          
-          const responseData = await response.json();
-          console.log("Room submission successful:", responseData);
-          
-          alert('Room listed successfully!');
-          window.location.href = 'index.html';
-        } else {
-          console.log("Processing regular product listing");
-          // Regular product submission
-          const files = document.getElementById('imageUpload').files;
-          if (files.length < 1) {
-            alert('Please select at least 1 image');
-            return;
-          }
-          
-          if (files.length > 5) {
+        if (this.files.length > 5) {
             alert('Maximum 5 images allowed');
+            this.value = '';
+            return;
+        }
+
+        Array.from(this.files).forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.createElement('div');
+                preview.className = 'image-preview';
+                preview.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview ${index + 1}">
+                <div class="remove-image" onclick="removeImage(${index}, false)">×</div>
+                `;
+                previewContainer.appendChild(preview);
+            }
+            reader.readAsDataURL(file);
+        });
+    });
+        
+        // Room image preview
+        document.getElementById('roomImageUpload').addEventListener('change', function(e) {
+          const previewContainer = document.getElementById('roomImagePreviews');
+          previewContainer.innerHTML = '';
+          const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+          const invalidFiles = Array.from(this.files).filter(file => 
+            !allowedTypes.includes(file.type)
+          );
+          
+          if (invalidFiles.length > 0) {
+            alert('Only JPG, PNG, and WEBP images are allowed');
+            this.value = '';
             return;
           }
           
-          // Validate required fields
-          const title = document.getElementById('title').value;
-          const price = document.getElementById('price').value;
-          const description = document.getElementById('description').value;
+          if (this.files.length > 10) {
+            alert('Maximum 10 images allowed');
+            this.value = '';
+            return;
+          }
           
-          if (!title || !price || !description) {
-            alert('Please fill in all required fields');
+          // Check total size
+          const totalSize = Array.from(this.files).reduce((sum, file) => sum + file.size, 0);
+          const MAX_SIZE = 50 * 1024 * 1024; // 50MB
+          if (totalSize > MAX_SIZE) {
+            alert('Total file size exceeds 50MB limit');
+            this.value = '';
             return;
           }
 
-          // Show upload status
-          document.getElementById('imageUploadStatus').style.display = 'flex';
-          
-          console.log("Uploading product images...");
-          // Upload images
-          const imageUrls = await uploadImages(false);
-          console.log("Product images uploaded:", imageUrls);
-          
-          // Create product object
-          const product = {
-            college: document.getElementById('college').value,
-            title: document.getElementById('title').value,
-            category: document.getElementById('category').value,
-            price: document.getElementById('price').value,
-            images: imageUrls,
-            description: document.getElementById('description').value,
-            condition: document.getElementById('condition').value,
-            sellerPhone: currentUser.phone,
-            sellerEmail: currentUser.email,
-            createdAt: new Date().toISOString(),
-            location: userLocationName,
-            coordinates: userCoordinates
-          };
-
-          console.log('Submitting product:', product);
-
-          // Save product to MongoDB via the API
-          const response = await fetch(API_ENDPOINTS.ADD_PRODUCT, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(product)
+          Array.from(this.files).forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              const preview = document.createElement('div');
+              preview.className = 'image-preview';
+              preview.innerHTML = `
+                <img src="${e.target.result}" alt="Preview ${index + 1}">
+                <div class="remove-image" onclick="removeImage(${index}, true)">×</div>
+              `;
+              previewContainer.appendChild(preview);
+            }
+            reader.readAsDataURL(file);
           });
-
-          console.log("Product submission response status:", response.status);
-          
-          if (!response.ok) {
-            const errorData = await response.json();
-            console.error("Product submission error:", errorData);
-            throw new Error(errorData.message || 'Failed to save product');
-          }
-          
-          const responseData = await response.json();
-          console.log("Product submission successful:", responseData);
-          
-          alert('Product listed successfully!');
-          window.location.href = 'index.html';
-        }
-      } catch (error) {
-        console.error("Form submission error:", error);
-        alert(error.message || 'Failed to submit listing');
-      } finally {
-        document.getElementById('imageUploadStatus').style.display = 'none';
-        document.getElementById('roomImageUploadStatus').style.display = 'none';
-      }
-    });
-
-
-    
-
-    // Modal functions
-    function redirectToProfile() {
-      window.location.href = 'PROFILE_FINAL.html';
-    }
-
-    function closePhoneErrorModal() {
-        document.getElementById('phoneErrorModal').style.display = 'none';
-    }
-
-    // Initialize form state
-    document.addEventListener('DOMContentLoaded', () => {
-      console.log("Initializing form state");
-      
-      // Hide room form by default
-      document.getElementById('roomForm').style.display = 'none';
-      
-      // Set initial required attributes
-      document.getElementById('roomPrice').removeAttribute('required');
-      document.getElementById('roomImageUpload').removeAttribute('required');
-      
-      // Check for draft data
-      const draftData = JSON.parse(localStorage.getItem('draftListing'));
-      if (draftData) {
-        console.log("Found draft data:", draftData);
-        // Populate form fields from draft
-        document.getElementById('college').value = draftData.college || '';
-        document.getElementById('category').value = draftData.category || '';
-        
-        // Trigger change event to show/hide appropriate form
-        const event = new Event('change');
-        document.getElementById('category').dispatchEvent(event);
-        
-        if (draftData.category === 'Room') {
-          // Populate room form fields
-          document.getElementById('hostelName').value = draftData.hostelName || '';
-          document.getElementById('ownerName').value = draftData.ownerName || '';
-          document.getElementById('contact1').value = draftData.contact1 || '';
-          document.getElementById('contact2').value = draftData.contact2 || '';
-          document.getElementById('collegeDistance').value = draftData.collegeDistance || '';
-          document.getElementById('occupancy').value = draftData.occupancy || '';
-          document.getElementById('roomPrice').value = draftData.price || '';
-          document.getElementById('priceType').value = draftData.priceType || 'monthly';
-          
-          // Set amenities checkboxes
-          if (draftData.hasAC) document.getElementById('ac').checked = true;
-          if (draftData.hasWifi) document.getElementById('wifi').checked = true;
-          if (draftData.hasWashingMachine) document.getElementById('washingMachine').checked = true;
-          if (draftData.hasMess) {
-            document.getElementById('mess').checked = true;
-            document.getElementById('messSection').style.display = 'block';
-            document.getElementById('messPrice').value = draftData.messPrice || '';
-          }
-          if (draftData.hasInstallment) document.getElementById('installment').checked = true;
-        } else {
-          // Populate regular form fields
-          document.getElementById('title').value = draftData.title || '';
-          document.getElementById('price').value = draftData.price || '';
-          document.getElementById('condition').value = draftData.condition || 'used';
-          document.getElementById('description').value = draftData.description || '';
-        }
-        
-        // Set coordinates if available
-        if (draftData.coordinates) {
-          userCoordinates = draftData.coordinates;
-          userLocationName = draftData.location || '';
-          
-          const locationStatus = document.getElementById(draftData.category === 'Room' ? 'roomLocationStatus' : 'locationStatus');
-          locationStatus.textContent = userLocationName;
-          locationStatus.style.color = '#28a745';
-        }
-      }
-      
-      // Check if user is logged in
-      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-      if (!currentUser) {
-        console.log("User not logged in, redirecting to login page");
-        alert("Please log in to list items for sale");
-        window.location.href = 'login.html?redirect=sell.html';
-        return;
-      }
-      
-      console.log("Form initialized successfully");
-    });
-    
-    // Make the map modal and initialization more robust
-    function openMapModal() {
-      // Show modal
-      const mapModal = document.getElementById('mapModal');
-      mapModal.style.display = 'block';
-      
-      // Show loading indicator
-      const mapLoading = document.getElementById('mapLoading');
-      mapLoading.style.display = 'block';
-      
-      // Reset attempts counter
-      mapInitAttempts = 0;
-      
-      // Ensure the scripts are loaded
-      if (typeof L === 'undefined') {
-        console.error("Leaflet library not loaded");
-        mapLoading.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Map library not loaded. Please refresh the page or use the "Use Current Location" button instead.';
-        
-        // Add a close button to dismiss the modal
-        const closeButton = document.createElement('button');
-        closeButton.textContent = 'Close';
-        closeButton.style.marginTop = '15px';
-        closeButton.style.padding = '8px 15px';
-        closeButton.style.background = '#dc3545';
-        closeButton.style.color = 'white';
-        closeButton.style.border = 'none';
-        closeButton.style.borderRadius = '4px';
-        closeButton.onclick = closeMapModal;
-        mapLoading.appendChild(closeButton);
-        return;
-      }
-      
-      // Wait for the modal to be visible before initializing the map
-      setTimeout(() => {
-        try {
-          initMap();
-          // Focus the search input after map loads
-          setTimeout(() => {
-            const searchInput = document.getElementById('mapSearchInput');
-            if (searchInput) searchInput.focus();
-          }, 800);
-        } catch (error) {
-          console.error("Error initializing map:", error);
-          mapLoading.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error loading map: ' + error.message;
-        }
-      }, 600); // Increased timeout to ensure modal is fully rendered
-    }
-    
-    // Initialize the map
-    let mapInitAttempts = 0;
-    function initMap() {
-      const mapContainer = document.getElementById('map');
-      
-      // Check if map container is properly rendered
-      if (!mapContainer || mapContainer.offsetWidth === 0 || mapContainer.offsetHeight === 0) {
-        console.log(`Map container not properly rendered, waiting... (attempt ${mapInitAttempts+1}/6)`);
-        
-        // Limit the number of attempts
-        if (mapInitAttempts >= 5) {
-          console.error("Map container still not properly rendered after multiple attempts");
-          document.getElementById('mapLoading').innerHTML = 
-            '<i class="fas fa-exclamation-triangle"></i> Map container not available. Please try closing and reopening.';
-          return;
-        }
-        
-        mapInitAttempts++;
-        setTimeout(initMap, 300); // Try again after a short delay
-        return;
-      }
-      
-      // Check if Leaflet is available
-      if (typeof L === 'undefined') {
-        console.error("Leaflet library not available");
-        document.getElementById('mapLoading').innerHTML = 
-          '<i class="fas fa-exclamation-triangle"></i> Map library not loaded. Please refresh the page.';
-        return;
-      }
-      
-      // Safe cleanup of any existing map instance
-      if (window.map) {
-        try {
-          window.map.off();
-          window.map.remove();
-        } catch (e) {
-          console.log("Error cleaning up previous map:", e);
-        }
-        window.map = null;
-      }
-      
-      try {
-        console.log("Creating new map instance");
-        
-        // Create map with specific options to prevent common issues
-        window.map = L.map('map', {
-          zoomControl: true,
-          attributionControl: true,
-          fadeAnimation: false, // Disable animations to reduce rendering issues
-          markerZoomAnimation: false
         });
         
-        // Set view after map is initialized
-        window.map.setView([18.5204, 73.8567], 13);
+        // Remove image function
+        function removeImage(index, isRoom) {
+          try {
+            const fileInputId = isRoom ? 'roomImageUpload' : 'imageUpload';
+            const files = Array.from(document.getElementById(fileInputId).files);
+            files.splice(index, 1);
+            
+            // Check if DataTransfer API is available
+            if (typeof DataTransfer === 'undefined') {
+              console.error("DataTransfer API not available");
+              alert("Your browser doesn't support image removal. Please try uploading all images at once.");
+              return;
+            }
+            
+            // Create new DataTransfer object and update files
+            const newFiles = new DataTransfer();
+            files.forEach(file => newFiles.items.add(file));
+            document.getElementById(fileInputId).files = newFiles.files;
+            
+            // Trigger change event to update previews
+            document.getElementById(fileInputId).dispatchEvent(new Event('change'));
+          } catch (error) {
+            console.error("Error removing image:", error);
+            alert("Failed to remove image. Please try uploading all images at once.");
+          }
+        }
+
+        // Form submission
+        document.getElementById('sellForm').addEventListener('submit', async function(event) {
+          event.preventDefault();
+          console.log("Form submission started");
+
+          try {
+            // Check if API endpoints are defined
+            if (typeof API_ENDPOINTS === 'undefined' || !API_ENDPOINTS.ADD_PRODUCT || !API_ENDPOINTS.ADD_ROOM) {
+              console.error("API endpoints not defined");
+              alert("Error: API configuration not loaded. Please refresh the page and try again.");
+              return;
+            }
+            
+            // Check if user has coordinates
+            if (!userCoordinates) {
+              alert("Please provide your location to continue.");
+              console.log("Location not provided");
+              return;
+            }
+            
+            // Check if user has phone number
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (!currentUser || !currentUser.phone) {
+              // Show error modal
+              document.getElementById('phoneErrorModal').style.display = 'block';
+              console.log("Phone number not provided");
+              return;
+            }
+            
+            const category = document.getElementById('category').value;
+            console.log("Form type:", category);
+            
+            // Get common fields
+            const college = document.getElementById('college').value;
+            
+            // Check if it's a room listing
+            if (category === 'Room') {
+              console.log("Processing room listing");
+              // Validate room fields
+              const hostelName = document.getElementById('hostelName').value;
+              if (!hostelName) {
+                alert("Please enter a hostel/PG name");
+                return;
+              }
+              
+              const roomPrice = document.getElementById('roomPrice').value;
+              if (!roomPrice) {
+                alert("Please enter a price");
+                return;
+              }
+              
+              // Check if at least one image is uploaded
+              const roomImages = document.getElementById('roomImageUpload').files;
+              if (roomImages.length === 0) {
+                alert("Please upload at least one image");
+                return;
+              }
+              
+              // Check if more than 10 images are uploaded
+              if (roomImages.length > 10) {
+                alert("You can upload a maximum of 10 images");
+                return;
+              }
+              
+              // Show upload status
+              document.getElementById('roomImageUploadStatus').style.display = 'flex';
+              
+              console.log("Uploading room images...");
+              // Upload images to ImgBB
+              const uploadedRoomImages = await uploadImages(true);
+              console.log("Room images uploaded:", uploadedRoomImages);
+              
+              // Create room object
+              const room = {
+                college,
+                title: hostelName, // Use hostelName as the title
+                category,
+                hostelName,
+                ownerName: document.getElementById('ownerName').value,
+                contact1: document.getElementById('contact1').value,
+                contact2: document.getElementById('contact2').value || null,
+                images: uploadedRoomImages,
+                coordinates: userCoordinates,
+                location: userLocationName,
+                collegeDistance: parseFloat(document.getElementById('collegeDistance').value) || null,
+                occupancy: parseInt(document.getElementById('occupancy').value) || null,
+                amenities: Array.from(document.querySelectorAll('input[name="amenities"]:checked')).map(el => el.value),
+                hasAC: document.getElementById('ac').checked,
+                hasWifi: document.getElementById('wifi').checked,
+                hasWashingMachine: document.getElementById('washingMachine').checked,
+                hasMess: document.getElementById('mess').checked,
+                messPrice: document.getElementById('mess').checked ? parseFloat(document.getElementById('messPrice').value) || null : null,
+                hasInstallment: document.getElementById('installment').checked,
+                price: roomPrice,
+                priceType: document.getElementById('priceType').value,
+                sellerPhone: currentUser.phone,
+                sellerEmail: currentUser.email
+              };
+              
+              console.log("Submitting room data:", room);
+              
+              // Save room to MongoDB
+              const response = await fetch(API_ENDPOINTS.ADD_ROOM, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(room)
+              });
+              
+              console.log("Room submission response status:", response.status);
+              
+              if (!response.ok) {
+                const errorData = await response.json();
+                console.error("Room submission error:", errorData);
+                throw new Error(errorData.message || 'Failed to save room listing');
+              }
+              
+              const responseData = await response.json();
+              console.log("Room submission successful:", responseData);
+              
+              alert('Room listed successfully!');
+              window.location.href = 'index.html';
+            } else {
+              console.log("Processing regular product listing");
+              // Regular product submission
+              const files = document.getElementById('imageUpload').files;
+              if (files.length < 1) {
+                alert('Please select at least 1 image');
+                return;
+              }
+              
+              if (files.length > 5) {
+                alert('Maximum 5 images allowed');
+                return;
+              }
+              
+              // Validate required fields
+              const title = document.getElementById('title').value;
+              const price = document.getElementById('price').value;
+              const description = document.getElementById('description').value;
+              
+              if (!title || !price || !description) {
+                alert('Please fill in all required fields');
+                return;
+              }
+
+              // Show upload status
+              document.getElementById('imageUploadStatus').style.display = 'flex';
+              
+              console.log("Uploading product images...");
+              // Upload images
+              const imageUrls = await uploadImages(false);
+              console.log("Product images uploaded:", imageUrls);
+              
+              // Create product object
+              const product = {
+                college: document.getElementById('college').value,
+                title: document.getElementById('title').value,
+                category: document.getElementById('category').value,
+                price: document.getElementById('price').value,
+                images: imageUrls,
+                description: document.getElementById('description').value,
+                condition: document.getElementById('condition').value,
+                sellerPhone: currentUser.phone,
+                sellerEmail: currentUser.email,
+                createdAt: new Date().toISOString(),
+                location: userLocationName,
+                coordinates: userCoordinates
+              };
+
+              console.log('Submitting product:', product);
+
+              // Save product to MongoDB via the API
+              const response = await fetch(API_ENDPOINTS.ADD_PRODUCT, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(product)
+              });
+
+              console.log("Product submission response status:", response.status);
+              
+              if (!response.ok) {
+                const errorData = await response.json();
+                console.error("Product submission error:", errorData);
+                throw new Error(errorData.message || 'Failed to save product');
+              }
+              
+              const responseData = await response.json();
+              console.log("Product submission successful:", responseData);
+              
+              alert('Product listed successfully!');
+              window.location.href = 'index.html';
+            }
+          } catch (error) {
+            console.error("Form submission error:", error);
+            alert(error.message || 'Failed to submit listing');
+          } finally {
+            document.getElementById('imageUploadStatus').style.display = 'none';
+            document.getElementById('roomImageUploadStatus').style.display = 'none';
+          }
+        });
+
+
         
-        // Add OpenStreetMap tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-          attribution: '© OpenStreetMap contributors'
-        }).addTo(window.map);
-        
-        // Force an immediate invalidateSize
-        setTimeout(() => {
-          if (window.map) {
-            try {
-              window.map.invalidateSize(true);
-              console.log("Map size invalidated");
-            } catch (e) {
-              console.error("Error invalidating map size:", e);
+
+        // Modal functions
+        function redirectToProfile() {
+          window.location.href = 'PROFILE_FINAL.html';
+        }
+
+        function closePhoneErrorModal() {
+            document.getElementById('phoneErrorModal').style.display = 'none';
+        }
+
+        // Initialize form state
+        document.addEventListener('DOMContentLoaded', () => {
+          console.log("Initializing form state");
+          
+          // Hide room form by default
+          document.getElementById('roomForm').style.display = 'none';
+          
+          // Set initial required attributes
+          document.getElementById('roomPrice').removeAttribute('required');
+          document.getElementById('roomImageUpload').removeAttribute('required');
+          
+          // Check for draft data
+          const draftData = JSON.parse(localStorage.getItem('draftListing'));
+          if (draftData) {
+            console.log("Found draft data:", draftData);
+            // Populate form fields from draft
+            document.getElementById('college').value = draftData.college || '';
+            document.getElementById('category').value = draftData.category || '';
+            
+            // Trigger change event to show/hide appropriate form
+            const event = new Event('change');
+            document.getElementById('category').dispatchEvent(event);
+            
+            if (draftData.category === 'Room') {
+              // Populate room form fields
+              document.getElementById('hostelName').value = draftData.hostelName || '';
+              document.getElementById('ownerName').value = draftData.ownerName || '';
+              document.getElementById('contact1').value = draftData.contact1 || '';
+              document.getElementById('contact2').value = draftData.contact2 || '';
+              document.getElementById('collegeDistance').value = draftData.collegeDistance || '';
+              document.getElementById('occupancy').value = draftData.occupancy || '';
+              document.getElementById('roomPrice').value = draftData.price || '';
+              document.getElementById('priceType').value = draftData.priceType || 'monthly';
+              
+              // Set amenities checkboxes
+              if (draftData.hasAC) document.getElementById('ac').checked = true;
+              if (draftData.hasWifi) document.getElementById('wifi').checked = true;
+              if (draftData.hasWashingMachine) document.getElementById('washingMachine').checked = true;
+              if (draftData.hasMess) {
+                document.getElementById('mess').checked = true;
+                document.getElementById('messSection').style.display = 'block';
+                document.getElementById('messPrice').value = draftData.messPrice || '';
+              }
+              if (draftData.hasInstallment) document.getElementById('installment').checked = true;
+            } else {
+              // Populate regular form fields
+              document.getElementById('title').value = draftData.title || '';
+              document.getElementById('price').value = draftData.price || '';
+              document.getElementById('condition').value = draftData.condition || 'used';
+              document.getElementById('description').value = draftData.description || '';
+            }
+            
+            // Set coordinates if available
+            if (draftData.coordinates) {
+              userCoordinates = draftData.coordinates;
+              userLocationName = draftData.location || '';
+              
+              const locationStatus = document.getElementById(draftData.category === 'Room' ? 'roomLocationStatus' : 'locationStatus');
+              locationStatus.textContent = userLocationName;
+              locationStatus.style.color = '#28a745';
             }
           }
-        }, 100);
+          
+          console.log("Form initialized successfully");
+        });
         
-        console.log("Map and tiles initialized");
+        // Make the map modal and initialization more robust
+        function openMapModal() {
+          // Show modal
+          const mapModal = document.getElementById('mapModal');
+          mapModal.style.display = 'block';
+          
+          // Show loading indicator
+          const mapLoading = document.getElementById('mapLoading');
+          mapLoading.style.display = 'block';
+          
+          // Reset attempts counter
+          mapInitAttempts = 0;
+          
+          // Ensure the scripts are loaded
+          if (typeof L === 'undefined') {
+            console.error("Leaflet library not loaded");
+            mapLoading.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Map library not loaded. Please refresh the page or use the "Use Current Location" button instead.';
+            
+            // Add a close button to dismiss the modal
+            const closeButton = document.createElement('button');
+            closeButton.textContent = 'Close';
+            closeButton.style.marginTop = '15px';
+            closeButton.style.padding = '8px 15px';
+            closeButton.style.background = '#dc3545';
+            closeButton.style.color = 'white';
+            closeButton.style.border = 'none';
+            closeButton.style.borderRadius = '4px';
+            closeButton.onclick = closeMapModal;
+            mapLoading.appendChild(closeButton);
+            return;
+          }
+          
+          // Wait for the modal to be visible before initializing the map
+          setTimeout(() => {
+            try {
+              initMap();
+              // Focus the search input after map loads
+              setTimeout(() => {
+                const searchInput = document.getElementById('mapSearchInput');
+                if (searchInput) searchInput.focus();
+              }, 800);
+            } catch (error) {
+              console.error("Error initializing map:", error);
+              mapLoading.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error loading map: ' + error.message;
+            }
+          }, 600); // Increased timeout to ensure modal is fully rendered
+        }
         
-        // Add geocoder control for searching locations if available
-        if (typeof L.Control.Geocoder !== 'undefined') {
+        // Initialize the map
+        let mapInitAttempts = 0;
+        function initMap() {
+          const mapContainer = document.getElementById('map');
+          
+          // Check if map container is properly rendered
+          if (!mapContainer || mapContainer.offsetWidth === 0 || mapContainer.offsetHeight === 0) {
+            console.log(`Map container not properly rendered, waiting... (attempt ${mapInitAttempts+1}/6)`);
+            
+            // Limit the number of attempts
+            if (mapInitAttempts >= 5) {
+              console.error("Map container still not properly rendered after multiple attempts");
+              document.getElementById('mapLoading').innerHTML = 
+                '<i class="fas fa-exclamation-triangle"></i> Map container not available. Please try closing and reopening.';
+              return;
+            }
+            
+            mapInitAttempts++;
+            setTimeout(initMap, 300); // Try again after a short delay
+            return;
+          }
+          
+          // Check if Leaflet is available
+          if (typeof L === 'undefined') {
+            console.error("Leaflet library not available");
+            document.getElementById('mapLoading').innerHTML = 
+              '<i class="fas fa-exclamation-triangle"></i> Map library not loaded. Please refresh the page.';
+            return;
+          }
+          
+          // Safe cleanup of any existing map instance
+          if (window.map) {
+            try {
+              window.map.off();
+              window.map.remove();
+            } catch (e) {
+              console.log("Error cleaning up previous map:", e);
+            }
+            window.map = null;
+          }
+          
           try {
-            const geocoder = L.Control.Geocoder.nominatim({
-              geocodingQueryParams: { 
-                format: 'json',
-                addressdetails: 1,
-                limit: 5
-              }
+            console.log("Creating new map instance");
+            
+            // Create map with specific options to prevent common issues
+            window.map = L.map('map', {
+              zoomControl: true,
+              attributionControl: true,
+              fadeAnimation: false, // Disable animations to reduce rendering issues
+              markerZoomAnimation: false
             });
             
-            L.Control.geocoder({
-              defaultMarkGeocode: false,
-              placeholder: 'Search for places...',
-              geocoder: geocoder
-            }).on('markgeocode', function(e) {
-              const result = e.geocode;
-              
+            // Set view after map is initialized
+            window.map.setView([18.5204, 73.8567], 13);
+            
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              maxZoom: 19,
+              attribution: '© OpenStreetMap contributors'
+            }).addTo(window.map);
+            
+            // Force an immediate invalidateSize
+            setTimeout(() => {
+              if (window.map) {
+                try {
+                  window.map.invalidateSize(true);
+                  console.log("Map size invalidated");
+                } catch (e) {
+                  console.error("Error invalidating map size:", e);
+                }
+              }
+            }, 100);
+            
+            console.log("Map and tiles initialized");
+            
+            // Add geocoder control for searching locations if available
+            if (typeof L.Control.Geocoder !== 'undefined') {
+              try {
+                const geocoder = L.Control.Geocoder.nominatim({
+                  geocodingQueryParams: { 
+                    format: 'json',
+                    addressdetails: 1,
+                    limit: 5
+                  }
+                });
+                
+                L.Control.geocoder({
+                  defaultMarkGeocode: false,
+                  placeholder: 'Search for places...',
+                  geocoder: geocoder
+                }).on('markgeocode', function(e) {
+                  const result = e.geocode;
+                  
+                  // Clear any existing markers
+                  if (window.marker) {
+                    window.map.removeLayer(window.marker);
+                  }
+                  
+                  // Add marker at the selected location
+                  window.marker = L.marker(result.center).addTo(window.map);
+                  
+                  // Set the selected location
+                  userCoordinates = {
+                    lat: result.center.lat,
+                    lon: result.center.lng
+                  };
+                  userLocationName = result.name || result.html || 'Selected location';
+                  
+                  // Update the selected location display
+                  document.getElementById('selectedLocationDisplay').textContent = userLocationName;
+                  
+                  // Zoom to the selected location
+                  window.map.fitBounds(result.bbox || [[result.center.lat - 0.01, result.center.lng - 0.01], 
+                                                     [result.center.lat + 0.01, result.center.lng + 0.01]]);
+                }).addTo(window.map);
+                
+                console.log("Geocoder initialized");
+              } catch (geocoderError) {
+                console.error("Geocoder error:", geocoderError);
+                // Continue without geocoder if it fails
+              }
+            } else {
+              console.warn("Geocoder control not available");
+            }
+            
+            // Handle map clicks to set location
+            window.map.on('click', function(e) {
               // Clear any existing markers
               if (window.marker) {
                 window.map.removeLayer(window.marker);
               }
               
-              // Add marker at the selected location
-              window.marker = L.marker(result.center).addTo(window.map);
+              // Add marker at the clicked location
+              window.marker = L.marker(e.latlng).addTo(window.map);
               
               // Set the selected location
               userCoordinates = {
-                lat: result.center.lat,
-                lon: result.center.lng
+                lat: e.latlng.lat,
+                lon: e.latlng.lng
               };
-              userLocationName = result.name || result.html || 'Selected location';
               
-              // Update the selected location display
-              document.getElementById('selectedLocationDisplay').textContent = userLocationName;
+              // Set temporary display while geocoding
+              document.getElementById('selectedLocationDisplay').textContent = `Lat: ${e.latlng.lat.toFixed(6)}, Lng: ${e.latlng.lng.toFixed(6)}`;
               
-              // Zoom to the selected location
-              window.map.fitBounds(result.bbox || [[result.center.lat - 0.01, result.center.lng - 0.01], 
-                                                 [result.center.lat + 0.01, result.center.lng + 0.01]]);
-            }).addTo(window.map);
-            
-            console.log("Geocoder initialized");
-          } catch (geocoderError) {
-            console.error("Geocoder error:", geocoderError);
-            // Continue without geocoder if it fails
-          }
-        } else {
-          console.warn("Geocoder control not available");
-        }
-        
-        // Handle map clicks to set location
-        window.map.on('click', function(e) {
-          // Clear any existing markers
-          if (window.marker) {
-            window.map.removeLayer(window.marker);
-          }
-          
-          // Add marker at the clicked location
-          window.marker = L.marker(e.latlng).addTo(window.map);
-          
-          // Set the selected location
-          userCoordinates = {
-            lat: e.latlng.lat,
-            lon: e.latlng.lng
-          };
-          
-          // Set temporary display while geocoding
-          document.getElementById('selectedLocationDisplay').textContent = `Lat: ${e.latlng.lat.toFixed(6)}, Lng: ${e.latlng.lng.toFixed(6)}`;
-          
-          // Reverse geocode to get the location name
-          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}&accept-language=en`)
-            .then(response => response.json())
-            .then(data => {
-              userLocationName = data.display_name || 'Selected location';
-              document.getElementById('selectedLocationDisplay').textContent = userLocationName;
-            })
-            .catch(error => {
-              console.error('Error reverse geocoding:', error);
-              // Keep the coordinates as display if geocoding fails
+              // Reverse geocode to get the location name
+              fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}&accept-language=en`)
+                .then(response => response.json())
+                .then(data => {
+                  userLocationName = data.display_name || 'Selected location';
+                  document.getElementById('selectedLocationDisplay').textContent = userLocationName;
+                })
+                .catch(error => {
+                  console.error('Error reverse geocoding:', error);
+                  // Keep the coordinates as display if geocoding fails
+                });
             });
-        });
-        
-        // If user already has coordinates, show them on the map
-        if (userCoordinates) {
-          const latlng = L.latLng(userCoordinates.lat, userCoordinates.lon);
-          window.marker = L.marker(latlng).addTo(window.map);
-          window.map.setView(latlng, 15);
-          document.getElementById('selectedLocationDisplay').textContent = userLocationName || 'Location selected';
-        }
-        
-        // Hide loading indicator once map is initialized
-        document.getElementById('mapLoading').style.display = 'none';
-        
-      } catch (mapError) {
-        console.error("Error in map initialization:", mapError);
-        document.getElementById('mapLoading').innerHTML = 
-          '<i class="fas fa-exclamation-triangle"></i> Error initializing map: ' + mapError.message;
-      }
-    }
-    
-    // Search for a location using the search input
-    function searchLocation() {
-      const searchInput = document.getElementById('mapSearchInput').value;
-      if (!searchInput) {
-        alert('Please enter a location to search');
-        return;
-      }
-      
-      // Show temporary search message
-      document.getElementById('selectedLocationDisplay').textContent = `Searching for "${searchInput}"...`;
-      
-      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchInput)}&accept-language=en`)
-        .then(response => response.json())
-        .then(data => {
-          if (data && data.length > 0) {
-            const result = data[0];
             
-            // Clear any existing markers
-            if (window.marker) {
-              window.map.removeLayer(window.marker);
+            // If user already has coordinates, show them on the map
+            if (userCoordinates) {
+              const latlng = L.latLng(userCoordinates.lat, userCoordinates.lon);
+              window.marker = L.marker(latlng).addTo(window.map);
+              window.map.setView(latlng, 15);
+              document.getElementById('selectedLocationDisplay').textContent = userLocationName || 'Location selected';
             }
             
-            // Add marker at the selected location
-            const latlng = L.latLng(result.lat, result.lon);
-            window.marker = L.marker(latlng).addTo(window.map);
+            // Hide loading indicator once map is initialized
+            document.getElementById('mapLoading').style.display = 'none';
             
-            // Set the selected location
-            userCoordinates = {
-              lat: parseFloat(result.lat),
-              lon: parseFloat(result.lon)
-            };
-            userLocationName = result.display_name;
-            
-            // Update the selected location display
-            document.getElementById('selectedLocationDisplay').textContent = userLocationName;
-            
-            // Zoom to the selected location
-            window.map.setView(latlng, 15);
-          } else {
-            alert('Location not found. Please try a different search term.');
-            document.getElementById('selectedLocationDisplay').textContent = 'No location selected';
+          } catch (mapError) {
+            console.error("Error in map initialization:", mapError);
+            document.getElementById('mapLoading').innerHTML = 
+              '<i class="fas fa-exclamation-triangle"></i> Error initializing map: ' + mapError.message;
           }
-        })
-        .catch(error => {
-          console.error('Error searching for location:', error);
-          alert('Error searching for location. Please try again.');
-          document.getElementById('selectedLocationDisplay').textContent = 'Search failed';
+        }
+        
+        // Search for a location using the search input
+        function searchLocation() {
+          const searchInput = document.getElementById('mapSearchInput').value;
+          if (!searchInput) {
+            alert('Please enter a location to search');
+            return;
+          }
+          
+          // Show temporary search message
+          document.getElementById('selectedLocationDisplay').textContent = `Searching for "${searchInput}"...`;
+          
+          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchInput)}&accept-language=en`)
+            .then(response => response.json())
+            .then(data => {
+              if (data && data.length > 0) {
+                const result = data[0];
+                
+                // Clear any existing markers
+                if (window.marker) {
+                  window.map.removeLayer(window.marker);
+                }
+                
+                // Add marker at the selected location
+                const latlng = L.latLng(result.lat, result.lon);
+                window.marker = L.marker(latlng).addTo(window.map);
+                
+                // Set the selected location
+                userCoordinates = {
+                  lat: parseFloat(result.lat),
+                  lon: parseFloat(result.lon)
+                };
+                userLocationName = result.display_name;
+                
+                // Update the selected location display
+                document.getElementById('selectedLocationDisplay').textContent = userLocationName;
+                
+                // Zoom to the selected location
+                window.map.setView(latlng, 15);
+              } else {
+                alert('Location not found. Please try a different search term.');
+                document.getElementById('selectedLocationDisplay').textContent = 'No location selected';
+              }
+            })
+            .catch(error => {
+              console.error('Error searching for location:', error);
+              alert('Error searching for location. Please try again.');
+              document.getElementById('selectedLocationDisplay').textContent = 'Search failed';
+            });
+        }
+        
+        // Close the map modal
+        function closeMapModal() {
+          document.getElementById('mapModal').style.display = 'none';
+        }
+        
+        // Confirm the selected location
+        function confirmMapLocation() {
+          if (!userCoordinates) {
+            alert('Please select a location on the map first.');
+            return;
+          }
+          
+          // Update the location status
+          const locationStatus = document.getElementById(document.getElementById('category').value === 'Room' ? 'roomLocationStatus' : 'locationStatus');
+          locationStatus.textContent = userLocationName || 'Location selected';
+          locationStatus.style.color = '#28a745';
+          
+          // Close the modal
+          closeMapModal();
+        }
+        
+        // Add event listener for the Enter key in the search input
+        document.getElementById('mapSearchInput').addEventListener('keyup', function(event) {
+          if (event.key === 'Enter') {
+            searchLocation();
+            }
         });
     }
-    
-    // Close the map modal
-    function closeMapModal() {
-      document.getElementById('mapModal').style.display = 'none';
-    }
-    
-    // Confirm the selected location
-    function confirmMapLocation() {
-      if (!userCoordinates) {
-        alert('Please select a location on the map first.');
-        return;
-      }
-      
-      // Update the location status
-      const locationStatus = document.getElementById(document.getElementById('category').value === 'Room' ? 'roomLocationStatus' : 'locationStatus');
-      locationStatus.textContent = userLocationName || 'Location selected';
-      locationStatus.style.color = '#28a745';
-      
-      // Close the modal
-      closeMapModal();
-    }
-    
-    // Add event listener for the Enter key in the search input
-    document.getElementById('mapSearchInput').addEventListener('keyup', function(event) {
-      if (event.key === 'Enter') {
-        searchLocation();
-        }
-    });
 </script>
 </body>
 </html>

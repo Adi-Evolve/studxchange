@@ -16,7 +16,7 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://studxchangeUser:Saimansays-1@studxchange.o1uay.mongodb.net/?retryWrites=true&w=majority&appName=Studxchange";
+const MONGODB_URI = process.env.MONGODB_URI;
 
 // Create a cached connection variable
 let cachedDb = null;
@@ -158,8 +158,8 @@ function initModels() {
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'studxchange05@gmail.com',
-    pass: process.env.EMAIL_PASSWORD || 'yrur dzzs mxmb xwbj' // Use environment variable or app password
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD
   }
 });
 
@@ -173,7 +173,16 @@ app.get('/api/products', async (req, res) => {
     await connectToDatabase();
     initModels();
     
-    const products = await Product.find().sort({ createdAt: -1 });
+    // Check if sellerEmail filter is provided
+    const { sellerEmail } = req.query;
+    let query = {};
+    
+    if (sellerEmail) {
+      console.log(`GET /api/products - Filtering by sellerEmail: ${sellerEmail}`);
+      query.sellerEmail = sellerEmail;
+    }
+    
+    const products = await Product.find(query).sort({ createdAt: -1 });
     console.log(`GET /api/products - Found ${products.length} products`);
     res.json(products);
   } catch (error) {
@@ -395,7 +404,7 @@ app.post('/api/auth/google', async (req, res) => {
     await connectToDatabase();
     initModels();
     
-    const { name, email } = req.body;
+    const { name, email, phone } = req.body;
     
     // Check if user exists
     let user = await User.findOne({ email });
@@ -405,8 +414,13 @@ app.post('/api/auth/google', async (req, res) => {
       user = new User({
         name,
         email,
+        phone: phone || '',
         provider: 'google'
       });
+      await user.save();
+    } else if (phone && !user.phone) {
+      // Update phone if provided and not already set
+      user.phone = phone;
       await user.save();
     }
     
@@ -503,6 +517,34 @@ app.put('/api/users/update', async (req, res) => {
     res.json(userResponse);
   } catch (error) {
     console.error('PUT /api/users/update - Error:', error.message);
+    res.status(500).json({ message: error.message, stack: error.stack });
+  }
+});
+
+// Add DELETE endpoint for products
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    console.log(`DELETE /api/products/${req.params.id} - Deleting product`);
+    
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
+    const productId = req.params.id;
+    
+    // Find the product to get its details before deletion
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    
+    // Delete the product
+    await Product.findByIdAndDelete(productId);
+    
+    console.log(`DELETE /api/products/${req.params.id} - Product deleted successfully`);
+    res.json({ message: 'Product deleted successfully' });
+  } catch (error) {
+    console.error(`DELETE /api/products/${req.params.id} - Error:`, error.message);
     res.status(500).json({ message: error.message, stack: error.stack });
   }
 });

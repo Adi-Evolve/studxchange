@@ -1,5 +1,5 @@
 // MongoDB Configuration
-const MONGODB_URI = "mongodb+srv://studxchangeUser:Saimansays-1@studxchange.o1uay.mongodb.net/?retryWrites=true&w=majority&appName=Studxchange";
+// Credentials are now stored in environment variables on the server
 
 // Since we can't directly use MongoDB in browser JavaScript,
 // we'll need to create API endpoints on a server to handle database operations.
@@ -11,7 +11,7 @@ const API_BASE_URL = "/api"; // Use relative path for all environments
 console.log("API_BASE_URL:", API_BASE_URL);
 
 // Image Upload Configuration
-const IMGBB_API_KEY = '272785e1c6e6221d927bad99483ff9ed';
+// API key is now stored in environment variables on the server
 const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload';
 
 // API Endpoints
@@ -20,6 +20,7 @@ const API_ENDPOINTS = {
   GET_PRODUCTS: `${API_BASE_URL}/products`,
   ADD_PRODUCT: `${API_BASE_URL}/products`,
   GET_PRODUCT_BY_ID: (id) => `${API_BASE_URL}/products/${id}`,
+  DELETE_PRODUCT: (id) => `${API_BASE_URL}/products/${id}`,
   
   // Rooms
   GET_ROOMS: `${API_BASE_URL}/rooms`,

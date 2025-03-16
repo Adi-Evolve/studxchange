@@ -498,6 +498,13 @@ button, select {
     async function loadListedItems() {
         try {
             const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (!currentUser || !currentUser.email) {
+                console.error('No user email found in localStorage');
+                document.getElementById('listedItemsList').innerHTML = '<p>Please log in to view your listed items.</p>';
+                return;
+            }
+            
+            console.log('Fetching products for email:', currentUser.email);
             const response = await fetch(`${API_ENDPOINTS.GET_PRODUCTS}?sellerEmail=${encodeURIComponent(currentUser.email)}`);
             
             if (!response.ok) {
@@ -573,7 +580,7 @@ button, select {
     async function deleteItem(productId) {
         if (!confirm('Are you sure you want to delete this item?')) return;
         try {
-            const response = await fetch(`${API_ENDPOINTS.GET_PRODUCT_BY_ID(productId)}`, {
+            const response = await fetch(`${API_ENDPOINTS.DELETE_PRODUCT(productId)}`, {
                 method: 'DELETE'
             });
             
