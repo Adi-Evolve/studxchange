@@ -76,18 +76,18 @@ async function connectToDatabase() {
       
       // Connect to MongoDB with more detailed options
       const conn = await mongoose.connect(process.env.MONGODB_URI, {
-        serverSelectionTimeoutMS: 10000, // Reduced timeout for serverless
+        serverSelectionTimeoutMS: 5000, // Further reduced timeout for serverless
         bufferCommands: false, // Disable mongoose buffering
-        connectTimeoutMS: 10000, // Reduced connection timeout for serverless
-        socketTimeoutMS: 20000, // Reduced socket timeout for serverless
+        connectTimeoutMS: 5000, // Further reduced connection timeout for serverless
+        socketTimeoutMS: 10000, // Further reduced socket timeout for serverless
         family: 4, // Use IPv4, skip trying IPv6
-        maxPoolSize: 5, // Reduced pool size for serverless
+        maxPoolSize: 1, // Minimal pool size for serverless
         minPoolSize: 1, // Maintain at least one connection
-        maxIdleTimeMS: 10000, // Close idle connections after 10 seconds
+        maxIdleTimeMS: 5000, // Close idle connections after 5 seconds
         serverApi: {
           version: '1',
-          strict: true,
-          deprecationErrors: true
+          strict: false, // Less strict mode for better compatibility
+          deprecationErrors: false // Disable deprecation errors
         }
       });
       
