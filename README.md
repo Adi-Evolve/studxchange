@@ -1,23 +1,25 @@
-# Studx
+# StudXchange
 
-A web application project.
+StudXchange is a platform for students to exchange academic resources, connect with peers, and collaborate on projects.
 
-## Setup
+## Features
+
+- Resource sharing
+- Peer-to-peer collaboration
+- Academic networking
+- Project management tools
+
+## Getting Started
 
 1. Clone the repository
-2. Install dependencies:
-   ```
-   npm install
-   ```
-3. Set up environment variables in `.env` file
-4. Run the server:
-   ```
-   node server.js
-   ```
+2. Install dependencies with `npm install`
+3. Configure environment variables
+4. Run the application with `npm start`
 
-## Project Structure
+## Contact
 
-- `server.js`: Main server file
-- `index.js`: Entry point
-- `public/`: Static assets
-- CSS files: Various styling for different components 
+For more information, contact Adi-Evolve.
+
+## License
+
+This project is licensed under the MIT License. 
