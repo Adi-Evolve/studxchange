@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search Results - StudXchange</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
+  <style>
+    /* Global Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      background-color: #f4f6f9;
+      color: #333;
+    }
+    header {
+      background-color: #2a3d56;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Navbar styles */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #2a3d56;
+      padding: 15px 30px;
+      /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
+      border: none;
+    }
+    
+    #searchResults {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      padding: 20px;
+    }
+    .product {
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      width: 280px;
+      margin: 12px;
+      padding: 15px;
+      text-align: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      text-decoration: none;
+      color: inherit;
+    }
+    .product:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 20px rgba(0, 0, 0, 0.2);
+    }
+    .product:hover .product-img {
+      transform: scale(1.05);
+    }
+    .product-img {
+      width: 100%;
+      height: 160px;
+      background-size: cover;
+      background-position: center;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      transition: transform 0.5s ease;
+    }
+    .product h4 {
+      font-size: 1.4rem;
+      color: #2a3d56;
+      margin-bottom: 10px;
+    }
+    .product p {
+      font-size: 1rem;
+      color: #666;
+    }
+    .price {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #1a75ff;
+      margin: 10px 0;
+    }
+    .condition {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 15px;
+    }
+    .buy-now {
+      background-color: #2a3d56;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .buy-now:hover {
+      background-color: #4d6a88;
+    }
+    footer {
+      background-color: #124559;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      margin-top: 30px;
+    }
+    .product-img {
+      background-repeat: no-repeat;
+      background-position: center;
+      background-color: #f0f0f0;
+      background-size: cover;
+      min-height: 160px;
+      position: relative;
+    }
+    .search-container {
+      max-width: 600px;
+      margin: 20px auto;
+    }
+    .searchbar {
+      display: flex;
+      align-items: center;
+      background: white;
+      border-radius: 30px;
+      padding: 2px;
+      width: 100%;
+    }
+    .searchbar select,
+    .searchbar input,
+    .searchbar button {
+      border: none;
+      padding: 10px;
+    }
+    .searchbar select {
+      background: #2a3d56;
+      color: white;
+      border-radius: 30px 0 0 30px;
+      width: 80px;
+    }
+    .searchbar input {
+      flex: 1;
+    }
+    .searchbar button {
+      background: #2a3d56;
+      color: white;
+      border-radius: 0 30px 30px 0;
+      cursor: pointer;
+    }
+    /* Add to existing styles */
+.location-button {
+    background-color: #28a745 !important;
+    margin-right: 10px;
+}
+
+.location-button:hover {
+    background-color: #218838 !important;
+}
+
+.location-status {
+    color: white;
+    margin-left: 10px;
+    font-size: 0.9rem;
+}
+
+.distance {
+    color: #666;
+    font-size: 0.9rem;
+    margin-top: 8px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.distance i {
+    margin-right: 5px;
+    color: #28a745;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #2a3d56;
+    padding: 15px 30px;
+    /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
+    border: none;
+  }
+  .navlogo img {
+    height: 100px;
+    width: 200px;
+  }
+  .search-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    margin: 0 20px;
+  }
+  .searchbar {
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 30px;
+    padding: 2px;
+    width: 100%;
+    max-width: 600px;
+  }
+  .category-select {
+    background: #2a3d56;
+    color: white;
+    border-radius: 30px 0 0 30px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    width: 80px;
+    text-align: center;
+  }
+  .searchbar input {
+    flex-grow: 1;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+  .searchbar button {
+    background: #2a3d56;
+    color: white;
+    border-radius: 0 30px 30px 0;
+    padding: 8px 15px;
+    font-size: 1rem;
+    transition: background 0.3s;
+  }
+  .searchbar button:hover {
+    background: #1a75ff;
+  }
+  .button-container {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+  .wishlist-button {
+    color: white;
+    font-size: 1.5rem;
+    transition: color 0.3s;
+  }
+  .wishlist-button:hover {
+    color: #ff4757;
+  }
+  .profile-button, .signup-button {
+    color: white;
+    padding: 10px 15px;
+    border-radius: 25px;
+    text-decoration: none;
+    background: transparent;
+    border: 2px solid white;
+    transition: all 0.3s;
+  }
+  .profile-button:hover, .signup-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  .wishlist-icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 5px;
+    border-radius: 50%;
+    z-index: 10;
+    transition: all 0.3s ease;
+  }
+  
+  .far.fa-heart.wishlist-icon {
+    color: #ccc;
+  }
+  
+  .fas.fa-heart.wishlist-icon {
+    color: #ff4757;
+  }
+  
+  .nav-button {
+    padding: 10px 25px;
+    border-radius: 25px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    font-weight: 500;
+    display: inline-block;
+    color: white;
+  }
+  
+  .nav-button:hover {
+    background-color: #4d6a88;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+  }
+  
+  .active-location {
+    background-color: #218838;
+    color: white;
+  }
+
+/* Add hover effects to product cards */
+.product {
+  position: relative;
+  overflow: hidden;
+}
+
+.product::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(26, 117, 255, 0.1) 0%, rgba(0, 0, 0, 0) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+  border-radius: 12px;
+}
+
+.product:hover::before {
+  opacity: 1;
+}
+
+/* Room product card styles */
+.room-product {
+  display: flex;
+  width: calc(50% - 24px);
+  height: 200px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  margin: 12px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.room-product:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.2);
+}
+
+.room-image-container {
+  width: 40%;
+  position: relative;
+  overflow: hidden;
+}
+
+.room-main-image {
+  width: 100%;
+  height: 70%;
+  object-fit: cover;
+}
+
+.room-thumbnails {
+  display: flex;
+  height: 30%;
+}
+
+.room-thumbnail {
+  flex: 1;
+  object-fit: cover;
+}
+
+.room-details {
+  width: 60%;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.room-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #2a3d56;
+  margin-bottom: 5px;
+}
+
+.room-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.room-info-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.9rem;
+}
+
+.room-info-item i {
+  color: #28a745;
+}
+
+.room-info-item.negative i {
+  color: #dc3545;
+}
+
+.room-price {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #1a75ff;
+  margin-top: auto;
+}
+
+.room-distance {
+  font-size: 0.9rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.room-distance i {
+  color: #28a745;
+}
+
+@media (max-width: 992px) {
+  .room-product {
+    width: calc(100% - 24px);
+  }
+}
+  </style>
+</head>
+<body>
+  <!-- Common Navbar -->
+  <header id="common-navbar"></header>
+
+  <div id="searchResults"></div>
+
+  <footer>
+    <p>For any help, contact us at: Studxchange05@gmail.com | Phone: 8857053541</p>
+  </footer>
+
+  <script src="/js/db-config.js"></script>
+  <script src="/js/navbar.js"></script>
+  <script>
+    let userLocation = JSON.parse(localStorage.getItem('userLocation')) || null;
+    let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+  
+    function toggleWishlist(event, product) {
+      // Prevent default behavior and stop event propagation
+      event.preventDefault();
+      event.stopPropagation();
+      
+      console.log("Toggle wishlist clicked for:", product.title); // Debug log
+      
+      let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+      const index = wishlist.findIndex(item => item.title === product.title);
+      
+      if (index === -1) {
+        // Add to wishlist
+        wishlist.push({
+          title: product.title,
+          price: product.price,
+          image: product.images?.[0] || product.image,
+          category: product.category
+        });
+        event.target.classList.remove('far');
+        event.target.classList.add('fas');
+        event.target.style.color = '#ff4757';
+        console.log("Added to wishlist"); // Debug log
+      } else {
+        // Remove from wishlist
+        wishlist.splice(index, 1);
+        event.target.classList.remove('fas');
+        event.target.classList.add('far');
+        event.target.style.color = '#ccc';
+        console.log("Removed from wishlist"); // Debug log
+      }
+      
+      localStorage.setItem('wishlist', JSON.stringify(wishlist));
+      return false; // Prevent any default behavior
+    }
+
+    // Haversine distance formula
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+async function getLocation() {
+  return new Promise((resolve) => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        position => resolve({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude
+        }),
+        () => resolve(null)
+      );
+    } else {
+      resolve(null);
+    }
+  });
+}
+
+    async function fetchProducts() {
+      try {
+        const response = await fetch(API_ENDPOINTS.GET_PRODUCTS);
+        if (!response.ok) {
+          throw new Error('Failed to fetch products');
+        }
+        return await response.json();
+      } catch (error) {
+        console.error("Failed to load products:", error);
+        return [];
+      }
+    }
+
+    async function fetchRooms() {
+      try {
+        const response = await fetch(API_ENDPOINTS.GET_ROOMS);
+        if (!response.ok) {
+          throw new Error('Failed to fetch rooms');
+        }
+        return await response.json();
+      } catch (error) {
+        console.error("Failed to load rooms:", error);
+        return [];
+      }
+    }
+
+    async function loadResults() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const searchQuery = urlParams.get('query')?.toLowerCase() || '';
+      const selectedCollege = urlParams.get('category')?.toLowerCase() || 'all';
+
+      try {
+        // Fetch both products and rooms
+        const [products, rooms] = await Promise.all([
+          fetchProducts(),
+          fetchRooms()
+        ]);
+        
+        // Combine products and rooms
+        const allItems = [...products, ...rooms];
+        
+        const filteredItems = allItems.filter(item => {
+          const matchesQuery = searchQuery === '' || 
+            item.title?.toLowerCase().includes(searchQuery);
+          const matchesCollege = selectedCollege === 'all' || 
+            item.college?.toLowerCase() === selectedCollege;
+          return matchesQuery && matchesCollege;
+        });
+
+        // Add distance calculation if user location is available
+        let itemsWithDistance = filteredItems;
+        if (userLocation) {
+          itemsWithDistance = filteredItems.map(item => {
+            if (item.coordinates) {
+              const distance = calculateDistance(
+                userLocation.lat, 
+                userLocation.lon, 
+                item.coordinates.lat, 
+                item.coordinates.lon
+              );
+              return { ...item, distance };
+            }
+            return { ...item, distance: Infinity };
+          });
+          
+          // Sort by distance
+          itemsWithDistance.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
+        }
+
+        const searchResultsDiv = document.getElementById('searchResults');
+        searchResultsDiv.innerHTML = '';
+
+        if (itemsWithDistance.length > 0) {
+          itemsWithDistance.forEach(product => {
+            // Check if it's a room listing
+            if (product.category?.toLowerCase() === 'room') {
+              // Create room product card
+              const roomProduct = document.createElement('div');
+              roomProduct.className = 'room-product';
+              roomProduct.onclick = () => window.location.href = `product_interface.html?product=${encodeURIComponent(product.title)}`;
+              
+              // Get up to 3 images for thumbnails
+              const mainImage = product.images?.[0] || 'placeholder.jpg';
+              const thumbnails = product.images?.slice(1, 4) || [];
+              
+              // Create HTML for room card
+              roomProduct.innerHTML = `
+                <div class="room-image-container">
+                  <img src="${mainImage}" class="room-main-image" alt="${product.title}">
+                  <div class="room-thumbnails">
+                    ${thumbnails.map(img => `<img src="${img}" class="room-thumbnail" alt="Room thumbnail">`).join('')}
+                  </div>
+                </div>
+                <div class="room-details">
+                  <div>
+                    <h3 class="room-title">${product.hostelName || product.title}</h3>
+                    <div class="room-info">
+                      ${product.occupancy ? `<div class="room-info-item"><i class="fas fa-users"></i> ${product.occupancy} Person</div>` : ''}
+                      ${product.hasMess ? 
+                        `<div class="room-info-item"><i class="fas fa-utensils"></i> Mess Included</div>` : 
+                        `<div class="room-info-item negative"><i class="fas fa-utensils"></i> No Mess</div>`
+                      }
+                      ${product.hasAC ? 
+                        `<div class="room-info-item"><i class="fas fa-snowflake"></i> AC</div>` : 
+                        `<div class="room-info-item negative"><i class="fas fa-snowflake"></i> Non-AC</div>`
+                      }
+                      ${product.hasWifi ? 
+                        `<div class="room-info-item"><i class="fas fa-wifi"></i> WiFi</div>` : 
+                        `<div class="room-info-item negative"><i class="fas fa-wifi"></i> No WiFi</div>`
+                      }
+                    </div>
+                    ${product.collegeDistance ? 
+                      `<div class="room-distance"><i class="fas fa-university"></i> ${product.collegeDistance} km from college</div>` : ''
+                    }
+                  </div>
+                  <div class="room-price">
+                    ₹${product.price} ${product.priceType === 'monthly' ? '/month' : '/year'}
+                  </div>
+                  ${product.distance ? 
+                    `<div class="room-distance"><i class="fas fa-map-marker-alt"></i> ~${product.distance.toFixed(1)} km away</div>` : ''
+                  }
+                </div>
+              `;
+              
+              searchResultsDiv.appendChild(roomProduct);
+            } else {
+              // Regular product card
+              const isInWishlist = wishlist.some(item => item.title === product.title);
+              const productImage = product.images?.[0] || product.image || 'placeholder.jpg';
+              
+              // Create a container div instead of an anchor to prevent default link behavior
+              const productContainer = document.createElement('div');
+              productContainer.classList.add('product');
+              
+              // Add click event to the container (except for the heart icon)
+              productContainer.addEventListener('click', function(e) {
+                // Don't navigate if clicking on the heart icon or its parent
+                if (e.target.classList.contains('fa-heart') || e.target.closest('.wishlist-icon')) {
+                  return; // Do nothing, let the onclick handler of the icon handle it
+                }
+                window.location.href = `product_interface.html?product=${encodeURIComponent(product.title)}`;
+              });
+              
+              productContainer.style.cursor = 'pointer';
+              productContainer.innerHTML = `
+                <div class="product-img" style="background-image: url('${productImage}'); position: relative;">
+                  <div class="wishlist-container" style="position: absolute; top: 10px; right: 10px; z-index: 20;">
+                    <i class="${isInWishlist ? 'fas' : 'far'} fa-heart wishlist-icon" 
+                       onclick="toggleWishlist(event, ${JSON.stringify(product).replace(/"/g, '&quot;')})"></i>
+                  </div>
+                </div>
+                <h4>${product.title || 'Untitled Product'}</h4>
+                <p class="price">${product.price || '0'} ₹</p>
+                <p class="condition">Condition: ${product.condition || 'Not specified'}</p>
+                <p class="distance">
+                  ${product.distance ? `<i class="fas fa-map-marker-alt"></i> ~${product.distance.toFixed(1)} km away` : ''}
+                </p>
+                <button class="buy-now" 
+                        onclick="event.stopPropagation(); window.location.href='product_interface.html?product=${encodeURIComponent(product.title)}'">
+                  Buy Now
+                </button>
+              `;
+              searchResultsDiv.appendChild(productContainer);
+            }
+          });
+        } else {
+          searchResultsDiv.innerHTML = "<p>No products found.</p>";
+        }
+      } catch (error) {
+        console.error('Error loading results:', error);
+        searchResultsDiv.innerHTML = '<p>Error loading products. Please try again.</p>';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Get user location if not already stored
+      if (!userLocation) {
+        userLocation = await getLocation();
+        if (userLocation) {
+          localStorage.setItem('userLocation', JSON.stringify(userLocation));
+        }
+      }
+      
+      loadResults();
+      // Refresh products every 30 seconds
+      setInterval(loadResults, 30000);
+    });
+  </script>
+ 
+  
+</body>
+</html>

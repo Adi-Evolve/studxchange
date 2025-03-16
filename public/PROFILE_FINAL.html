@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile - StudXchange</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" />
+  <style>
+    /* Global Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      color: #333;
+    }
+    header {
+      background-color: #2a3d56;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .account-container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .account-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .account-header h1 {
+      font-size: 24px;
+      color: #2a3d56;
+    }
+    .account-actions button {
+      background-color: #2a3d56;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .account-actions button:hover {
+      background-color: #4d6a88;
+    }
+    .profile-info, .order-history, .sold-items, .settings {
+      margin-bottom: 20px;
+    }
+    .profile-info h2, .order-history h2, .sold-items h2, .settings h2 {
+      font-size: 22px;
+      color: #2a3d56;
+      margin-bottom: 10px;
+    }
+    .profile-item {
+      margin: 10px 0;
+    }
+    .profile-item strong {
+      color: #2a3d56;
+    }
+    .order-history ul, .sold-items ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    .order-history li, .sold-items li {
+      margin: 8px 0;
+    }
+    .settings button {
+      background-color: #2a3d56;
+      padding: 10px 20px;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      margin-right: 15px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .settings button:hover {
+      background-color: #4d6a88;
+    }
+    footer {
+      background-color: #124559;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .phone-button {
+      margin-left: 10px;
+      padding: 5px 10px;
+      background: #2a3d56;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .listed-items {
+      margin-bottom: 30px;
+    }
+    .listed-item {
+      display: flex;
+      align-items: center;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      transition: transform 0.2s ease;
+    }
+    .listed-item:hover {
+      transform: translateX(5px);
+    }
+    .item-image {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 4px;
+      margin-right: 20px;
+    }
+    .item-details {
+      flex-grow: 1;
+    }
+    .item-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .sold-btn, .delete-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      color: white;
+    }
+    .sold-btn {
+      background-color: #28a745 !important;
+      border: 1px solid #218838;
+    }
+    .sold-btn:hover {
+      background-color: #218838 !important;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .delete-btn {
+      background-color: #dc3545 !important;
+      border: 1px solid #c82333;
+    }
+    .delete-btn:hover {
+      background-color: #c82333 !important;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 400px;
+      border-radius: 8px;
+    }
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    /* Updated Modal Button Styles */
+    .modal-content button {
+      background-color: #2a3d56;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .modal-content button:hover {
+      background-color: #4d6a88;
+    }
+    
+    /* Navbar styles for consistency */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #2a3d56;
+      padding: 15px 30px;
+      /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
+      border: none;
+    }
+    .navlogo img {
+      height: 100px;
+      width: 250px;
+    }
+    .search-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      margin: 0 20px;
+    }
+    .searchbar {
+      display: flex;
+      align-items: center;
+      background: white;
+      border-radius: 30px;
+      padding: 2px;
+      width: 100%;
+      max-width: 600px;
+    }
+    .nav-button {
+      padding: 10px 25px;
+      border-radius: 25px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+      font-weight: 500;
+      display: inline-block;
+      color: white;
+    }
+    .location-button {
+      background-color: #28a745 !important;
+      margin-right: 10px;
+    }
+    @media (max-width: 768px) {
+    .searchbar select {
+        padding: 8px;
+        font-size: 14px;
+    }
+}
+.searchbar select {
+    background: #2a3d56;
+    color: white;
+    border-radius: 30px 0 0 30px;
+}
+.searchbar select, .searchbar input, .searchbar button {
+    border: none;
+    padding: 10px;
+}
+@media (max-width: 768px) {
+    .searchbar select {
+        padding: 8px;
+        font-size: 14px;
+    }
+}
+select {
+    word-wrap: normal;
+}
+button, select {
+    text-transform: none;
+}
+button, input, optgroup, select, textarea {
+    margin: 0;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+}
+select {
+    word-wrap: normal;
+}
+button, select {
+    text-transform: none;
+}
+button, input, optgroup, select, textarea {
+    margin: 0;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+}
+@media (max-width: 768px) {
+    .searchbar input {
+        font-size: 14px;
+    }
+}
+.searchbar input {
+    width: 100%;
+}
+.searchbar select, .searchbar input, .searchbar button {
+    border: none;
+    padding: 10px;
+}
+
+@media (max-width: 768px) {
+    .searchbar input {
+        font-size: 14px;
+    }
+}
+.searchbar button {
+    background: #2a3d56;
+    color: white;
+    border-radius: 0 30px 30px 0;
+}
+button, select {
+    text-transform: none;
+}
+  </style>
+</head>
+<body>
+  <!-- Common Navbar -->
+  <header>
+    <div class="navbar">
+        <div class="navlogo">
+            <a href="index.html"><img src="Logo1.png" alt="StudXchange"></a>
+        </div>
+        <div class="search-container">
+            <form class="searchbar" action="search-results.html" method="GET">
+                <select name="category">
+                    <option value="all">All</option>
+                    <option value="VIT">VIT</option>
+                    <option value="COEP">COEP</option>
+                    <option value="PICT">PICT</option>
+                    <option value="DYP">DYP</option>
+                    <option value="PCCOE">PCCOE</option>
+                </select>
+                <input type="text" name="query" placeholder="Search products...">
+                <button type="submit"><i class="fas fa-search"></i></button>
+            </form>
+        </div>
+        <button class="nav-button location-button" id="locationButton">
+            <i class="fas fa-map-marker-alt"></i> 
+            <span id="locationText">Get Location</span>
+        </button>
+        <span id="locationStatus" class="location-status"></span>
+        <div class="button-container" style="display: flex;">
+            <a class="nav-button wishlist-button me-2" href="wishlist.html">
+                <i class="far fa-heart"></i>
+            </a>
+            <a class="nav-button sell-button" href="sell.html">Sell/Donate</a>
+            <!-- <div id="authButtonContainer"></div> -->
+
+        </div>
+    </div>
+</header>
+
+  <div class="account-container">
+      <header class="account-header">
+          <h1 style="color: white;">Welcome, <span id="userName" style="color: white;"></span></h1>
+          <div class="account-actions">
+              <button onclick="editProfile()">Edit Profile</button>
+              <button onclick="logout()">Logout</button>
+          </div>
+      </header>
+
+      <div class="account-details">
+          <!-- Profile Information Section -->
+          <div class="profile-info">
+              <h2>Profile Information</h2>
+              <div class="profile-item">
+                  <strong>Name:</strong> <span id="profileName"></span>
+              </div>
+              <div class="profile-item">
+                  <strong>Email:</strong> <span id="profileEmail"></span>
+              </div>
+              <div class="profile-item">
+                  <strong>Phone:</strong> 
+                  <span id="profilePhone"></span>
+                  <button id="addPhoneBtn" class="phone-button" onclick="openPhoneModal()">Add Phone Number</button>
+              </div>
+          </div>
+
+          <!-- Listed Items Section -->
+          <div class="listed-items">
+              <h2>My Listed Items</h2>
+              <ul id="listedItemsList"></ul>
+          </div>
+
+          <!-- Order History Section -->
+          <div class="order-history">
+              <h2>Last Orders</h2>
+              <ul id="orderList"></ul>
+          </div>
+
+          <!-- Sold Items Section -->
+          <div class="sold-items">
+              <h2>Sold Items</h2>
+              <ul id="soldItemsList"></ul>
+          </div>
+
+          <!-- Account Settings Section -->
+          <div class="settings">
+              <h2>Account Settings</h2>
+              <button onclick="changePassword()">Change Password</button>
+              <button onclick="updatePaymentMethod()">Update Payment Method</button>
+              <button onclick="updateAddress()">Update Shipping Address</button>
+          </div>
+      </div>
+  </div>
+
+  <footer>
+      <p>For any help, contact us at: Studxchange05@gmail.com | Phone: 8857053541</p>
+  </footer>
+
+  <!-- Phone Modal -->
+  <div id="phoneModal" class="modal">
+      <div class="modal-content">
+          <span class="close" onclick="closePhoneModal()">&times;</span>
+          <h2>Enter Phone Number</h2>
+          <input type="tel" id="newPhone" placeholder="Enter 10-digit number" pattern="[0-9]{10}" required>
+          <button onclick="savePhone()">Save</button>
+      </div>
+  </div>
+
+
+  <script src="/js/db-config.js"></script>
+  <script src="/js/navbar.js"></script>
+  <script>
+    // When the page loads, load user data from localStorage and display profile info.
+    document.addEventListener('DOMContentLoaded', () => {
+        const user = JSON.parse(localStorage.getItem('currentUser'));
+        if (user) {
+            document.getElementById('userName').textContent = user.name;
+            document.getElementById('profileName').textContent = user.name;
+            document.getElementById('profileEmail').textContent = user.email;
+            if (user.phone) {
+                document.getElementById('profilePhone').textContent = user.phone;
+                document.getElementById('addPhoneBtn').style.display = 'none';
+            } else {
+                document.getElementById('profilePhone').textContent = 'Not provided';
+                document.getElementById('addPhoneBtn').style.display = 'inline-block';
+            }
+            loadListedItems();
+            loadSoldItems();
+        } else {
+            window.location.href = 'login.html';
+        }
+    });
+
+    // Phone Modal functions
+    function openPhoneModal() {
+        document.getElementById('phoneModal').style.display = 'block';
+    }
+    
+    function closePhoneModal() {
+        document.getElementById('phoneModal').style.display = 'none';
+    }
+
+    async function savePhone() {
+        const newPhone = document.getElementById('newPhone').value.trim();
+        if (!newPhone.match(/^\d{10}$/)) {
+            alert('Please enter a valid 10-digit phone number');
+            return;
+        }
+        try {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            currentUser.phone = newPhone;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            // Update user in MongoDB
+            const response = await fetch(API_ENDPOINTS.UPDATE_USER, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: currentUser.email,
+                    phone: newPhone
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to update phone number');
+            }
+            
+            document.getElementById('profilePhone').textContent = newPhone;
+            document.getElementById('addPhoneBtn').style.display = 'none';
+            closePhoneModal();
+        } catch (error) {
+            console.error('Error saving phone:', error);
+            alert('Failed to save phone number');
+        }
+    }
+
+    async function loadListedItems() {
+        try {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const response = await fetch(`${API_ENDPOINTS.GET_PRODUCTS}?sellerEmail=${encodeURIComponent(currentUser.email)}`);
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch listed items');
+            }
+            
+            const products = await response.json();
+            const listedItems = document.getElementById('listedItemsList');
+            listedItems.innerHTML = '';
+            
+            if (products.length === 0) {
+                listedItems.innerHTML = '<p>You have no listed items.</p>';
+                return;
+            }
+            
+            products.forEach(product => {
+                listedItems.innerHTML += `
+                    <li class="listed-item">
+                        <img src="${product.images?.[0] || product.image}" class="item-image" alt="${product.title}">
+                        <div class="item-details">
+                            <h3>${product.title}</h3>
+                            <p>₹${product.price}</p>
+                        </div>
+                        <div class="item-actions">
+                            <button class="sold-btn" onclick="handleSold('${product._id}')">Mark Sold</button>
+                            <button class="delete-btn" onclick="deleteItem('${product._id}')">Remove</button>
+                        </div>
+                    </li>
+                `;
+            });
+        } catch (error) {
+            console.error('Error loading items:', error);
+            document.getElementById('listedItemsList').innerHTML = '<p>Failed to load your listed items.</p>';
+        }
+    }
+
+    async function loadSoldItems() {
+        try {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const response = await fetch(`${API_ENDPOINTS.GET_SOLD_ITEMS}?sellerEmail=${encodeURIComponent(currentUser.email)}`);
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch sold items');
+            }
+            
+            const soldItems = await response.json();
+            const soldItemsList = document.getElementById('soldItemsList');
+            soldItemsList.innerHTML = '';
+            
+            if (soldItems.length === 0) {
+                soldItemsList.innerHTML = '<p>You have no sold items.</p>';
+                return;
+            }
+            
+            soldItems.forEach(item => {
+                soldItemsList.innerHTML += `
+                    <li class="listed-item">
+                        <img src="${item.image}" class="item-image" alt="${item.title}">
+                        <div class="item-details">
+                            <h3>${item.title}</h3>
+                            <p>₹${item.price}</p>
+                            <p>Sold on: ${new Date(item.soldDate).toLocaleDateString()}</p>
+                        </div>
+                    </li>
+                `;
+            });
+        } catch (error) {
+            console.error('Error loading sold items:', error);
+            document.getElementById('soldItemsList').innerHTML = '<p>Failed to load your sold items.</p>';
+        }
+    }
+
+    async function deleteItem(productId) {
+        if (!confirm('Are you sure you want to delete this item?')) return;
+        try {
+            const response = await fetch(`${API_ENDPOINTS.GET_PRODUCT_BY_ID(productId)}`, {
+                method: 'DELETE'
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to delete item');
+            }
+            
+            await loadListedItems();
+            alert('Item deleted successfully!');
+        } catch (error) {
+            console.error('Delete error:', error);
+            alert('Failed to delete item');
+        }
+    }
+
+    async function handleSold(productId) {
+        if (!confirm('Mark this item as sold?')) return;
+        try {
+            const response = await fetch(`${API_ENDPOINTS.MARK_SOLD}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ productId })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to mark item as sold');
+            }
+            
+            await loadListedItems();
+            await loadSoldItems();
+            alert('Item marked as sold!');
+        } catch (error) {
+            console.error('Error marking as sold:', error);
+            alert('Failed to mark item as sold');
+        }
+    }
+
+    // Other account actions
+    function editProfile() {
+        alert('Edit profile feature coming soon!');
+    }
+    
+    function logout() {
+        localStorage.removeItem('currentUser');
+        window.location.href = 'login.html';
+    }
+    
+    function changePassword() {
+        alert('Password change feature coming soon!');
+    }
+    
+    function updatePaymentMethod() {
+        alert('Payment method update coming soon!');
+    }
+    
+    function updateAddress() {
+        alert('Address update feature coming soon!');
+    }
+</script>
+</body>
+</html>
