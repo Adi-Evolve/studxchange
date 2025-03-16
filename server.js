@@ -24,15 +24,33 @@ const MONGODB_URI = process.env.MONGODB_URI;
 
 // Create a cached connection variable
 let cachedDb = null;
+let lastConnectionTime = null;
+const CONNECTION_TIMEOUT = 60 * 60 * 1000; // 1 hour in milliseconds
 
 // Function to connect to MongoDB
 async function connectToDatabase() {
   console.log('Connecting to MongoDB...');
   
-  // If the connection is already established, reuse it
-  if (cachedDb && mongoose.connection.readyState === 1) {
+  // Check if connection is still valid
+  const currentTime = Date.now();
+  const connectionExpired = lastConnectionTime && (currentTime - lastConnectionTime > CONNECTION_TIMEOUT);
+  
+  // If the connection is already established, recent, and in a good state, reuse it
+  if (cachedDb && mongoose.connection.readyState === 1 && !connectionExpired) {
     console.log('Using cached database connection');
     return cachedDb;
+  }
+  
+  // If connection exists but is expired or in a bad state, force a reconnection
+  if (mongoose.connection.readyState !== 0) {
+    console.log('Closing existing mongoose connection (expired or bad state)');
+    try {
+      await mongoose.connection.close();
+      cachedDb = null;
+    } catch (closeError) {
+      console.error('Error closing mongoose connection:', closeError);
+      // Continue anyway, we'll try to establish a new connection
+    }
   }
   
   // Maximum number of connection attempts
@@ -50,21 +68,21 @@ async function connectToDatabase() {
       console.log(`Connection attempt ${retryCount + 1}/${MAX_RETRIES}`);
       console.log('Attempting to connect with URI:', process.env.MONGODB_URI.substring(0, 20) + '...');
       
-      // Disconnect if there's an existing connection in a bad state
-      if (mongoose.connection.readyState !== 0) {
-        console.log('Closing existing mongoose connection');
-        await mongoose.connection.close();
-      }
-      
       // Connect to MongoDB with more detailed options
       const conn = await mongoose.connect(process.env.MONGODB_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
         serverSelectionTimeoutMS: 30000, // Increased timeout for Vercel
         bufferCommands: false, // Disable mongoose buffering
         connectTimeoutMS: 30000, // Connection timeout
         socketTimeoutMS: 45000, // Socket timeout
-        family: 4 // Use IPv4, skip trying IPv6
+        family: 4, // Use IPv4, skip trying IPv6
+        maxPoolSize: 10, // Limit connection pool size
+        minPoolSize: 1, // Maintain at least one connection
+        maxIdleTimeMS: 30000, // Close idle connections after 30 seconds
+        serverApi: {
+          version: '1',
+          strict: true,
+          deprecationErrors: true
+        }
       });
       
       console.log('Connected to MongoDB successfully');
@@ -78,18 +96,24 @@ async function connectToDatabase() {
       console.log('Available collections:', collections.map(c => c.name).join(', '));
       
       cachedDb = conn;
+      lastConnectionTime = Date.now();
       
       // Set up event listeners
       mongoose.connection.on('error', err => {
         console.error('MongoDB connection error:', err);
-        cachedDb = null;
+        if (err.name === 'MongoExpiredSessionError') {
+          console.log('Session expired, will reconnect on next request');
+          lastConnectionTime = null; // Force reconnection on next request
+        }
+        // Don't set cachedDb to null here, let the reconnection logic handle it
       });
       
       mongoose.connection.on('disconnected', () => {
         console.log('MongoDB disconnected');
-        cachedDb = null;
+        lastConnectionTime = null;
       });
       
+      console.log('Initial MongoDB connection successful');
       return cachedDb;
     } catch (error) {
       retryCount++;
@@ -264,7 +288,37 @@ app.get('/api/products', async (req, res) => {
       query.sellerEmail = sellerEmail;
     }
     
-    const products = await Product.find(query).sort({ createdAt: -1 });
+    // Perform the query with retry logic for session expiration
+    let products;
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+    
+    while (retryCount < MAX_RETRIES) {
+      try {
+        products = await Product.find(query).sort({ createdAt: -1 });
+        break; // If successful, exit the loop
+      } catch (queryError) {
+        retryCount++;
+        console.error(`GET /api/products - Query error (attempt ${retryCount}/${MAX_RETRIES}):`, queryError.message);
+        
+        if (queryError.name === 'MongoExpiredSessionError' && retryCount < MAX_RETRIES) {
+          console.log('GET /api/products - Session expired, reconnecting...');
+          // Force a new connection
+          if (mongoose.connection.readyState !== 0) {
+            await mongoose.connection.close();
+          }
+          await connectToDatabase();
+          initModels();
+          continue; // Retry the query
+        }
+        
+        // If we've reached max retries or it's not a session error, throw it
+        if (retryCount >= MAX_RETRIES) {
+          throw queryError;
+        }
+      }
+    }
+    
     console.log(`GET /api/products - Found ${products.length} products`);
     res.json(products);
   } catch (error) {
@@ -294,8 +348,8 @@ app.get('/api/rooms', async (req, res) => {
     
     console.log('GET /api/rooms - Room model is properly initialized');
     
-    // Check if sellerEmail filter is provided
-    const { sellerEmail } = req.query;
+    // Check if title or sellerEmail filter is provided
+    const { title, sellerEmail } = req.query;
     let query = {};
     
     if (sellerEmail) {
@@ -303,10 +357,44 @@ app.get('/api/rooms', async (req, res) => {
       query.sellerEmail = sellerEmail;
     }
     
+    if (title) {
+      console.log(`GET /api/rooms - Filtering by title: ${title}`);
+      // Use case-insensitive regex for title search
+      query.title = { $regex: new RegExp(title, 'i') };
+    }
+    
     console.log('GET /api/rooms - Executing query:', JSON.stringify(query));
     
-    // Perform the query directly without Promise.race
-    const rooms = await Room.find(query).sort({ createdAt: -1 });
+    // Perform the query with retry logic for session expiration
+    let rooms;
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+    
+    while (retryCount < MAX_RETRIES) {
+      try {
+        rooms = await Room.find(query).sort({ createdAt: -1 });
+        break; // If successful, exit the loop
+      } catch (queryError) {
+        retryCount++;
+        console.error(`GET /api/rooms - Query error (attempt ${retryCount}/${MAX_RETRIES}):`, queryError.message);
+        
+        if (queryError.name === 'MongoExpiredSessionError' && retryCount < MAX_RETRIES) {
+          console.log('GET /api/rooms - Session expired, reconnecting...');
+          // Force a new connection
+          if (mongoose.connection.readyState !== 0) {
+            await mongoose.connection.close();
+          }
+          await connectToDatabase();
+          initModels();
+          continue; // Retry the query
+        }
+        
+        // If we've reached max retries or it's not a session error, throw it
+        if (retryCount >= MAX_RETRIES) {
+          throw queryError;
+        }
+      }
+    }
     
     console.log(`GET /api/rooms - Found ${rooms.length} rooms`);
     
@@ -336,7 +424,37 @@ app.get('/api/products/:id', async (req, res) => {
     await connectToDatabase();
     initModels();
     
-    const product = await Product.findById(req.params.id);
+    // Perform the query with retry logic for session expiration
+    let product;
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+    
+    while (retryCount < MAX_RETRIES) {
+      try {
+        product = await Product.findById(req.params.id);
+        break; // If successful, exit the loop
+      } catch (queryError) {
+        retryCount++;
+        console.error(`GET /api/products/${req.params.id} - Query error (attempt ${retryCount}/${MAX_RETRIES}):`, queryError.message);
+        
+        if (queryError.name === 'MongoExpiredSessionError' && retryCount < MAX_RETRIES) {
+          console.log(`GET /api/products/${req.params.id} - Session expired, reconnecting...`);
+          // Force a new connection
+          if (mongoose.connection.readyState !== 0) {
+            await mongoose.connection.close();
+          }
+          await connectToDatabase();
+          initModels();
+          continue; // Retry the query
+        }
+        
+        // If we've reached max retries or it's not a session error, throw it
+        if (retryCount >= MAX_RETRIES) {
+          throw queryError;
+        }
+      }
+    }
+    
     if (!product) return res.status(404).json({ message: 'Product not found' });
     
     console.log(`GET /api/products/${req.params.id} - Found product: ${product.title}`);
@@ -575,13 +693,47 @@ app.post('/api/auth/google', async (req, res) => {
 // Add endpoint to get sold items
 app.get('/api/sold-items', async (req, res) => {
   try {
+    console.log('GET /api/sold-items - Fetching sold items');
+    
     // Ensure database connection
     await connectToDatabase();
     initModels();
     
     const { sellerEmail } = req.query;
     const query = sellerEmail ? { sellerEmail } : {};
-    const soldItems = await SoldItem.find(query).sort({ soldDate: -1 });
+    
+    // Perform the query with retry logic for session expiration
+    let soldItems;
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+    
+    while (retryCount < MAX_RETRIES) {
+      try {
+        soldItems = await SoldItem.find(query).sort({ soldDate: -1 });
+        break; // If successful, exit the loop
+      } catch (queryError) {
+        retryCount++;
+        console.error(`GET /api/sold-items - Query error (attempt ${retryCount}/${MAX_RETRIES}):`, queryError.message);
+        
+        if (queryError.name === 'MongoExpiredSessionError' && retryCount < MAX_RETRIES) {
+          console.log('GET /api/sold-items - Session expired, reconnecting...');
+          // Force a new connection
+          if (mongoose.connection.readyState !== 0) {
+            await mongoose.connection.close();
+          }
+          await connectToDatabase();
+          initModels();
+          continue; // Retry the query
+        }
+        
+        // If we've reached max retries or it's not a session error, throw it
+        if (retryCount >= MAX_RETRIES) {
+          throw queryError;
+        }
+      }
+    }
+    
+    console.log(`GET /api/sold-items - Found ${soldItems.length} sold items`);
     res.json(soldItems);
   } catch (error) {
     console.error('GET /api/sold-items - Error:', error.message);
@@ -592,33 +744,122 @@ app.get('/api/sold-items', async (req, res) => {
 // Add endpoint to mark a product as sold
 app.post('/api/products/mark-sold', async (req, res) => {
   try {
+    console.log('POST /api/products/mark-sold - Marking product as sold');
+    
     // Ensure database connection
     await connectToDatabase();
     initModels();
     
     const { productId } = req.body;
     
-    // Find the product
-    const product = await Product.findById(productId);
+    if (!productId) {
+      return res.status(400).json({ message: 'Product ID is required' });
+    }
+    
+    // Find the product with retry logic for session expiration
+    let product;
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+    
+    while (retryCount < MAX_RETRIES) {
+      try {
+        product = await Product.findById(productId);
+        break; // If successful, exit the loop
+      } catch (queryError) {
+        retryCount++;
+        console.error(`POST /api/products/mark-sold - Query error (attempt ${retryCount}/${MAX_RETRIES}):`, queryError.message);
+        
+        if (queryError.name === 'MongoExpiredSessionError' && retryCount < MAX_RETRIES) {
+          console.log('POST /api/products/mark-sold - Session expired, reconnecting...');
+          // Force a new connection
+          if (mongoose.connection.readyState !== 0) {
+            await mongoose.connection.close();
+          }
+          await connectToDatabase();
+          initModels();
+          continue; // Retry the query
+        }
+        
+        // If we've reached max retries or it's not a session error, throw it
+        if (retryCount >= MAX_RETRIES) {
+          throw queryError;
+        }
+      }
+    }
+    
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
     
-    // Create a sold item record
-    const soldItem = new SoldItem({
-      title: product.title,
-      price: product.price,
-      image: product.images?.[0] || product.image || 'placeholder.jpg',
-      sellerEmail: product.sellerEmail,
-      soldDate: new Date()
-    });
+    // Create a sold item record with retry logic
+    let soldItem;
+    retryCount = 0;
     
-    // Save the sold item
-    await soldItem.save();
+    while (retryCount < MAX_RETRIES) {
+      try {
+        soldItem = new SoldItem({
+          title: product.title,
+          price: product.price,
+          image: product.images?.[0] || product.image || 'placeholder.jpg',
+          sellerEmail: product.sellerEmail,
+          soldDate: new Date()
+        });
+        
+        // Save the sold item
+        await soldItem.save();
+        break; // If successful, exit the loop
+      } catch (saveError) {
+        retryCount++;
+        console.error(`POST /api/products/mark-sold - Save error (attempt ${retryCount}/${MAX_RETRIES}):`, saveError.message);
+        
+        if (saveError.name === 'MongoExpiredSessionError' && retryCount < MAX_RETRIES) {
+          console.log('POST /api/products/mark-sold - Session expired, reconnecting...');
+          // Force a new connection
+          if (mongoose.connection.readyState !== 0) {
+            await mongoose.connection.close();
+          }
+          await connectToDatabase();
+          initModels();
+          continue; // Retry the save
+        }
+        
+        // If we've reached max retries or it's not a session error, throw it
+        if (retryCount >= MAX_RETRIES) {
+          throw saveError;
+        }
+      }
+    }
     
-    // Delete the product
-    await Product.findByIdAndDelete(productId);
+    // Delete the product with retry logic
+    retryCount = 0;
     
+    while (retryCount < MAX_RETRIES) {
+      try {
+        await Product.findByIdAndDelete(productId);
+        break; // If successful, exit the loop
+      } catch (deleteError) {
+        retryCount++;
+        console.error(`POST /api/products/mark-sold - Delete error (attempt ${retryCount}/${MAX_RETRIES}):`, deleteError.message);
+        
+        if (deleteError.name === 'MongoExpiredSessionError' && retryCount < MAX_RETRIES) {
+          console.log('POST /api/products/mark-sold - Session expired, reconnecting...');
+          // Force a new connection
+          if (mongoose.connection.readyState !== 0) {
+            await mongoose.connection.close();
+          }
+          await connectToDatabase();
+          initModels();
+          continue; // Retry the delete
+        }
+        
+        // If we've reached max retries or it's not a session error, throw it
+        if (retryCount >= MAX_RETRIES) {
+          throw deleteError;
+        }
+      }
+    }
+    
+    console.log(`POST /api/products/mark-sold - Product ${productId} marked as sold`);
     res.json({ message: 'Product marked as sold' });
   } catch (error) {
     console.error('POST /api/products/mark-sold - Error:', error.message);
@@ -684,6 +925,78 @@ app.delete('/api/products/:id', async (req, res) => {
   } catch (error) {
     console.error(`DELETE /api/products/${req.params.id} - Error:`, error.message);
     res.status(500).json({ message: error.message, stack: error.stack });
+  }
+});
+
+// Get room by title
+app.get('/api/rooms/title/:title', async (req, res) => {
+  try {
+    console.log(`GET /api/rooms/title/${req.params.title} - Fetching room by title`);
+    
+    // Ensure database connection
+    await connectToDatabase();
+    console.log(`GET /api/rooms/title/${req.params.title} - Database connection successful`);
+    
+    // Initialize models
+    initModels();
+    console.log(`GET /api/rooms/title/${req.params.title} - Models initialized`);
+    
+    // Check if Room model is properly initialized
+    if (!Room) {
+      console.error(`GET /api/rooms/title/${req.params.title} - Room model not initialized`);
+      return res.status(500).json({ message: 'Room model not initialized' });
+    }
+    
+    const title = req.params.title;
+    console.log(`GET /api/rooms/title/${title} - Searching for room with title: ${title}`);
+    
+    // Perform the query with retry logic for session expiration
+    let room;
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+    
+    while (retryCount < MAX_RETRIES) {
+      try {
+        // Use case-insensitive regex for title search
+        room = await Room.findOne({ title: { $regex: new RegExp(title, 'i') } });
+        break; // If successful, exit the loop
+      } catch (queryError) {
+        retryCount++;
+        console.error(`GET /api/rooms/title/${title} - Query error (attempt ${retryCount}/${MAX_RETRIES}):`, queryError.message);
+        
+        if (queryError.name === 'MongoExpiredSessionError' && retryCount < MAX_RETRIES) {
+          console.log(`GET /api/rooms/title/${title} - Session expired, reconnecting...`);
+          // Force a new connection
+          if (mongoose.connection.readyState !== 0) {
+            await mongoose.connection.close();
+          }
+          await connectToDatabase();
+          initModels();
+          continue; // Retry the query
+        }
+        
+        // If we've reached max retries or it's not a session error, throw it
+        if (retryCount >= MAX_RETRIES) {
+          throw queryError;
+        }
+      }
+    }
+    
+    if (!room) {
+      console.log(`GET /api/rooms/title/${title} - Room not found`);
+      return res.status(404).json({ message: 'Room not found' });
+    }
+    
+    console.log(`GET /api/rooms/title/${title} - Found room: ${room.title}`);
+    res.json(room);
+  } catch (error) {
+    console.error(`GET /api/rooms/title/${req.params.title} - Error:`, error.message);
+    console.error(`GET /api/rooms/title/${req.params.title} - Stack:`, error.stack);
+    res.status(500).json({ 
+      message: 'Failed to fetch room by title',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'production' ? null : error.stack
+    });
   }
 });
 
