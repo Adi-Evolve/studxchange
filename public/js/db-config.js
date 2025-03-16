@@ -10,6 +10,8 @@ const API_BASE_URL = window.location.hostname === 'localhost' || window.location
     ? "/api" 
     : "/api"; // Same for production since we're using relative paths
 
+console.log("API_BASE_URL:", API_BASE_URL);
+
 // API Endpoints
 const API_ENDPOINTS = {
   // Products
@@ -36,8 +38,13 @@ const API_ENDPOINTS = {
   MARK_SOLD: `${API_BASE_URL}/products/mark-sold`
 };
 
+// Log all endpoints for debugging
+console.log("API Endpoints:", API_ENDPOINTS);
+
 // Helper function for making API requests
 async function apiRequest(endpoint, method = 'GET', data = null) {
+  console.log(`Making ${method} request to ${endpoint}`);
+  
   const options = {
     method,
     headers: {
@@ -47,15 +54,28 @@ async function apiRequest(endpoint, method = 'GET', data = null) {
 
   if (data) {
     options.body = JSON.stringify(data);
+    console.log('Request data:', data);
   }
 
   try {
     const response = await fetch(endpoint, options);
+    console.log(`Response status: ${response.status}`);
+    
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'API request failed');
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+        console.error('API error details:', errorData);
+      } catch (e) {
+        console.error('Could not parse error response:', e);
+      }
+      throw new Error(errorMessage);
     }
-    return await response.json();
+    
+    const responseData = await response.json();
+    console.log('Response data:', responseData);
+    return responseData;
   } catch (error) {
     console.error('API request error:', error);
     throw error;

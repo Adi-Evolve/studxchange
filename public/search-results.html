@@ -513,11 +513,25 @@ async function getLocation() {
 
     async function fetchProducts() {
       try {
+        console.log('Fetching products from:', API_ENDPOINTS.GET_PRODUCTS);
         const response = await fetch(API_ENDPOINTS.GET_PRODUCTS);
+        console.log('Products response status:', response.status);
+        
         if (!response.ok) {
-          throw new Error('Failed to fetch products');
+          let errorMessage = `HTTP error! status: ${response.status}`;
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+            console.error('API error details:', errorData);
+          } catch (e) {
+            console.error('Could not parse error response:', e);
+          }
+          throw new Error(errorMessage);
         }
-        return await response.json();
+        
+        const data = await response.json();
+        console.log('Products data received:', data.length, 'items');
+        return data;
       } catch (error) {
         console.error("Failed to load products:", error);
         return [];
@@ -526,11 +540,25 @@ async function getLocation() {
 
     async function fetchRooms() {
       try {
+        console.log('Fetching rooms from:', API_ENDPOINTS.GET_ROOMS);
         const response = await fetch(API_ENDPOINTS.GET_ROOMS);
+        console.log('Rooms response status:', response.status);
+        
         if (!response.ok) {
-          throw new Error('Failed to fetch rooms');
+          let errorMessage = `HTTP error! status: ${response.status}`;
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+            console.error('API error details:', errorData);
+          } catch (e) {
+            console.error('Could not parse error response:', e);
+          }
+          throw new Error(errorMessage);
         }
-        return await response.json();
+        
+        const data = await response.json();
+        console.log('Rooms data received:', data.length, 'items');
+        return data;
       } catch (error) {
         console.error("Failed to load rooms:", error);
         return [];

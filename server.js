@@ -18,9 +18,31 @@ app.use(express.static(path.join(__dirname, 'public')));
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://studxchangeUser:Saimansays-1@studxchange.o1uay.mongodb.net/?retryWrites=true&w=majority&appName=Studxchange";
 
-mongoose.connect(MONGODB_URI)
+console.log('Connecting to MongoDB...');
+mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000 // Timeout after 5s instead of 30s
+})
   .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('Failed to connect to MongoDB:', err));
+  .catch(err => {
+    console.error('Failed to connect to MongoDB:', err);
+    // Don't crash the server if MongoDB connection fails
+    // Instead, we'll handle errors in the route handlers
+  });
+
+// Connection error handling
+mongoose.connection.on('error', err => {
+  console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected. Attempting to reconnect...');
+});
+
+mongoose.connection.on('reconnected', () => {
+  console.log('MongoDB reconnected');
+});
 
 // Define MongoDB Schemas and Models
 const productSchema = new mongoose.Schema({
@@ -112,20 +134,26 @@ const transporter = nodemailer.createTransport({
 // Get all products
 app.get('/api/products', async (req, res) => {
   try {
+    console.log('GET /api/products - Fetching products');
     const products = await Product.find().sort({ createdAt: -1 });
+    console.log(`GET /api/products - Found ${products.length} products`);
     res.json(products);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('GET /api/products - Error:', error.message);
+    res.status(500).json({ message: error.message, stack: error.stack });
   }
 });
 
 // Get all rooms
 app.get('/api/rooms', async (req, res) => {
   try {
+    console.log('GET /api/rooms - Fetching rooms');
     const rooms = await Room.find().sort({ createdAt: -1 });
+    console.log(`GET /api/rooms - Found ${rooms.length} rooms`);
     res.json(rooms);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('GET /api/rooms - Error:', error.message);
+    res.status(500).json({ message: error.message, stack: error.stack });
   }
 });
 
