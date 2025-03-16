@@ -15,5 +15,8 @@
     "nodemailer": "^6.7.0",
     "nodemon": "^2.0.14",
     "dotenv": "^10.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }
