@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>API Test</title>
+  <script src="js/db-config.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -46,7 +47,7 @@
       resultsElement.textContent = 'Loading products...';
       
       try {
-        const response = await fetch('/api/products');
+        const response = await fetch(API_ENDPOINTS.GET_PRODUCTS);
         console.log('Products response status:', response.status);
         
         if (!response.ok) {
@@ -68,7 +69,7 @@
       resultsElement.textContent = 'Loading rooms...';
       
       try {
-        const response = await fetch('/api/rooms');
+        const response = await fetch(API_ENDPOINTS.GET_ROOMS);
         console.log('Rooms response status:', response.status);
         
         if (!response.ok) {
@@ -107,7 +108,7 @@
       resultsElement.textContent = 'Loading sold items...';
       
       try {
-        const response = await fetch('/api/sold-items');
+        const response = await fetch(API_ENDPOINTS.GET_SOLD_ITEMS);
         console.log('Sold items response status:', response.status);
         
         if (!response.ok) {

@@ -8,6 +8,15 @@
 // Get the base URL dynamically based on the current environment
 const API_BASE_URL = "/api"; // Use relative path for all environments
 
+// Ensure API calls work from both root and /public/ paths
+function getApiUrl(endpoint) {
+  // If we're in the /public/ path, we need to go up one level
+  if (window.location.pathname.startsWith('/public/')) {
+    return `..${endpoint}`;
+  }
+  return endpoint;
+}
+
 console.log("API_BASE_URL:", API_BASE_URL);
 
 // Image Upload Configuration
@@ -17,28 +26,30 @@ const IMGBB_UPLOAD_URL = 'https://api.imgbb.com/1/upload';
 // API Endpoints
 const API_ENDPOINTS = {
   // Products
-  GET_PRODUCTS: `${API_BASE_URL}/products`,
-  ADD_PRODUCT: `${API_BASE_URL}/products`,
-  GET_PRODUCT_BY_ID: (id) => `${API_BASE_URL}/products/${id}`,
-  DELETE_PRODUCT: (id) => `${API_BASE_URL}/products/${id}`,
+  GET_PRODUCTS: getApiUrl(`${API_BASE_URL}/products`),
+  ADD_PRODUCT: getApiUrl(`${API_BASE_URL}/products`),
+  GET_PRODUCT_BY_ID: (id) => getApiUrl(`${API_BASE_URL}/products/${id}`),
+  DELETE_PRODUCT: (id) => getApiUrl(`${API_BASE_URL}/products/${id}`),
   
   // Rooms
-  GET_ROOMS: `${API_BASE_URL}/rooms`,
-  ADD_ROOM: `${API_BASE_URL}/rooms`,
+  GET_ROOMS: getApiUrl(`${API_BASE_URL}/rooms`),
+  ADD_ROOM: getApiUrl(`${API_BASE_URL}/rooms`),
+  GET_ROOMS_BY_TITLE: getApiUrl(`${API_BASE_URL}/rooms?title=`),
+  GET_ROOM_BY_TITLE: getApiUrl(`${API_BASE_URL}/rooms/title/`),
   
   // Users
-  REGISTER_USER: `${API_BASE_URL}/users/register`,
-  LOGIN_USER: `${API_BASE_URL}/users/login`,
-  VERIFY_OTP: `${API_BASE_URL}/users/verify-otp`,
-  SEND_OTP: `${API_BASE_URL}/users/send-otp`,
-  UPDATE_USER: `${API_BASE_URL}/users/update`,
+  REGISTER_USER: getApiUrl(`${API_BASE_URL}/users/register`),
+  LOGIN_USER: getApiUrl(`${API_BASE_URL}/users/login`),
+  VERIFY_OTP: getApiUrl(`${API_BASE_URL}/users/verify-otp`),
+  SEND_OTP: getApiUrl(`${API_BASE_URL}/users/send-otp`),
+  UPDATE_USER: getApiUrl(`${API_BASE_URL}/users/update`),
   
   // Google Auth
-  GOOGLE_AUTH: `${API_BASE_URL}/auth/google`,
+  GOOGLE_AUTH: getApiUrl(`${API_BASE_URL}/auth/google`),
   
   // Sold Items
-  GET_SOLD_ITEMS: `${API_BASE_URL}/sold-items`,
-  MARK_SOLD: `${API_BASE_URL}/products/mark-sold`
+  GET_SOLD_ITEMS: getApiUrl(`${API_BASE_URL}/sold-items`),
+  MARK_SOLD: getApiUrl(`${API_BASE_URL}/products/mark-sold`)
 };
 
 // Log all endpoints for debugging

@@ -1020,7 +1020,7 @@ async function toggleWishlist(product) {
       try {
         console.log("Attempting to fetch room directly from MongoDB:", roomTitle);
         // Try the /api/rooms endpoint
-        const response = await fetch(`/api/rooms?title=${encodeURIComponent(roomTitle)}`);
+        const response = await fetch(API_ENDPOINTS.GET_ROOMS_BY_TITLE + encodeURIComponent(roomTitle));
         if (response.ok) {
           const data = await response.json();
           console.log("Response from MongoDB:", data);
@@ -1146,7 +1146,7 @@ async function toggleWishlist(product) {
             // Check if we're looking for a room listing
             if (title.includes("hostel") || title.includes("room") || title.includes("pg")) {
               // Make direct API request to server for room data
-              const response = await fetch(`/api/rooms/title/${encodeURIComponent(productTitleParam)}`);
+              const response = await fetch(API_ENDPOINTS.GET_ROOM_BY_TITLE + encodeURIComponent(productTitleParam));
               if (response.ok) {
                 const roomData = await response.json();
                 console.log("Fetched room data from API:", roomData);

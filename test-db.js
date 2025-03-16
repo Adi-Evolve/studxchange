@@ -1,45 +1,59 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 
-async function testDatabase() {
+async function testConnection() {
+  console.log('Testing MongoDB connection...');
+  
   try {
-    console.log('Testing MongoDB connection...');
-    console.log('Connection string:', process.env.MONGODB_URI);
-    
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 30000,
-      connectTimeoutMS: 30000,
-      socketTimeoutMS: 45000,
-      family: 4
-    });
-    
-    console.log('Connected to MongoDB successfully!');
-    console.log('Connection state:', mongoose.connection.readyState);
-    console.log('Database name:', mongoose.connection.db.databaseName);
-    
-    // List collections
-    const collections = await mongoose.connection.db.listCollections().toArray();
-    console.log('Collections:', collections.map(c => c.name));
-    
-    // Check each collection for documents
-    for (const collection of collections) {
-      const count = await mongoose.connection.db.collection(collection.name).countDocuments();
-      console.log(`Collection ${collection.name} has ${count} documents`);
-      
-      if (count > 0) {
-        // Show a sample document
-        const sample = await mongoose.connection.db.collection(collection.name).findOne();
-        console.log(`Sample document from ${collection.name}:`, JSON.stringify(sample, null, 2));
-      }
+    // Ensure MONGODB_URI is defined
+    if (!process.env.MONGODB_URI) {
+      console.error('MONGODB_URI environment variable is not defined');
+      process.exit(1);
     }
     
-    await mongoose.disconnect();
-    console.log('Disconnected from MongoDB');
+    console.log('Attempting to connect with URI:', process.env.MONGODB_URI.substring(0, 20) + '...');
+    
+    // Connect to MongoDB
+    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+    
+    console.log('Connected to MongoDB successfully');
+    
+    // Verify we can access the database
+    const dbName = mongoose.connection.db.databaseName;
+    console.log('Database name:', dbName);
+    
+    // Test a simple operation to ensure the connection is working
+    const collections = await mongoose.connection.db.listCollections().toArray();
+    console.log('Available collections:', collections.map(c => c.name).join(', '));
+    
+    // Close the connection
+    await mongoose.connection.close();
+    console.log('Connection closed successfully');
+    
+    return true;
   } catch (error) {
-    console.error('Failed to connect to MongoDB:', error);
+    console.error('Failed to connect to MongoDB. Error details:', error);
+    console.error('Connection string format correct? URI starts with:', 
+                 process.env.MONGODB_URI ? process.env.MONGODB_URI.substring(0, 20) + '...' : 'undefined');
+    return false;
   }
 }
 
-testDatabase(); 
+// Run the test
+testConnection()
+  .then(success => {
+    if (success) {
+      console.log('MongoDB connection test passed!');
+      process.exit(0);
+    } else {
+      console.error('MongoDB connection test failed!');
+      process.exit(1);
+    }
+  })
+  .catch(err => {
+    console.error('Unexpected error during test:', err);
+    process.exit(1);
+  }); 

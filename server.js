@@ -13,7 +13,11 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
+
+// Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
+// Also serve static files from /public/ path for compatibility with Live Server
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -685,6 +689,12 @@ app.delete('/api/products/:id', async (req, res) => {
 
 // Catch-all route to serve index.html
 app.get('*', (req, res) => {
+  // Skip API routes
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ message: 'API endpoint not found' });
+  }
+  
+  // Handle both root and /public/ paths
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
