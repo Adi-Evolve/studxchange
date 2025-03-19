@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # StudXchange
 
 StudXchange is a platform for students to exchange academic resources, connect with peers, and collaborate on projects.
@@ -71,3 +72,6 @@ For more information, contact Adi-Evolve.
 ## License
 
 This project is licensed under the MIT License. 
+=======
+# studxchange
+>>>>>>> 1de0898082170ca6007d638689430618bdb03281
