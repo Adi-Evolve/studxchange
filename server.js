@@ -6,7 +6,7 @@ const path = require('path');
 
 require('dotenv').config();
 require('./models/otp'); // Add this line to register the OTP model
-
+require('./models/user');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
-
+app.use(express.json());
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
 // Also serve static files from /public/ path for compatibility with Live Server
@@ -786,6 +786,8 @@ app.get('/api/sold-items', async (req, res) => {
   }
 });
 
+app.post('/api/auth/google', require('./controllers/authController').googleAuth);
+
 // Add endpoint to mark a product as sold
 app.post('/api/products/mark-sold', async (req, res) => {
   try {
@@ -1095,5 +1097,6 @@ app.use((err, req, res, next) => {
   });
 });
 
+app.post('/api/auth/google', require('./controllers/authController').googleAuth);
 // Export the Express API for Vercel
 module.exports = app;
