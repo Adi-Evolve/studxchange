@@ -145,10 +145,11 @@
       <span class="divider-text">or</span>
     </div>
   </div>
-  
+
    
 
     <script>
+      const GOOGLE_CLIENT_ID = "26642122071-ekdopa6ljd6orkti9j8jadaf30bqmnv2.apps.googleusercontent.com";
       function handleGoogleResponse(response) {
           const userData = parseJwt(response.credential);
           
@@ -183,7 +184,7 @@
       // Initialize Google Sign-In
       window.onload = function() {
           google.accounts.id.initialize({
-              client_id: "YOUR_GOOGLE_CLIENT_ID",
+              client_id: "26642122071-ekdopa6ljd6orkti9j8jadaf30bqmnv2.apps.googleusercontent.com",
               callback: handleGoogleResponse
           });
       };
