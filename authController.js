@@ -1,5 +1,5 @@
 // src/controllers/authController.js
-const twilioService = require('../services/twilioService');
+
 const axios = require('axios');
 const OTP = require('../models/otp'); // Make sure you have the OTP model
 
@@ -14,20 +14,17 @@ exports.sendEmailOtp = async (req, res) => {
     await OTP.findOneAndDelete({ email }); // Delete any existing OTP
     await new OTP({ email, otp }).save();
 
-    // Send email via EmailJS
-    const emailjsResponse = await axios.post(
-      'https://api.emailjs.com/api/v1.0/email/send',
-      {
-        service_id: process.env.EMAILJS_SERVICE_ID,
-        template_id: process.env.EMAILJS_TEMPLATE_ID,
-        user_id: process.env.EMAILJS_USER_ID,
-        template_params: {
-          to_email: email,
-          to_name: name,
-          otp: otp
-        }
+    // EmailJS request
+    const response = await axios.post('https://api.emailjs.com/api/v1.0/email/send', {
+      service_id: process.env.EMAILJS_SERVICE_ID,
+      template_id: process.env.EMAILJS_TEMPLATE_ID,
+      user_id: process.env.EMAILJS_USER_ID,
+      template_params: {
+        to_email: email,
+        to_name: name,
+        otp: otp
       }
-    );
+    });
 
     if (emailjsResponse.status === 200) {
       res.json({ message: 'OTP sent successfully' });
@@ -47,19 +44,13 @@ exports.verifyEmailOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
     
-    // Find OTP in database
+    // Find and validate OTP
     const otpRecord = await OTP.findOne({ email });
+    if (!otpRecord) return res.status(400).json({ error: 'OTP not found' });
     
-    if (!otpRecord) {
-      return res.status(400).json({ error: 'OTP not found' });
-    }
-
     // Check expiration (5 minutes)
-    const createdAt = new Date(otpRecord.createdAt).getTime();
-    const now = new Date().getTime();
-    const diff = (now - createdAt) / 1000 / 60; // Difference in minutes
-
-    if (diff > 5) {
+    const isExpired = (new Date() - otpRecord.createdAt) > 300000;
+    if (isExpired) {
       await OTP.findByIdAndDelete(otpRecord._id);
       return res.status(400).json({ error: 'OTP expired' });
     }
@@ -68,36 +59,14 @@ exports.verifyEmailOtp = async (req, res) => {
       return res.status(400).json({ error: 'Invalid OTP' });
     }
 
-    // Delete the OTP after successful verification
+    // Cleanup after successful verification
     await OTP.findByIdAndDelete(otpRecord._id);
-    
     res.json({ verified: true });
 
   } catch (error) {
     console.error('Verify OTP error:', error);
-    res.status(500).json({ 
-      error: error.message || 'Failed to verify OTP',
-      details: error.response?.data
-    });
+    res.status(500).json({ error: 'Failed to verify OTP' });
   }
 };
 
-exports.sendSmsOtp = async (req, res) => {
-  try {
-    const { phone } = req.body;
-    const result = await twilioService.sendSmsOtp(phone);
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
 
-exports.verifySmsOtp = async (req, res) => {
-  try {
-    const { phone, otp } = req.body;
-    const result = await twilioService.verifySmsOtp(phone, otp);
-    res.json(result);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};

@@ -3,8 +3,10 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
-const nodemailer = require('nodemailer');
+
 require('dotenv').config();
+require('./models/otp'); // Add this line to register the OTP model
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -277,14 +279,7 @@ function initModels() {
   }
 }
 
-// Configure Nodemailer for sending OTPs
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
-  }
-});
+
 
 // API Routes
 // Health check endpoint

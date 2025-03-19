@@ -407,9 +407,15 @@
       let resendTimer;
 
       function validateEmail(email) {
-          const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          return re.test(email);
-      }
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
+}
+
+// In sendOtpBtn click handler
+if (!validateEmail(email)) {
+  showError("Invalid email format");
+  return;
+}
 
       function startOtpResendTimer() {
           let seconds = 30;
