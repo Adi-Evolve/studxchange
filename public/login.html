@@ -136,33 +136,13 @@
   <div class="login-container">
     <h1>Login</h1>
     
-    <!-- Google Sign-In -->
+    <!-- Google Sign-In Button -->
     <div class="google-signin-container">
-      <div id="g_id_signin" data-type="standard" data-theme="outline" data-size="large"></div>
-    </div>
-
-    <div class="divider">
-      <span class="divider-text">or</span>
-    </div>
-
-    <!-- Login Form -->
-    <form class="login-form" id="loginForm">
-      <label for="email">Email</label>
-      <input type="email" id="email" name="email" placeholder="Enter your email" required>
-      
-      <label for="password">Password</label>
-      <input type="password" id="password" name="password" placeholder="Enter your password" required>
-      
-      <button type="submit" id="loginBtn">Login</button>
-      
-      <div class="error" id="formError"></div>
-    </form>
-    
-    <div class="signup-link">
-      <p>Don't have an account? <a href="Signuppage.html">Sign up</a></p>
+      <div id="g_id_signin" data-type="standard" data-size="large" data-theme="outline"></div>
     </div>
   </div>
 
+<<<<<<< HEAD
   <script>
     // Google Sign-In Initialization
     function initGoogleSignIn() {
@@ -200,9 +180,53 @@
           body: JSON.stringify({
             name: userData.name,
             email: userData.email
+=======
+    
+  
+
+   
+
+    <script>
+      const GOOGLE_CLIENT_ID = "26642122071-ekdopa6ljd6orkti9j8jadaf30bqmnv2.apps.googleusercontent.com";
+     
+      function handleGoogleResponse(response) {
+          const userData = parseJwt(response.credential);
+          
+          fetch('/api/auth/google', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                  name: userData.name,
+                  email: userData.email,
+                  googleId: userData.sub
+              })
+>>>>>>> 0beaa1660015b95dde29e848981a3c330d5d4229
           })
+          .then(response => response.json())
+          .then(user => {
+              localStorage.setItem('currentUser', JSON.stringify(user));
+              window.location.href = 'PROFILE_FINAL.html';
+          })
+          .then(response => {
+  if (!response.ok) throw new Error('Login failed');
+  return response.json();
+})
+
+          .catch(error => {
+              console.error('Login error:', error);
+              alert('Login failed. Please try again.');
+          });
+      }
+      function initGoogleSignIn() {
+      if (typeof google !== 'undefined') {
+        google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleGoogleResponse
         });
         
+<<<<<<< HEAD
         if (!result.ok) {
           const errorData = await result.json();
           throw new Error(errorData.message || 'Authentication failed');
@@ -336,11 +360,39 @@
         showError(error.message || 'Login failed. Please check your credentials.');
       } finally {
         hideLoading();
+=======
+        // Explicitly render the button
+        google.accounts.id.renderButton(
+          document.getElementById('g_id_signin'),
+          { theme: "outline", size: "large", width: 300 }
+        );
       }
-    });
+    }
+      function parseJwt(token) {
+          const base64Url = token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          return JSON.parse(atob(base64));
+>>>>>>> 0beaa1660015b95dde29e848981a3c330d5d4229
+      }
 
-    // Initialize Google Sign-In on load
-    window.onload = initGoogleSignIn;
+      // Initialize Google Sign-In
+      // Initialize when Google SDK loads
+    window.onload = function() {
+      // Check if Google SDK is loaded
+      if (typeof google !== 'undefined') {
+        initGoogleSignIn();
+      } else {
+        // Retry every 500ms for 5 seconds
+        let attempts = 0;
+        const checkInterval = setInterval(() => {
+          if (typeof google !== 'undefined') {
+            clearInterval(checkInterval);
+            initGoogleSignIn();
+          }
+          if (++attempts > 10) clearInterval(checkInterval);
+        }, 500);
+      }
+    };
   </script>
 </body>
 </html> 
