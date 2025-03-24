@@ -6,12 +6,8 @@
   <title>Sell Your Products - StudXchange</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <!-- Leaflet.js for OpenStreetMap -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <!-- Leaflet Search Plugin -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <!-- Replace Leaflet with Google Maps -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places"></script>
   <style>
     /* Global Styles */
     * {
@@ -250,7 +246,10 @@
       height: 400px;
       border-radius: 8px;
       margin-bottom: 15px;
-      z-index: 1; /* Ensure proper z-index */
+    }
+    
+    .pac-container {
+      z-index: 1051 !important;
     }
     
     /* Add loading indicator for map */
@@ -627,7 +626,6 @@
       <h2>Select Location</h2>
       <div style="display: flex; margin-bottom: 10px;">
         <input type="text" id="mapSearchInput" placeholder="Search for a location" style="flex: 1; padding: 8px; margin-right: 10px;">
-        <button onclick="searchLocation()" style="padding: 8px 15px; background: #2a3d56; color: white; border: none; border-radius: 4px;">Search</button>
       </div>
       <div id="mapLoading" class="map-loading">
         <i class="fas fa-spinner fa-spin"></i> Loading map...
@@ -653,6 +651,13 @@
       
       // Initialize the form
       initForm();
+      
+      // Hide room form initially
+      document.getElementById('roomForm').style.display = 'none';
+      
+      // Trigger category change to set initial form state
+      const event = new Event('change');
+      document.getElementById('category').dispatchEvent(event);
     });
     
     function initForm() {
@@ -670,48 +675,64 @@
       document.getElementById('category').addEventListener('change', function() {
         const isRoom = this.value === 'Room';
         
-      // Toggle display of form sections
-    document.getElementById('regularForm').style.display = isRoom ? 'none' : 'block';
-    document.getElementById('regularFormCont').style.display = isRoom ? 'none' : 'block';
-    document.getElementById('roomForm').style.display = isRoom ? 'block' : 'none';
-    
-      // Toggle required attributes for regular product fields
-      const regularFields = ['title', 'price', 'condition', 'description'];
-    regularFields.forEach(field => {
-      const element = document.getElementById(field);
-      if (element) {
+        // Toggle display of form sections
+        document.getElementById('regularForm').style.display = isRoom ? 'none' : 'block';
+        document.getElementById('regularFormCont').style.display = isRoom ? 'none' : 'block';
+        document.getElementById('roomForm').style.display = isRoom ? 'block' : 'none';
+        
+        // Reset form fields when switching
         if (isRoom) {
-          element.removeAttribute('required');
+          // Clear regular form fields
+          document.getElementById('title').value = '';
+          document.getElementById('price').value = '';
+          document.getElementById('description').value = '';
+          document.getElementById('imageUpload').value = '';
+          document.getElementById('imagePreviews').innerHTML = '';
         } else {
-          element.setAttribute('required', 'required');
+          // Clear room form fields
+          document.getElementById('hostelName').value = '';
+          document.getElementById('ownerName').value = '';
+          document.getElementById('contact1').value = '';
+          document.getElementById('contact2').value = '';
+          document.getElementById('collegeDistance').value = '';
+          document.getElementById('occupancy').value = '';
+          document.getElementById('roomPrice').value = '';
+          document.getElementById('roomImageUpload').value = '';
+          document.getElementById('roomImagePreviews').innerHTML = '';
+          
+          // Reset checkboxes
+          document.getElementById('ac').checked = false;
+          document.getElementById('wifi').checked = false;
+          document.getElementById('washingMachine').checked = false;
+          document.getElementById('mess').checked = false;
+          document.getElementById('installment').checked = false;
         }
-      }
-    });
-      
-      // Toggle required attributes for room fields
-      const roomFields = ['roomPrice'];
-    roomFields.forEach(field => {
-      const element = document.getElementById(field);
-      if (element) {
-        if (isRoom) {
-          element.setAttribute('required', '');
-        } else {
-          element.removeAttribute('required');
-          }
+        
+        // Toggle required attributes for regular product fields
+        const regularFields = ['title', 'price', 'condition', 'description', 'imageUpload'];
+        regularFields.forEach(field => {
+          const element = document.getElementById(field);
+          if (element) {
+            if (isRoom) {
+              element.removeAttribute('required');
+            } else {
+              element.setAttribute('required', 'required');
+            }
           }
         });
         
-      // Toggle required attribute for image upload
-      const regularImageUpload = document.getElementById('imageUpload');
-    const roomImageUpload = document.getElementById('roomImageUpload');
-    
-    if (isRoom) {
-      regularImageUpload.removeAttribute('required');
-      roomImageUpload.setAttribute('required', 'required');
-    } else {
-      regularImageUpload.setAttribute('required', 'required');
-      roomImageUpload.removeAttribute('required');
-    }
+        // Toggle required attributes for room fields
+        const roomFields = ['hostelName', 'roomPrice', 'contact1', 'roomImageUpload'];
+        roomFields.forEach(field => {
+          const element = document.getElementById(field);
+          if (element) {
+            if (isRoom) {
+              element.setAttribute('required', 'required');
+            } else {
+              element.removeAttribute('required');
+            }
+          }
+        });
       });
       
       // Toggle mess price input based on mess checkbox
@@ -1250,280 +1271,121 @@
         
         // Make the map modal and initialization more robust
         function openMapModal() {
-          // Show modal
-          const mapModal = document.getElementById('mapModal');
-          mapModal.style.display = 'block';
+          document.getElementById('mapModal').style.display = 'block';
           
-          // Show loading indicator
-          const mapLoading = document.getElementById('mapLoading');
-          mapLoading.style.display = 'block';
-          
-          // Reset attempts counter
-          mapInitAttempts = 0;
-          
-          // Ensure the scripts are loaded
-          if (typeof L === 'undefined') {
-            console.error("Leaflet library not loaded");
-            mapLoading.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Map library not loaded. Please refresh the page or use the "Use Current Location" button instead.';
+          // Initialize map if not already done
+          if (!map) {
+            initMap();
+          } else {
+            // Force a resize to fix rendering issues
+            google.maps.event.trigger(map, 'resize');
             
-            // Add a close button to dismiss the modal
-            const closeButton = document.createElement('button');
-            closeButton.textContent = 'Close';
-            closeButton.style.marginTop = '15px';
-            closeButton.style.padding = '8px 15px';
-            closeButton.style.background = '#dc3545';
-            closeButton.style.color = 'white';
-            closeButton.style.border = 'none';
-            closeButton.style.borderRadius = '4px';
-            closeButton.onclick = closeMapModal;
-            mapLoading.appendChild(closeButton);
-            return;
-          }
-          
-          // Wait for the modal to be visible before initializing the map
-          setTimeout(() => {
-            try {
-              initMap();
-              // Focus the search input after map loads
-              setTimeout(() => {
-                const searchInput = document.getElementById('mapSearchInput');
-                if (searchInput) searchInput.focus();
-              }, 800);
-            } catch (error) {
-              console.error("Error initializing map:", error);
-              mapLoading.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error loading map: ' + error.message;
+            // If we have coordinates, center on them
+            if (userCoordinates) {
+              const latLng = new google.maps.LatLng(userCoordinates.lat, userCoordinates.lon);
+              map.setCenter(latLng);
+              marker.setPosition(latLng);
             }
-          }, 600); // Increased timeout to ensure modal is fully rendered
+          }
         }
         
-        // Initialize the map
-        let mapInitAttempts = 0;
+        let map;
+        let marker;
+        let autocomplete;
+
         function initMap() {
-          const mapContainer = document.getElementById('map');
+          // Default center (Pune)
+          const defaultCenter = { lat: 18.5204, lng: 73.8567 };
           
-          // Check if map container is properly rendered
-          if (!mapContainer || mapContainer.offsetWidth === 0 || mapContainer.offsetHeight === 0) {
-            console.log(`Map container not properly rendered, waiting... (attempt ${mapInitAttempts+1}/6)`);
+          map = new google.maps.Map(document.getElementById('map'), {
+            center: defaultCenter,
+            zoom: 13,
+            mapTypeControl: false,
+          });
+          
+          // Create the search box
+          const input = document.getElementById('mapSearchInput');
+          autocomplete = new google.maps.places.Autocomplete(input);
+          autocomplete.bindTo('bounds', map);
+          
+          // Create marker for selected location
+          marker = new google.maps.Marker({
+            map: map,
+            draggable: true,
+            animation: google.maps.Animation.DROP
+          });
+          
+          // Listen for place selection
+          autocomplete.addListener('place_changed', () => {
+            const place = autocomplete.getPlace();
             
-            // Limit the number of attempts
-            if (mapInitAttempts >= 5) {
-              console.error("Map container still not properly rendered after multiple attempts");
-              document.getElementById('mapLoading').innerHTML = 
-                '<i class="fas fa-exclamation-triangle"></i> Map container not available. Please try closing and reopening.';
+            if (!place.geometry) {
+              alert("No location found for the entered address");
               return;
             }
             
-            mapInitAttempts++;
-            setTimeout(initMap, 300); // Try again after a short delay
-            return;
-          }
+            // Update map and marker
+            map.setCenter(place.geometry.location);
+            map.setZoom(17);
+            marker.setPosition(place.geometry.location);
+            
+            // Update coordinates and location name
+            userCoordinates = {
+              lat: place.geometry.location.lat(),
+              lon: place.geometry.location.lng()
+            };
+            userLocationName = place.formatted_address;
+            document.getElementById('selectedLocationDisplay').textContent = userLocationName;
+          });
           
-          // Check if Leaflet is available
-          if (typeof L === 'undefined') {
-            console.error("Leaflet library not available");
-            document.getElementById('mapLoading').innerHTML = 
-              '<i class="fas fa-exclamation-triangle"></i> Map library not loaded. Please refresh the page.';
-            return;
-          }
-          
-          // Safe cleanup of any existing map instance
-          if (window.map) {
+          // Listen for marker drag events
+          marker.addListener('dragend', async () => {
+            const position = marker.getPosition();
+            userCoordinates = {
+              lat: position.lat(),
+              lon: position.lng()
+            };
+            
+            // Reverse geocode the coordinates
+            const geocoder = new google.maps.Geocoder();
             try {
-              window.map.off();
-              window.map.remove();
-            } catch (e) {
-              console.log("Error cleaning up previous map:", e);
-            }
-            window.map = null;
-          }
-          
-          try {
-            console.log("Creating new map instance");
-            
-            // Create map with specific options to prevent common issues
-            window.map = L.map('map', {
-              zoomControl: true,
-              attributionControl: true,
-              fadeAnimation: false, // Disable animations to reduce rendering issues
-              markerZoomAnimation: false
-            });
-            
-            // Set view after map is initialized
-            window.map.setView([18.5204, 73.8567], 13);
-            
-            // Add OpenStreetMap tiles
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-              maxZoom: 19,
-              attribution: '© OpenStreetMap contributors'
-            }).addTo(window.map);
-            
-            // Force an immediate invalidateSize
-            setTimeout(() => {
-              if (window.map) {
-                try {
-                  window.map.invalidateSize(true);
-                  console.log("Map size invalidated");
-                } catch (e) {
-                  console.error("Error invalidating map size:", e);
-                }
-              }
-            }, 100);
-            
-            console.log("Map and tiles initialized");
-            
-            // Add geocoder control for searching locations if available
-            if (typeof L.Control.Geocoder !== 'undefined') {
-              try {
-                const geocoder = L.Control.Geocoder.nominatim({
-                  geocodingQueryParams: { 
-                    format: 'json',
-                    addressdetails: 1,
-                    limit: 5
-                  }
-                });
-                
-                L.Control.geocoder({
-                  defaultMarkGeocode: false,
-                  placeholder: 'Search for places...',
-                  geocoder: geocoder
-                }).on('markgeocode', function(e) {
-                  const result = e.geocode;
-                  
-                  // Clear any existing markers
-                  if (window.marker) {
-                    window.map.removeLayer(window.marker);
-                  }
-                  
-                  // Add marker at the selected location
-                  window.marker = L.marker(result.center).addTo(window.map);
-                  
-                  // Set the selected location
-                  userCoordinates = {
-                    lat: result.center.lat,
-                    lon: result.center.lng
-                  };
-                  userLocationName = result.name || result.html || 'Selected location';
-                  
-                  // Update the selected location display
-                  document.getElementById('selectedLocationDisplay').textContent = userLocationName;
-                  
-                  // Zoom to the selected location
-                  window.map.fitBounds(result.bbox || [[result.center.lat - 0.01, result.center.lng - 0.01], 
-                                                     [result.center.lat + 0.01, result.center.lng + 0.01]]);
-                }).addTo(window.map);
-                
-                console.log("Geocoder initialized");
-              } catch (geocoderError) {
-                console.error("Geocoder error:", geocoderError);
-                // Continue without geocoder if it fails
-              }
-            } else {
-              console.warn("Geocoder control not available");
-            }
-            
-            // Handle map clicks to set location
-            window.map.on('click', function(e) {
-              // Clear any existing markers
-              if (window.marker) {
-                window.map.removeLayer(window.marker);
-              }
-              
-              // Add marker at the clicked location
-              window.marker = L.marker(e.latlng).addTo(window.map);
-              
-              // Set the selected location
-              userCoordinates = {
-                lat: e.latlng.lat,
-                lon: e.latlng.lng
-              };
-              
-              // Set temporary display while geocoding
-              document.getElementById('selectedLocationDisplay').textContent = `Lat: ${e.latlng.lat.toFixed(6)}, Lng: ${e.latlng.lng.toFixed(6)}`;
-              
-              // Reverse geocode to get the location name
-              fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}&accept-language=en`)
-                .then(response => response.json())
-                .then(data => {
-                  userLocationName = data.display_name || 'Selected location';
-                  document.getElementById('selectedLocationDisplay').textContent = userLocationName;
-                })
-                .catch(error => {
-                  console.error('Error reverse geocoding:', error);
-                  // Keep the coordinates as display if geocoding fails
-                });
-            });
-            
-            // If user already has coordinates, show them on the map
-            if (userCoordinates) {
-              const latlng = L.latLng(userCoordinates.lat, userCoordinates.lon);
-              window.marker = L.marker(latlng).addTo(window.map);
-              window.map.setView(latlng, 15);
-              document.getElementById('selectedLocationDisplay').textContent = userLocationName || 'Location selected';
-            }
-            
-            // Hide loading indicator once map is initialized
-            document.getElementById('mapLoading').style.display = 'none';
-            
-          } catch (mapError) {
-            console.error("Error in map initialization:", mapError);
-            document.getElementById('mapLoading').innerHTML = 
-              '<i class="fas fa-exclamation-triangle"></i> Error initializing map: ' + mapError.message;
-          }
-        }
-        
-        // Search for a location using the search input
-        function searchLocation() {
-          const searchInput = document.getElementById('mapSearchInput').value;
-          if (!searchInput) {
-            alert('Please enter a location to search');
-            return;
-          }
-          
-          // Show temporary search message
-          document.getElementById('selectedLocationDisplay').textContent = `Searching for "${searchInput}"...`;
-          
-          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchInput)}&accept-language=en`)
-            .then(response => response.json())
-            .then(data => {
-              if (data && data.length > 0) {
-                const result = data[0];
-                
-                // Clear any existing markers
-                if (window.marker) {
-                  window.map.removeLayer(window.marker);
-                }
-                
-                // Add marker at the selected location
-                const latlng = L.latLng(result.lat, result.lon);
-                window.marker = L.marker(latlng).addTo(window.map);
-                
-                // Set the selected location
-                userCoordinates = {
-                  lat: parseFloat(result.lat),
-                  lon: parseFloat(result.lon)
-                };
-                userLocationName = result.display_name;
-                
-                // Update the selected location display
+              const response = await geocoder.geocode({ location: position });
+              if (response.results[0]) {
+                userLocationName = response.results[0].formatted_address;
                 document.getElementById('selectedLocationDisplay').textContent = userLocationName;
-                
-                // Zoom to the selected location
-                window.map.setView(latlng, 15);
-              } else {
-                alert('Location not found. Please try a different search term.');
-                document.getElementById('selectedLocationDisplay').textContent = 'No location selected';
               }
-            })
-            .catch(error => {
-              console.error('Error searching for location:', error);
-              alert('Error searching for location. Please try again.');
-              document.getElementById('selectedLocationDisplay').textContent = 'Search failed';
-            });
-        }
-        
-        // Close the map modal
-        function closeMapModal() {
-          document.getElementById('mapModal').style.display = 'none';
+            } catch (error) {
+              console.error("Geocoding error:", error);
+              document.getElementById('selectedLocationDisplay').textContent = 
+                `Lat: ${position.lat().toFixed(6)}, Lng: ${position.lng().toFixed(6)}`;
+            }
+          });
+          
+          // Listen for map clicks
+          map.addListener('click', async (e) => {
+            marker.setPosition(e.latLng);
+            userCoordinates = {
+              lat: e.latLng.lat(),
+              lon: e.latLng.lng()
+            };
+            
+            // Reverse geocode the coordinates
+            const geocoder = new google.maps.Geocoder();
+            try {
+              const response = await geocoder.geocode({ location: e.latLng });
+              if (response.results[0]) {
+                userLocationName = response.results[0].formatted_address;
+                document.getElementById('selectedLocationDisplay').textContent = userLocationName;
+              }
+            } catch (error) {
+              console.error("Geocoding error:", error);
+              document.getElementById('selectedLocationDisplay').textContent = 
+                `Lat: ${e.latLng.lat().toFixed(6)}, Lng: ${e.latLng.lng().toFixed(6)}`;
+            }
+          });
+          
+          // Hide loading indicator
+          document.getElementById('mapLoading').style.display = 'none';
         }
         
         // Confirm the selected location
@@ -1542,12 +1404,10 @@
           closeMapModal();
         }
         
-        // Add event listener for the Enter key in the search input
-        document.getElementById('mapSearchInput').addEventListener('keyup', function(event) {
-          if (event.key === 'Enter') {
-            searchLocation();
-            }
-        });
+        // Close the map modal
+        function closeMapModal() {
+          document.getElementById('mapModal').style.display = 'none';
+        }
     }
 </script>
 </body>

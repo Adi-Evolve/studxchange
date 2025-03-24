@@ -683,7 +683,7 @@ app.post('/api/auth/google', async (req, res) => {
     await connectToDatabase();
     initModels();
     
-    const { name, email, phone } = req.body;
+    const { name, email } = req.body;
     console.log(`POST /api/auth/google - Processing authentication for email: ${email}`);
     
     // Check if user exists
@@ -693,13 +693,9 @@ app.post('/api/auth/google', async (req, res) => {
       // Create new user if not found
       console.log(`POST /api/auth/google - Creating new user for email: ${email}`);
       
-      // Only set phone if it's a valid 10-digit number
-      const phoneToSave = phone && phone.length === 10 && /^\d{10}$/.test(phone) ? phone : null;
-      
       user = new User({
         name,
         email,
-        phone: phoneToSave,
         provider: 'google'
       });
       
@@ -708,35 +704,30 @@ app.post('/api/auth/google', async (req, res) => {
         console.log(`POST /api/auth/google - New user created for email: ${email}`);
       } catch (saveError) {
         console.error(`POST /api/auth/google - Error creating user: ${saveError.message}`);
-        
-        // If validation error, try again with null phone
-        if (saveError.name === 'ValidationError' && saveError.message.includes('phone')) {
-          console.log(`POST /api/auth/google - Retrying with null phone for email: ${email}`);
-          user.phone = null;
-          await user.save();
-          console.log(`POST /api/auth/google - New user created with null phone for email: ${email}`);
-        } else {
-          throw saveError;
-        }
+        throw saveError;
       }
-    } else if (phone && phone.length === 10 && /^\d{10}$/.test(phone) && (!user.phone || user.phone.length === 0)) {
-      // Update phone if provided, valid, and not already set
-      console.log(`POST /api/auth/google - Updating phone for existing user: ${email}`);
-      user.phone = phone;
-      await user.save();
     } else {
-      console.log(`POST /api/auth/google - Found existing user: ${email}`);
+      // Update existing user's name if it has changed
+      if (user.name !== name) {
+        user.name = name;
+        await user.save();
+        console.log(`POST /api/auth/google - Updated existing user's name: ${email}`);
+      }
     }
     
-    // Create user response without password
-    const userResponse = user.toObject();
-    delete userResponse.password;
+    // Create user response without sensitive data
+    const userResponse = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      provider: user.provider
+    };
     
     res.json(userResponse);
   } catch (error) {
     console.error('POST /api/auth/google - Error:', error.message);
-    console.error('POST /api/auth/google - Stack:', error.stack);
-    res.status(500).json({ message: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Authentication failed. Please try again.' });
   }
 });
 

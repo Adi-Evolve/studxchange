@@ -175,268 +175,179 @@
   <script>
       // Google Sign-In Initialization
       function initGoogleSignIn() {
-          google.accounts.id.initialize({
-              client_id: "26642122071-ekdopa6ljd6orkti9j8jadaf30bqmnv2.apps.googleusercontent.com", // This should be set on the server side
-              callback: handleGoogleResponse
-          });
-          google.accounts.id.renderButton(
-              document.getElementById('g_id_signin'),
-              { theme: "outline", size: "large", width: 300 }
-          );
+        google.accounts.id.initialize({
+          client_id: "26642122071-ekdopa6ljd6orkti9j8jadaf30bqmnv2.apps.googleusercontent.com",
+          callback: handleGoogleResponse,
+          auto_select: false,
+          cancel_on_tap_outside: true
+        });
+        google.accounts.id.renderButton(
+          document.getElementById('g_id_signin'),
+          { 
+            theme: "outline", 
+            size: "large", 
+            width: 300,
+            text: "signup_with",
+            shape: "rectangular"
+          }
+        );
       }
 
       async function handleGoogleResponse(response) {
-          try {
-              const userData = parseJwt(response.credential);
-              
-              // Call API to handle Google auth
-              const result = await fetch(API_ENDPOINTS.GOOGLE_AUTH, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                  name: userData.name,
-                  email: userData.email
-                })
-              });
-              
-              if (!result.ok) {
-                const errorData = await result.json();
-                throw new Error(errorData.message || 'Google authentication failed');
-              }
-              
-              const user = await result.json();
-              
-              // Save user data to localStorage
-              localStorage.setItem('currentUser', JSON.stringify(user));
-              
-              // Redirect to profile page
-              window.location.href = 'PROFILE_FINAL.html';
-          } catch (error) {
-              showError(error.message || 'Google sign-in failed');
+        try {
+          showLoading();
+          const userData = parseJwt(response.credential);
+          
+          console.log('Google Sign-In successful, processing registration...');
+          
+          // Call API to handle Google auth
+          const result = await fetch(API_ENDPOINTS.GOOGLE_AUTH, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              name: userData.name,
+              email: userData.email
+            })
+          });
+          
+          if (!result.ok) {
+            const errorData = await result.json();
+            throw new Error(errorData.message || 'Registration failed');
           }
+          
+          const user = await result.json();
+          
+          // Save user data to localStorage
+          localStorage.setItem('currentUser', JSON.stringify(user));
+          
+          // Show success message before redirect
+          showSuccess('Registration successful! Redirecting...');
+          
+          // Redirect after a short delay
+          setTimeout(() => {
+            window.location.href = 'PROFILE_FINAL.html';
+          }, 1500);
+          
+        } catch (error) {
+          console.error('Google Sign-In error:', error);
+          showError(error.message || 'Registration failed. Please try again.');
+        } finally {
+          hideLoading();
+        }
       }
 
-      // Helper: Parse JWT token
+      // Parse JWT token
       function parseJwt(token) {
+        try {
           const base64Url = token.split('.')[1];
           const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
           return JSON.parse(atob(base64));
+        } catch (error) {
+          console.error('JWT parsing error:', error);
+          throw new Error('Invalid authentication response');
+        }
       }
 
       // Show error message
       function showError(message) {
-          const errorDiv = document.getElementById('formError');
-          errorDiv.textContent = message;
-          errorDiv.style.display = 'block';
-          setTimeout(() => { errorDiv.style.display = 'none'; }, 5000);
+        const errorDiv = document.getElementById('formError');
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        errorDiv.style.backgroundColor = '#ffebee';
+        errorDiv.style.padding = '10px';
+        errorDiv.style.borderRadius = '4px';
+        errorDiv.style.marginTop = '10px';
+        setTimeout(() => { 
+          errorDiv.style.display = 'none';
+        }, 5000);
       }
 
-      // OTP variable
-      let otpValid = false;
+      // Show success message
+      function showSuccess(message) {
+        const errorDiv = document.getElementById('formError');
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        errorDiv.style.backgroundColor = '#e8f5e9';
+        errorDiv.style.color = '#2e7d32';
+        errorDiv.style.padding = '10px';
+        errorDiv.style.borderRadius = '4px';
+        errorDiv.style.marginTop = '10px';
+      }
 
-      // Phone number validation
-      document.getElementById('phone').addEventListener('input', function() {
-          const phoneValue = this.value.trim();
-          const phoneError = document.getElementById('phoneError');
-          
-          if (phoneValue.length !== 10 || !/^\d{10}$/.test(phoneValue)) {
-              phoneError.style.display = 'block';
-              this.setCustomValidity('Phone number must be exactly 10 digits');
-          } else {
-              phoneError.style.display = 'none';
-              this.setCustomValidity('');
-          }
-      });
+      // Show loading state
+      function showLoading() {
+        const signupBtn = document.getElementById('signupBtn');
+        if (signupBtn) {
+          signupBtn.disabled = true;
+          signupBtn.classList.add('loading');
+        }
+        // Disable Google Sign-In button
+        const googleBtn = document.getElementById('g_id_signin');
+        if (googleBtn) {
+          googleBtn.style.opacity = '0.7';
+          googleBtn.style.pointerEvents = 'none';
+        }
+      }
 
-      // Step 1: Send OTP button event
-      document.getElementById('sendOtpBtn').addEventListener('click', async () => {
-          const email = document.getElementById('email').value.trim();
+      // Hide loading state
+      function hideLoading() {
+        const signupBtn = document.getElementById('signupBtn');
+        if (signupBtn) {
+          signupBtn.disabled = false;
+          signupBtn.classList.remove('loading');
+        }
+        // Re-enable Google Sign-In button
+        const googleBtn = document.getElementById('g_id_signin');
+        if (googleBtn) {
+          googleBtn.style.opacity = '1';
+          googleBtn.style.pointerEvents = 'auto';
+        }
+      }
+
+      // Handle signup form submission
+      document.getElementById('signupForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        showLoading();
+        
+        try {
           const name = document.getElementById('name').value.trim();
+          const email = document.getElementById('email').value.trim();
+          const password = document.getElementById('password').value;
           const phone = document.getElementById('phone').value.trim();
           
-          // Validate all fields
-          if (!name) {
-              showError("Please enter your name");
-              return;
+          const response = await fetch(API_ENDPOINTS.REGISTER_USER, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name, email, password, phone })
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Registration failed');
           }
           
-          if (!validateEmail(email)) {
-            showError("Please enter a valid email address");
-            return;
-          }
-
-          if (phone.length !== 10 || !/^\d{10}$/.test(phone)) {
-            showError("Phone number must be exactly 10 digits");
-            return;
-          }
-
-          try {
-            document.getElementById('sendOtpBtn').disabled = true;
-            document.getElementById('sendOtpBtn').textContent = 'Sending...';
-            
-            // Call the API to send OTP
-            const response = await fetch(API_ENDPOINTS.SEND_OTP, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ email, name })
-            });
-            
-            if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Failed to send OTP');
-            }
-            
-            // Show OTP verification step
-            document.getElementById('step2').style.display = 'block';
-            document.getElementById('resendOptions').style.display = 'block';
-            document.getElementById('sendOtpBtn').textContent = 'OTP Sent';
-            startOtpResendTimer();
-          } catch (error) {
-            console.error('OTP Error:', error);
-            showError(error.message || 'Failed to send OTP. Please try again.');
-            document.getElementById('sendOtpBtn').disabled = false;
-            document.getElementById('sendOtpBtn').textContent = 'Send OTP';
-          }
-      });
-
-      // Step 2: Verify OTP button event
-      document.getElementById('verifyOtpBtn').addEventListener('click', async () => {
-          const email = document.getElementById('email').value.trim();
-          const otp = document.getElementById('otpInput').value.trim();
-          const otpError = document.getElementById('otpError');
+          const user = await response.json();
           
-          if (!otp) {
-            otpError.textContent = 'Please enter the OTP';
-            otpError.style.display = 'block';
-            return;
-          }
+          // Save user data to localStorage
+          localStorage.setItem('currentUser', JSON.stringify(user));
           
-          try {
-            document.getElementById('verifyOtpBtn').disabled = true;
-            document.getElementById('verifyOtpBtn').textContent = 'Verifying...';
-            
-            // Call API to verify OTP
-            const response = await fetch(API_ENDPOINTS.VERIFY_OTP, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ email, otp })
-            });
-            
-            if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Invalid OTP');
-            }
-            
-            const result = await response.json();
-            
-            if (result.verified) {
-              otpValid = true;
-              
-              // Hide Step 1 and 2, show Step 3 (password input and final signup)
-              document.getElementById('step1').style.display = 'none';
-              document.getElementById('step2').style.display = 'none';
-              document.getElementById('resendOptions').style.display = 'none';
-              document.getElementById('step3').style.display = 'block';
-            } else {
-              throw new Error('OTP verification failed');
-            }
-          } catch (error) {
-            otpError.textContent = error.message || 'Incorrect OTP. Please try again.';
-            otpError.style.display = 'block';
-            document.getElementById('verifyOtpBtn').disabled = false;
-            document.getElementById('verifyOtpBtn').textContent = 'Verify OTP';
-          }
-      });
-
-      // Step 3: Final signup submission event
-      document.getElementById('signupForm').addEventListener('submit', async (e) => {
-          e.preventDefault();
+          // Show success message
+          showSuccess('Registration successful! Redirecting...');
           
-          if (!otpValid) {
-            showError('Email verification required');
-            return;
-          }
-          
-          try {
-            document.getElementById('finalSubmitBtn').disabled = true;
-            document.getElementById('finalSubmitBtn').textContent = 'Signing Up...';
-            
-            // Create user object
-            const user = {
-                name: document.getElementById('name').value.trim(),
-                email: document.getElementById('email').value.trim(),
-                phone: document.getElementById('phone').value.trim(),
-                password: document.getElementById('password').value,
-                provider: 'email'
-            };
-            
-            // Call API to register user
-            const response = await fetch(API_ENDPOINTS.REGISTER_USER, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(user)
-            });
-            
-            if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Registration failed');
-            }
-            
-            const registeredUser = await response.json();
-            
-            // Save user to localStorage
-            localStorage.setItem('currentUser', JSON.stringify(registeredUser));
-            
-            // Redirect to profile page
+          // Redirect after a short delay
+          setTimeout(() => {
             window.location.href = 'PROFILE_FINAL.html';
-          } catch (error) {
-            showError(error.message || 'Registration failed');
-            document.getElementById('finalSubmitBtn').disabled = false;
-            document.getElementById('finalSubmitBtn').textContent = 'Sign Up';
-          }
-      });
-
-      let resendTimer;
-
-      function validateEmail(email) {
-          const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          return re.test(email);
-      }
-
-      function startOtpResendTimer() {
-          let seconds = 30;
-          document.getElementById('resendLink').style.pointerEvents = 'none';
-          document.getElementById('resendLink').style.color = '#999';
-          document.getElementById('resendLink').textContent = `Resend OTP in ${seconds}s`;
+          }, 1500);
           
-          clearInterval(resendTimer);
-          resendTimer = setInterval(() => {
-              seconds--;
-              document.getElementById('resendLink').textContent = `Resend OTP in ${seconds}s`;
-              
-              if (seconds <= 0) {
-                  clearInterval(resendTimer);
-                  document.getElementById('resendLink').style.pointerEvents = 'auto';
-                  document.getElementById('resendLink').style.color = '#2a3d56';
-                  document.getElementById('resendLink').textContent = 'Resend OTP';
-              }
-          }, 1000);
-      }
-
-      // Resend link handler
-      document.getElementById('resendLink').addEventListener('click', (e) => {
-          e.preventDefault();
-          if (document.getElementById('resendLink').style.pointerEvents !== 'none') {
-              document.getElementById('sendOtpBtn').click();
-          }
+        } catch (error) {
+          showError(error.message || 'Registration failed. Please check your information.');
+        } finally {
+          hideLoading();
+        }
       });
 
       // Initialize Google Sign-In on load
