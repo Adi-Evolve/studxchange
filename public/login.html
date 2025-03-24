@@ -142,45 +142,6 @@
     </div>
   </div>
 
-<<<<<<< HEAD
-  <script>
-    // Google Sign-In Initialization
-    function initGoogleSignIn() {
-      google.accounts.id.initialize({
-        client_id: "26642122071-ekdopa6ljd6orkti9j8jadaf30bqmnv2.apps.googleusercontent.com",
-        callback: handleGoogleResponse,
-        auto_select: false,
-        cancel_on_tap_outside: true
-      });
-      google.accounts.id.renderButton(
-        document.getElementById('g_id_signin'),
-        { 
-          theme: "outline", 
-          size: "large", 
-          width: 300,
-          text: "signin_with",
-          shape: "rectangular"
-        }
-      );
-    }
-
-    async function handleGoogleResponse(response) {
-      try {
-        showLoading();
-        const userData = parseJwt(response.credential);
-        
-        console.log('Google Sign-In successful, processing authentication...');
-        
-        // Call API to handle Google auth
-        const result = await fetch(API_ENDPOINTS.GOOGLE_AUTH, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            name: userData.name,
-            email: userData.email
-=======
     
   
 
@@ -202,7 +163,6 @@
                   email: userData.email,
                   googleId: userData.sub
               })
->>>>>>> 0beaa1660015b95dde29e848981a3c330d5d4229
           })
           .then(response => response.json())
           .then(user => {
@@ -226,141 +186,6 @@
           callback: handleGoogleResponse
         });
         
-<<<<<<< HEAD
-        if (!result.ok) {
-          const errorData = await result.json();
-          throw new Error(errorData.message || 'Authentication failed');
-        }
-        
-        const user = await result.json();
-        
-        // Save user data to localStorage
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        
-        // Show success message before redirect
-        showSuccess('Login successful! Redirecting...');
-        
-        // Redirect after a short delay
-        setTimeout(() => {
-          window.location.href = 'PROFILE_FINAL.html';
-        }, 1500);
-        
-      } catch (error) {
-        console.error('Google Sign-In error:', error);
-        showError(error.message || 'Login failed. Please try again.');
-      } finally {
-        hideLoading();
-      }
-    }
-
-    // Parse JWT token
-    function parseJwt(token) {
-      try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        return JSON.parse(atob(base64));
-      } catch (error) {
-        console.error('JWT parsing error:', error);
-        throw new Error('Invalid authentication response');
-      }
-    }
-
-    // Show error message
-    function showError(message) {
-      const errorDiv = document.getElementById('formError');
-      errorDiv.textContent = message;
-      errorDiv.style.display = 'block';
-      errorDiv.style.backgroundColor = '#ffebee';
-      errorDiv.style.padding = '10px';
-      errorDiv.style.borderRadius = '4px';
-      errorDiv.style.marginTop = '10px';
-      setTimeout(() => { 
-        errorDiv.style.display = 'none';
-      }, 5000);
-    }
-
-    // Show success message
-    function showSuccess(message) {
-      const errorDiv = document.getElementById('formError');
-      errorDiv.textContent = message;
-      errorDiv.style.display = 'block';
-      errorDiv.style.backgroundColor = '#e8f5e9';
-      errorDiv.style.color = '#2e7d32';
-      errorDiv.style.padding = '10px';
-      errorDiv.style.borderRadius = '4px';
-      errorDiv.style.marginTop = '10px';
-    }
-
-    // Show loading state
-    function showLoading() {
-      const loginBtn = document.getElementById('loginBtn');
-      if (loginBtn) {
-        loginBtn.disabled = true;
-        loginBtn.classList.add('loading');
-      }
-      // Disable Google Sign-In button
-      const googleBtn = document.getElementById('g_id_signin');
-      if (googleBtn) {
-        googleBtn.style.opacity = '0.7';
-        googleBtn.style.pointerEvents = 'none';
-      }
-    }
-
-    // Hide loading state
-    function hideLoading() {
-      const loginBtn = document.getElementById('loginBtn');
-      if (loginBtn) {
-        loginBtn.disabled = false;
-        loginBtn.classList.remove('loading');
-      }
-      // Re-enable Google Sign-In button
-      const googleBtn = document.getElementById('g_id_signin');
-      if (googleBtn) {
-        googleBtn.style.opacity = '1';
-        googleBtn.style.pointerEvents = 'auto';
-      }
-    }
-
-    // Handle login form submission
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      showLoading();
-      
-      try {
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
-        
-        const response = await fetch(API_ENDPOINTS.LOGIN_USER, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ email, password })
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Invalid credentials');
-        }
-        
-        const user = await response.json();
-        
-        // Save user data to localStorage
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        
-        // Show success message
-        showSuccess('Login successful! Redirecting...');
-        
-        // Redirect after a short delay
-        setTimeout(() => {
-          window.location.href = 'PROFILE_FINAL.html';
-        }, 1500);
-        
-      } catch (error) {
-        showError(error.message || 'Login failed. Please check your credentials.');
-      } finally {
-        hideLoading();
-=======
         // Explicitly render the button
         google.accounts.id.renderButton(
           document.getElementById('g_id_signin'),
@@ -372,7 +197,6 @@
           const base64Url = token.split('.')[1];
           const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
           return JSON.parse(atob(base64));
->>>>>>> 0beaa1660015b95dde29e848981a3c330d5d4229
       }
 
       // Initialize Google Sign-In
