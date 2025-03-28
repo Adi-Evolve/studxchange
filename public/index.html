@@ -69,38 +69,28 @@
             /* Navbar Mobile */
             .navbar {
                 flex-direction: column;
-                padding: 10px;
+                padding: 15px;
             }
             
             .navlogo img {
-                height: 70px;
-                width: 180px;
-                margin-bottom: 10px;
+                height: 80px;
+                width: 200px;
+                margin-bottom: 15px;
             }
             
             .search-container {
                 width: 100%;
-                margin: 10px 0;
+                margin: 15px 0;
             }
             
             .button-container {
+                flex-direction: column;
                 width: 100%;
-                display: flex;
-                justify-content: center;
                 gap: 10px;
-                margin-top: 10px;
-            }
-            
-            .button-container a {
-                padding: 8px 12px;
-                font-size: 14px;
+                margin-top: 15px;
             }
             
             /* Search Bar Mobile */
-            .searchbar {
-                max-width: 100%;
-            }
-            
             .searchbar select {
                 padding: 8px;
                 font-size: 14px;
@@ -108,7 +98,6 @@
             
             .searchbar input {
                 font-size: 14px;
-                padding: 8px;
             }
             
             .searchbar button {
@@ -118,56 +107,31 @@
             /* Hero Section Mobile */
             .hero-section {
                 grid-template-columns: 1fr;
-                padding: 15px;
+                padding: 20px 15px;
                 gap: 15px;
             }
             
             .box {
                 padding: 15px;
-                margin-bottom: 10px;
             }
             
             .box1-img {
-                height: 180px;
+                height: 200px;
             }
             
             /* Featured Products Mobile */
-            .featured-section h2 {
-                font-size: 1.5rem;
-                margin: 15px 0;
-                text-align: center;
-            }
-            
             .slider-container {
-                padding: 0 10px;
-                margin: 0;
-            }
-            
-            .product-slider {
-                gap: 10px;
-                padding: 10px 0;
+                padding: 0 15px;
             }
             
             .product-card {
-                flex: 0 0 160px;
-                min-width: 160px;
-                margin-right: 10px;
-            }
-            
-            .product-image {
-                height: 120px;
-            }
-            
-            .product-price {
-                font-size: 0.9rem;
+                flex: 0 0 180px;
             }
             
             /* Location Button Mobile */
             .location-button {
-                margin: 10px auto;
+                margin: 10px 0;
                 width: 100%;
-                max-width: 250px;
-                display: block;
                 text-align: center;
             }
             
@@ -175,54 +139,134 @@
             footer {
                 padding: 15px;
                 font-size: 14px;
-                text-align: center;
-            }
-            
-            /* Slider Controls */
-            .slider-controls {
-                margin-top: 10px;
-            }
-            
-            .slider-prev, .slider-next {
-                padding: 5px 10px;
-                font-size: 14px;
             }
         }
-        
-        /* Small phones */
-        @media (max-width: 480px) {
-            .navlogo img {
-                height: 60px;
-                width: 150px;
-            }
-            
-            .button-container {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .button-container a {
-                width: 100%;
-                text-align: center;
-                margin-bottom: 5px;
-            }
-            
-            .product-card {
-                flex: 0 0 140px;
-                min-width: 140px;
-            }
-            
-            .product-image {
-                height: 100px;
-            }
-            
-            .product-title {
-                font-size: 0.8rem;
-            }
-            
-            .product-price {
-                font-size: 0.8rem;
-            }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #f4f6f9;
+            color: #333;
+        }
+        /* ===== Navbar ===== */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #2a3d56;
+            padding: 15px 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .navlogo img {
+            height: 100px;
+            width: 250px;
+        }
+        .navbar .button-container {
+            display: flex;
+            gap: 20px;
+        }
+        /* ===== Search Bar ===== */
+        .search-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            margin: 0 20px;
+        }
+        .searchbar {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 30px;
+            padding: 2px;
+            width: 100%;
+            max-width: 600px;
+        }
+        .searchbar select,
+        .searchbar input,
+        .searchbar button {
+            border: none;
+            padding: 10px;
+        }
+        .searchbar select {
+            background: #2a3d56;
+            color: white;
+            border-radius: 30px 0 0 30px;
+        }
+        .searchbar input {
+            width: 100%;
+        }
+        .searchbar button {
+            background: #2a3d56;
+            color: white;
+            border-radius: 0 30px 30px 0;
+        }
+        /* ===== Profile/Signup Button ===== */
+        .button-container {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        .profile-button, .signup-button {
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        .profile-button {
+            background: transparent;
+        }
+        .signup-button {
+            background: #1a75ff;
+            cursor: pointer;
+        }
+        /* ===== Hero Section ===== */
+        .hero-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 40px 30px;
+        }
+        .box {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            overflow: hidden;
+            position: relative;
+        }
+        .box:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        .box:hover .box1-img {
+            transform: scale(1.05);
+        }
+        .box1-img {
+            height: 250px;
+            width: 100%;
+            background-size: cover;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            transition: transform 0.5s ease;
+        }
+        /* ===== Footer ===== */
+        footer {
+            background: #3a4a62;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .navbar a:hover {
+            background-color: #4d6a88;
+        }
+        .navbar .button-container {
+            display: flex;
+            gap: 20px;
         }
         /* ===== Updated Button Styles ===== */
         .nav-button {
