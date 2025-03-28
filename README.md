@@ -52,6 +52,7 @@ npm start
 - `JWT_SECRET`: Secret key for JWT token generation
 - `EMAIL_USER`: Email address for sending OTPs
 - `EMAIL_PASSWORD`: Email password for sending OTPs
+- `IMGBB_API_KEY`: API key for ImgBB image hosting
 
 ## Contributing
 
@@ -63,4 +64,4 @@ npm start
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the LICENSE file for details.
