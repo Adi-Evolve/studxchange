@@ -205,6 +205,89 @@
       background-color: #4d6a88;
     }
     
+    /* Responsive styles for mobile devices */
+    @media (max-width: 768px) {
+      .account-container {
+        margin: 15px;
+        padding: 15px;
+      }
+      
+      .account-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      
+      .account-header h1 {
+        font-size: 20px;
+      }
+      
+      .listed-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .item-image {
+        width: 100%;
+        height: auto;
+        margin-right: 0;
+        margin-bottom: 15px;
+      }
+      
+      .item-actions {
+        margin-top: 15px;
+        width: 100%;
+        justify-content: space-between;
+      }
+      
+      .sold-btn, .delete-btn {
+        padding: 6px 12px;
+        font-size: 14px;
+      }
+      
+      .settings button {
+        margin-bottom: 10px;
+        width: 100%;
+        margin-right: 0;
+      }
+      
+      .modal-content {
+        width: 90%;
+        padding: 15px;
+      }
+    }
+    
+    /* Small phones */
+    @media (max-width: 480px) {
+      .account-container {
+        padding: 12px;
+      }
+      
+      .account-header h1 {
+        font-size: 18px;
+      }
+      
+      .profile-info h2, .order-history h2, .sold-items h2, .settings h2 {
+        font-size: 18px;
+      }
+      
+      .profile-item {
+        font-size: 14px;
+      }
+      
+      .listed-item {
+        padding: 10px;
+      }
+      
+      .item-details h3 {
+        font-size: 16px;
+      }
+      
+      .item-details p {
+        font-size: 14px;
+      }
+    }
+    
     /* Navbar styles for consistency */
     .navbar {
       display: flex;

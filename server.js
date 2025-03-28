@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
 const nodemailer = require('nodemailer');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const app = express();
@@ -205,7 +206,8 @@ const userSchema = new mongoose.Schema({
     }
   },
   password: String,
-  provider: String
+  provider: String,
+  isVerified: Boolean
 });
 
 const otpSchema = new mongoose.Schema({
@@ -671,72 +673,60 @@ app.post('/api/users/verify-otp', async (req, res) => {
 // Google Authentication
 app.post('/api/auth/google', async (req, res) => {
   try {
-    console.log('POST /api/auth/google - Processing Google authentication');
+    const { name, email } = req.body;
     
-    // Validate request body
-    if (!req.body || !req.body.email) {
-      console.error('POST /api/auth/google - Missing required fields');
+    if (!email) {
       return res.status(400).json({ message: 'Email is required' });
     }
-    
-    // Ensure database connection
+
+    // Connect to database
     await connectToDatabase();
-    initModels();
     
-    const { name, email, phone } = req.body;
-    console.log(`POST /api/auth/google - Processing authentication for email: ${email}`);
+    // Initialize models
+    initModels();
     
     // Check if user exists
     let user = await User.findOne({ email });
     
     if (!user) {
-      // Create new user if not found
-      console.log(`POST /api/auth/google - Creating new user for email: ${email}`);
-      
-      // Only set phone if it's a valid 10-digit number
-      const phoneToSave = phone && phone.length === 10 && /^\d{10}$/.test(phone) ? phone : null;
-      
-      user = new User({
+      // Create new user if doesn't exist
+      user = await User.create({
         name,
         email,
-        phone: phoneToSave,
-        provider: 'google'
+        provider: 'google',
+        isVerified: true // Google users are pre-verified
       });
-      
-      try {
-        await user.save();
-        console.log(`POST /api/auth/google - New user created for email: ${email}`);
-      } catch (saveError) {
-        console.error(`POST /api/auth/google - Error creating user: ${saveError.message}`);
-        
-        // If validation error, try again with null phone
-        if (saveError.name === 'ValidationError' && saveError.message.includes('phone')) {
-          console.log(`POST /api/auth/google - Retrying with null phone for email: ${email}`);
-          user.phone = null;
-          await user.save();
-          console.log(`POST /api/auth/google - New user created with null phone for email: ${email}`);
-        } else {
-          throw saveError;
-        }
-      }
-    } else if (phone && phone.length === 10 && /^\d{10}$/.test(phone) && (!user.phone || user.phone.length === 0)) {
-      // Update phone if provided, valid, and not already set
-      console.log(`POST /api/auth/google - Updating phone for existing user: ${email}`);
-      user.phone = phone;
-      await user.save();
+      console.log('New Google user created:', user._id);
     } else {
-      console.log(`POST /api/auth/google - Found existing user: ${email}`);
+      // Update name if changed
+      if (name && name !== user.name) {
+        user.name = name;
+        await user.save();
+      }
     }
     
-    // Create user response without password
-    const userResponse = user.toObject();
-    delete userResponse.password;
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
     
-    res.json(userResponse);
+    // Send response without sensitive data
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        provider: user.provider
+      }
+    });
+    
   } catch (error) {
-    console.error('POST /api/auth/google - Error:', error.message);
-    console.error('POST /api/auth/google - Stack:', error.stack);
-    res.status(500).json({ message: error.message, stack: error.stack });
+    console.error('Google auth error:', error);
+    res.status(500).json({ message: 'Authentication failed' });
   }
 });
 

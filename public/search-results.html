@@ -430,6 +430,127 @@
     width: calc(100% - 24px);
   }
 }
+
+.distance i {
+    margin-right: 5px;
+    color: #28a745;
+}
+
+/* Responsive styles for mobile devices */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    padding: 10px;
+  }
+  
+  .navlogo img {
+    height: 70px;
+    width: 180px;
+    margin-bottom: 10px;
+  }
+  
+  .search-container {
+    width: 100%;
+    margin: 10px 0;
+  }
+  
+  .searchbar {
+    max-width: 100%;
+  }
+  
+  .searchbar select {
+    padding: 8px;
+    font-size: 14px;
+  }
+  
+  .searchbar input {
+    font-size: 14px;
+    padding: 8px;
+  }
+  
+  .searchbar button {
+    padding: 8px;
+  }
+  
+  #searchResults {
+    padding: 10px;
+  }
+  
+  .product {
+    width: 100%;
+    max-width: 280px;
+    margin: 10px;
+  }
+  
+  .product-img {
+    height: 140px;
+  }
+  
+  .product h4 {
+    font-size: 1.2rem;
+  }
+  
+  .price {
+    font-size: 1.1rem;
+  }
+  
+  .condition {
+    font-size: 0.8rem;
+  }
+  
+  .buy-now {
+    padding: 8px;
+    font-size: 0.9rem;
+  }
+  
+  footer {
+    padding: 15px;
+    font-size: 14px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  .navlogo img {
+    height: 60px;
+    width: 150px;
+  }
+  
+  .product {
+    margin: 10px 5px;
+  }
+  
+  .product h4 {
+    font-size: 1.1rem;
+  }
+  
+  .product-img {
+    height: 120px;
+  }
+  
+  .price {
+    font-size: 1rem;
+  }
+  
+  .buy-now {
+    padding: 7px;
+    font-size: 0.85rem;
+  }
+  
+  .distance {
+    font-size: 0.8rem;
+  }
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #2a3d56;
+    padding: 15px 30px;
+    /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
+    border: none;
+  }
   </style>
 </head>
 <body>
