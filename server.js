@@ -7,6 +7,12 @@ const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
+// Set default JWT_SECRET if not provided in environment variables
+if (!process.env.JWT_SECRET) {
+  console.warn('JWT_SECRET not found in environment variables. Using default secret for development. DO NOT USE IN PRODUCTION!');
+  process.env.JWT_SECRET = 'studxchange_default_jwt_secret_key_2025';
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -676,7 +682,10 @@ app.post('/api/auth/google', async (req, res) => {
   try {
     const { name, email, googleId } = req.body;
     
+    console.log('Google auth request received:', { name, email, googleId: googleId ? 'provided' : 'not provided' });
+    
     if (!email) {
+      console.error('Google auth error: Email is required');
       return res.status(400).json({ message: 'Email is required' });
     }
 
@@ -686,6 +695,8 @@ app.post('/api/auth/google', async (req, res) => {
     // Initialize models
     initModels();
     
+    console.log('Google auth: Connected to database, checking for existing user');
+    
     // Check if user exists by email or googleId
     let user = await User.findOne({ 
       $or: [
@@ -694,18 +705,38 @@ app.post('/api/auth/google', async (req, res) => {
       ]
     });
     
+    console.log('Google auth: User search result:', user ? `Found user with ID ${user._id}` : 'No user found');
+    
     if (!user) {
       // Create new user if doesn't exist
-      user = await User.create({
-        name,
-        email,
-        googleId, // Save the googleId if provided
-        provider: 'google',
-        isVerified: true // Google users are pre-verified
-      });
-      console.log('New Google user created:', user._id);
+      console.log('Google auth: Creating new user');
+      try {
+        user = await User.create({
+          name,
+          email,
+          googleId, // Save the googleId if provided
+          provider: 'google',
+          isVerified: true // Google users are pre-verified
+        });
+        console.log('New Google user created:', user._id);
+      } catch (createError) {
+        console.error('Google auth error during user creation:', createError);
+        // Check if it's a duplicate key error
+        if (createError.code === 11000) {
+          console.error('Duplicate key error details:', createError.keyPattern, createError.keyValue);
+          // Try to find the user again with more relaxed criteria
+          user = await User.findOne({ email });
+          if (!user) {
+            throw new Error('Failed to create or find user');
+          }
+          console.log('Found user after duplicate key error:', user._id);
+        } else {
+          throw createError;
+        }
+      }
     } else {
       // Update user information if needed
+      console.log('Google auth: Updating existing user');
       let needsUpdate = false;
       
       if (name && name !== user.name) {
@@ -720,10 +751,17 @@ app.post('/api/auth/google', async (req, res) => {
       }
       
       if (needsUpdate) {
-        await user.save();
-        console.log('Updated Google user:', user._id);
+        try {
+          await user.save();
+          console.log('Updated Google user:', user._id);
+        } catch (updateError) {
+          console.error('Google auth error during user update:', updateError);
+          // Continue anyway, we still have a valid user object
+        }
       }
     }
+    
+    console.log('Google auth: Generating JWT token');
     
     // Generate JWT token
     const token = jwt.sign(
@@ -731,6 +769,8 @@ app.post('/api/auth/google', async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
+    
+    console.log('Google auth: Authentication successful');
     
     // Send response without sensitive data
     res.json({
@@ -746,7 +786,11 @@ app.post('/api/auth/google', async (req, res) => {
     
   } catch (error) {
     console.error('Google auth error:', error);
-    res.status(500).json({ message: 'Authentication failed' });
+    // Send more detailed error information in development
+    res.status(500).json({ 
+      message: 'Authentication failed',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
