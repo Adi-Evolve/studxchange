@@ -13,7 +13,8 @@ const userSchema = new mongoose.Schema({
   },
   googleId: {
     type: String,
-    unique: true
+    unique: true,
+    sparse: true // Only index this field if it exists
   },
   phone: String,
   profileComplete: {

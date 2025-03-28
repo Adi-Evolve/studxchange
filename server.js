@@ -207,7 +207,8 @@ const userSchema = new mongoose.Schema({
   },
   password: String,
   provider: String,
-  isVerified: Boolean
+  isVerified: Boolean,
+  googleId: String
 });
 
 const otpSchema = new mongoose.Schema({
@@ -673,7 +674,7 @@ app.post('/api/users/verify-otp', async (req, res) => {
 // Google Authentication
 app.post('/api/auth/google', async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { name, email, googleId } = req.body;
     
     if (!email) {
       return res.status(400).json({ message: 'Email is required' });
@@ -685,23 +686,42 @@ app.post('/api/auth/google', async (req, res) => {
     // Initialize models
     initModels();
     
-    // Check if user exists
-    let user = await User.findOne({ email });
+    // Check if user exists by email or googleId
+    let user = await User.findOne({ 
+      $or: [
+        { email },
+        ...(googleId ? [{ googleId }] : [])
+      ]
+    });
     
     if (!user) {
       // Create new user if doesn't exist
       user = await User.create({
         name,
         email,
+        googleId, // Save the googleId if provided
         provider: 'google',
         isVerified: true // Google users are pre-verified
       });
       console.log('New Google user created:', user._id);
     } else {
-      // Update name if changed
+      // Update user information if needed
+      let needsUpdate = false;
+      
       if (name && name !== user.name) {
         user.name = name;
+        needsUpdate = true;
+      }
+      
+      // Update googleId if it's provided and not already set
+      if (googleId && !user.googleId) {
+        user.googleId = googleId;
+        needsUpdate = true;
+      }
+      
+      if (needsUpdate) {
         await user.save();
+        console.log('Updated Google user:', user._id);
       }
     }
     

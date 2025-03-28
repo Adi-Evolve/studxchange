@@ -342,7 +342,8 @@
           },
           body: JSON.stringify({
             name: userData.name,
-            email: userData.email
+            email: userData.email,
+            googleId: userData.sub // Add the Google ID (sub is the unique identifier)
           })
         });
         
