@@ -199,209 +199,217 @@
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      transition: background 0.3s ease;
-    }
-    .modal-content button:hover {
-      background-color: #4d6a88;
+      margin-top: 10px;
     }
     
-    /* Responsive styles for mobile devices */
+    /* Responsive Styles */
     @media (max-width: 768px) {
       .account-container {
         margin: 15px;
         padding: 15px;
       }
-      
       .account-header {
         flex-direction: column;
         align-items: flex-start;
-        gap: 10px;
       }
-      
       .account-header h1 {
-        font-size: 20px;
+        margin-bottom: 15px;
       }
-      
+      .account-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .settings button {
+        margin-bottom: 10px;
+        margin-right: 8px;
+      }
       .listed-item {
         flex-direction: column;
         align-items: flex-start;
       }
-      
       .item-image {
         width: 100%;
         height: auto;
         margin-right: 0;
         margin-bottom: 15px;
       }
-      
       .item-actions {
         margin-top: 15px;
         width: 100%;
         justify-content: space-between;
       }
-      
-      .sold-btn, .delete-btn {
-        padding: 6px 12px;
-        font-size: 14px;
-      }
-      
-      .settings button {
-        margin-bottom: 10px;
-        width: 100%;
-        margin-right: 0;
-      }
-      
       .modal-content {
-        width: 90%;
-        padding: 15px;
+        width: 95%;
+        margin: 30% auto;
       }
     }
     
-    /* Small phones */
     @media (max-width: 480px) {
-      .account-container {
-        padding: 12px;
-      }
-      
       .account-header h1 {
-        font-size: 18px;
+        font-size: 20px;
       }
-      
       .profile-info h2, .order-history h2, .sold-items h2, .settings h2 {
         font-size: 18px;
       }
-      
-      .profile-item {
+      .account-actions button, .settings button {
+        padding: 8px 12px;
         font-size: 14px;
+        width: 100%;
+        margin-bottom: 8px;
       }
-      
-      .listed-item {
-        padding: 10px;
+      .settings {
+        display: flex;
+        flex-direction: column;
       }
-      
-      .item-details h3 {
-        font-size: 16px;
+      .settings button {
+        margin-right: 0;
+        width: 100%;
       }
-      
-      .item-details p {
-        font-size: 14px;
+      .item-actions {
+        flex-direction: column;
+        gap: 8px;
+      }
+      .sold-btn, .delete-btn {
+        width: 100%;
+      }
+      .modal-content {
+        padding: 15px;
+      }
+      .close {
+        font-size: 24px;
       }
     }
     
-    /* Navbar styles for consistency */
+    /* Navbar Styles */
     .navbar {
       display: flex;
       justify-content: space-between;
       align-items: center;
       background-color: #2a3d56;
       padding: 15px 30px;
-      /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
-      border: none;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
     .navlogo img {
       height: 100px;
       width: 250px;
     }
-    .search-container {
-      flex: 1;
+    .navbar .button-container {
       display: flex;
-      justify-content: center;
-      margin: 0 20px;
+      gap: 20px;
     }
+    .navbar .button-container a {
+      text-decoration: none;
+      color: white;
+      background-color: #124559;
+      padding: 10px 20px;
+      border-radius: 8px;
+      transition: background 0.3s ease;
+    }
+    .navbar .button-container a:hover {
+      background-color: #0d3446;
+    }
+    
+    /* Responsive Navbar */
+    @media (max-width: 768px) {
+      .navbar {
+        flex-direction: column;
+        padding: 15px;
+      }
+      .navlogo img {
+        height: 80px;
+        width: 200px;
+        margin-bottom: 15px;
+      }
+      .navbar .button-container {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .navlogo img {
+        height: 60px;
+        width: 150px;
+      }
+      .navbar .button-container {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .navbar .button-container a {
+        width: 100%;
+        text-align: center;
+        padding: 8px 15px;
+      }
+    }
+    
+    /* Search Bar Styles */
     .searchbar {
       display: flex;
       align-items: center;
       background: white;
       border-radius: 30px;
-      padding: 2px;
+      padding: 5px;
       width: 100%;
-      max-width: 600px;
+      max-width: 500px;
     }
-    .nav-button {
-      padding: 10px 25px;
-      border-radius: 25px;
-      text-decoration: none;
-      transition: all 0.3s ease;
-      border: 2px solid transparent;
-      font-weight: 500;
-      display: inline-block;
+    .searchbar input {
+      flex: 1;
+      border: none;
+      padding: 10px;
+      outline: none;
+      font-size: 16px;
+    }
+    .searchbar button {
+      background: #2a3d56;
       color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 0 30px 30px 0;
+      cursor: pointer;
     }
-    .location-button {
-      background-color: #28a745 !important;
-      margin-right: 10px;
+    .searchbar select {
+      background: #2a3d56;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 30px 0 0 30px;
+      cursor: pointer;
+      outline: none;
     }
+    
+    /* Responsive Search Bar */
     @media (max-width: 768px) {
-    .searchbar select {
-        padding: 8px;
-        font-size: 14px;
+      .searchbar {
+        max-width: 100%;
+        margin: 15px 0;
+      }
     }
-}
-.searchbar select {
-    background: #2a3d56;
-    color: white;
-    border-radius: 30px 0 0 30px;
-}
-.searchbar select, .searchbar input, .searchbar button {
-    border: none;
-    padding: 10px;
-}
-@media (max-width: 768px) {
-    .searchbar select {
-        padding: 8px;
-        font-size: 14px;
+    
+    @media (max-width: 480px) {
+      .searchbar {
+        flex-direction: column;
+        background: transparent;
+        border-radius: 0;
+        padding: 0;
+      }
+      .searchbar select {
+        width: 100%;
+        border-radius: 8px;
+        margin-bottom: 10px;
+      }
+      .searchbar input {
+        width: 100%;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+      }
+      .searchbar button {
+        width: 100%;
+        border-radius: 8px;
+      }
     }
-}
-select {
-    word-wrap: normal;
-}
-button, select {
-    text-transform: none;
-}
-button, input, optgroup, select, textarea {
-    margin: 0;
-    font-family: inherit;
-    font-size: inherit;
-    line-height: inherit;
-}
-select {
-    word-wrap: normal;
-}
-button, select {
-    text-transform: none;
-}
-button, input, optgroup, select, textarea {
-    margin: 0;
-    font-family: inherit;
-    font-size: inherit;
-    line-height: inherit;
-}
-@media (max-width: 768px) {
-    .searchbar input {
-        font-size: 14px;
-    }
-}
-.searchbar input {
-    width: 100%;
-}
-.searchbar select, .searchbar input, .searchbar button {
-    border: none;
-    padding: 10px;
-}
-
-@media (max-width: 768px) {
-    .searchbar input {
-        font-size: 14px;
-    }
-}
-.searchbar button {
-    background: #2a3d56;
-    color: white;
-    border-radius: 0 30px 30px 0;
-}
-button, select {
-    text-transform: none;
-}
   </style>
 </head>
 <body>
