@@ -8,6 +8,7 @@
   <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="js/db-config.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   
   <style>
     /* Basic Reset and Styles */
@@ -17,217 +18,294 @@
       box-sizing: border-box;
     }
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #f4f4f9;
       color: #333;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
     header {
-      background-color: #124559;
-      color: white;
-      padding: 20px;
-      text-align: center;
-    }
-    .login-container {
-      max-width: 400px;
-      margin: 20px auto;
-      padding: 20px;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .login-container h1 {
-      text-align: center;
-      margin-bottom: 20px;
-      color: #2a3d56;
-    }
-    .login-form label {
-      display: block;
-      margin: 10px 0 5px;
-      font-weight: bold;
-      color: #2a3d56;
-    }
-    .login-form input {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 15px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 1rem;
-    }
-    .login-form button {
-      width: 100%;
-      padding: 10px;
       background-color: #2a3d56;
       color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 1.1rem;
-      cursor: pointer;
-      transition: background 0.3s ease;
+      padding: 20px;
     }
-    .login-form button:hover {
-      background-color: #4d6a88;
+    .login-container {
+      max-width: 500px;
+      margin: 40px auto;
+      padding: 40px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    .login-container h1 {
+      margin-bottom: 30px;
+      color: #2a3d56;
+      font-weight: 600;
+    }
+    .login-container p {
+      margin-bottom: 30px;
+      color: #666;
+      line-height: 1.6;
     }
     .google-signin-container {
-      margin: 20px 0;
-      text-align: center;
-    }
-    .divider {
-      margin: 20px 0;
+      margin: 30px 0;
       display: flex;
-      align-items: center;
-      text-align: center;
-      color: #666;
-    }
-    .divider::before,
-    .divider::after {
-      content: '';
-      flex: 1;
-      border-bottom: 1px solid #ddd;
-    }
-    .divider-text {
-      padding: 0 10px;
+      justify-content: center;
     }
     .error {
-      color: red;
+      color: #e53935;
       font-size: 0.9em;
-      margin-top: 10px;
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 4px;
+      background-color: #ffebee;
       display: none;
     }
     .signup-link {
-      text-align: center;
-      margin-top: 20px;
-      font-size: 0.9rem;
+      margin-top: 30px;
+      font-size: 0.95rem;
+      color: #666;
     }
     .signup-link a {
       color: #1a75ff;
       text-decoration: none;
+      font-weight: 500;
     }
     .signup-link a:hover {
       text-decoration: underline;
     }
-    .loading {
-      opacity: 0.7;
-      pointer-events: none;
+    .logo-container {
+      margin-bottom: 30px;
     }
-    .loading::after {
-      content: "";
-      position: absolute;
-      right: 1rem;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 1.2rem;
-      height: 1.2rem;
-      border: 3px solid rgba(255, 255, 255, 0.3);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
+    .logo-container img {
+      height: 120px;
+      width: auto;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    .benefits {
+      display: flex;
+      justify-content: space-around;
+      margin: 30px 0;
+      flex-wrap: wrap;
+    }
+    .benefit-item {
+      flex: 0 0 30%;
+      text-align: center;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .benefit-item i {
+      font-size: 2.5rem;
+      color: #1a75ff;
+      margin-bottom: 15px;
+    }
+    .benefit-item h3 {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+      color: #2a3d56;
+    }
+    .benefit-item p {
+      font-size: 0.9rem;
+      color: #666;
     }
     
-    /* Responsive styles for mobile devices */
+    /* Navbar Styles - Matching index.html */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #2a3d56;
+      padding: 15px 30px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .navlogo img {
+      height: 100px;
+      width: 250px;
+    }
+    .navbar .button-container {
+      display: flex;
+      gap: 20px;
+    }
+    .nav-button {
+      padding: 10px 25px;
+      border-radius: 25px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+      font-weight: 500;
+      display: inline-block;
+      color: white;
+    }
+    .search-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      margin: 0 20px;
+    }
+    .searchbar {
+      display: flex;
+      align-items: center;
+      background: white;
+      border-radius: 30px;
+      padding: 2px;
+      width: 100%;
+      max-width: 600px;
+    }
+    .searchbar select, .searchbar input, .searchbar button {
+      border: none;
+      padding: 10px;
+    }
+    .searchbar select {
+      background: #2a3d56;
+      color: white;
+      border-radius: 30px 0 0 30px;
+    }
+    .searchbar input {
+      width: 100%;
+    }
+    .searchbar button {
+      background: #2a3d56;
+      color: white;
+      border-radius: 0 30px 30px 0;
+    }
+    
+    /* Responsive Navbar */
     @media (max-width: 768px) {
-      header {
+      .navbar {
+        flex-direction: column;
         padding: 15px;
       }
-      
-      header h1 {
-        font-size: 1.5rem;
+      .navlogo img {
+        height: 80px;
+        width: 200px;
+        margin-bottom: 15px;
       }
-      
+      .search-container {
+        width: 100%;
+        margin: 10px 0;
+      }
+      .navbar .button-container {
+        width: 100%;
+        justify-content: center;
+        margin-top: 10px;
+      }
+      .searchbar select, .searchbar input {
+        font-size: 14px;
+        padding: 8px;
+      }
       .login-container {
-        margin: 15px auto;
-        padding: 15px;
-        width: 90%;
+        margin: 20px 15px;
+        padding: 25px;
       }
-      
-      .login-container h1 {
-        font-size: 1.5rem;
-      }
-      
-      .login-form input {
-        padding: 8px;
-        font-size: 0.9rem;
-      }
-      
-      .login-form button {
-        padding: 8px;
-        font-size: 1rem;
-      }
-      
-      .google-signin-container {
-        margin: 15px 0;
-      }
-      
-      .divider {
-        margin: 15px 0;
-      }
-      
-      .signup-link {
-        font-size: 0.8rem;
+      .benefit-item {
+        flex: 0 0 100%;
       }
     }
     
-    /* Small phones */
     @media (max-width: 480px) {
+      .navbar {
+        padding: 10px;
+      }
+      .navlogo img {
+        height: 60px;
+        width: 150px;
+      }
+      .navbar .button-container {
+        flex-wrap: wrap;
+      }
+      .nav-button {
+        padding: 8px 15px;
+        font-size: 14px;
+        margin: 5px;
+      }
       .login-container {
-        padding: 12px;
+        padding: 20px;
       }
-      
-      .login-form label {
-        font-size: 0.9rem;
+      .logo-container img {
+        height: 80px;
       }
-      
-      .login-form input {
-        padding: 7px;
-        font-size: 0.85rem;
-        margin-bottom: 12px;
-      }
-      
-      .login-form button {
-        padding: 7px;
-        font-size: 0.95rem;
-      }
+    }
+    
+    footer {
+      background-color: #2a3d56;
+      color: white;
+      text-align: center;
+      padding: 20px;
+      margin-top: auto;
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>StudXchange</h1>
+    <div class="navbar">
+      <div class="navlogo">
+        <a href="index.html"><img src="Logo1.png" alt="StudXchange"></a>
+      </div>
+      <div class="search-container">
+        <form class="searchbar" action="search-results.html" method="GET">
+          <select name="category">
+            <option value="all">All</option>
+            <option value="VIT">VIT</option>
+            <option value="COEP">COEP</option>
+            <option value="PICT">PICT</option>
+            <option value="DYP">DYP</option>
+            <option value="PCCOE">PCCOE</option>
+          </select>
+          <input type="text" name="query" placeholder="Search products...">
+          <button type="submit"><i class="fas fa-search"></i></button>
+        </form>
+      </div>
+      <div class="button-container">
+        <a class="nav-button sell-button" href="sell.html">Sell/Donate</a>
+        <a class="nav-button" href="index.html">Home</a>
+      </div>
+    </div>
   </header>
 
   <div class="login-container">
-    <h1>Login</h1>
+    <div class="logo-container">
+      <img src="Logo1.png" alt="StudXchange">
+    </div>
     
-    <!-- Google Sign-In -->
+    <h1>Welcome to StudXchange</h1>
+    
+    <p>The ultimate college marketplace for students to buy, sell, and find accommodations. Join our community with a simple Google login.</p>
+    
     <div class="google-signin-container">
-      <div id="g_id_signin" data-type="standard" data-theme="outline" data-size="large"></div>
+      <div id="g_id_signin"></div>
     </div>
-
-    <div class="divider">
-      <span class="divider-text">or</span>
+    
+    <div id="formError" class="error"></div>
+    
+    <div class="benefits">
+      <div class="benefit-item">
+        <i class="fas fa-shopping-cart"></i>
+        <h3>Buy & Sell</h3>
+        <p>Trade textbooks, electronics, and more with fellow students</p>
+      </div>
+      <div class="benefit-item">
+        <i class="fas fa-home"></i>
+        <h3>Find Housing</h3>
+        <p>Discover perfect accommodations near your campus</p>
+      </div>
+      <div class="benefit-item">
+        <i class="fas fa-shield-alt"></i>
+        <h3>Secure & Simple</h3>
+        <p>One-click Google login for a seamless experience</p>
+      </div>
     </div>
-
-    <!-- Login Form -->
-    <form class="login-form" id="loginForm">
-      <label for="email">Email</label>
-      <input type="email" id="email" name="email" placeholder="Enter your email" required>
-      
-      <label for="password">Password</label>
-      <input type="password" id="password" name="password" placeholder="Enter your password" required>
-      
-      <button type="submit" id="loginBtn">Login</button>
-      
-      <div class="error" id="formError"></div>
-    </form>
     
     <div class="signup-link">
-      <p>Don't have an account? <a href="Signuppage.html">Sign up</a></p>
+      New to StudXchange? Sign in with Google to create your account automatically!
     </div>
   </div>
-
+  
+  <footer>
+    <p> 2025 StudXchange - The College Marketplace</p>
+    <p>For any help, contact us at: Studxchange05@gmail.com | Phone: 8857053541</p>
+  </footer>
+  
   <script>
     // Google Sign-In Initialization
     function initGoogleSignIn() {
@@ -275,9 +353,13 @@
         
         const data = await result.json();
         
-        // Save user data and token to localStorage
-        localStorage.setItem('currentUser', JSON.stringify(data.user));
-        localStorage.setItem('token', data.token);
+        // Save user data to localStorage
+        localStorage.setItem('currentUser', JSON.stringify({
+          name: data.user.name,
+          email: data.user.email,
+          phone: data.user.phone,
+          token: data.token
+        }));
         
         // Show success message before redirect
         showSuccess('Login successful! Redirecting...');
@@ -312,10 +394,6 @@
       const errorDiv = document.getElementById('formError');
       errorDiv.textContent = message;
       errorDiv.style.display = 'block';
-      errorDiv.style.backgroundColor = '#ffebee';
-      errorDiv.style.padding = '10px';
-      errorDiv.style.borderRadius = '4px';
-      errorDiv.style.marginTop = '10px';
       setTimeout(() => { 
         errorDiv.style.display = 'none';
       }, 5000);
@@ -328,19 +406,10 @@
       errorDiv.style.display = 'block';
       errorDiv.style.backgroundColor = '#e8f5e9';
       errorDiv.style.color = '#2e7d32';
-      errorDiv.style.padding = '10px';
-      errorDiv.style.borderRadius = '4px';
-      errorDiv.style.marginTop = '10px';
     }
 
     // Show loading state
     function showLoading() {
-      const loginBtn = document.getElementById('loginBtn');
-      if (loginBtn) {
-        loginBtn.disabled = true;
-        loginBtn.classList.add('loading');
-      }
-      // Disable Google Sign-In button
       const googleBtn = document.getElementById('g_id_signin');
       if (googleBtn) {
         googleBtn.style.opacity = '0.7';
@@ -350,63 +419,15 @@
 
     // Hide loading state
     function hideLoading() {
-      const loginBtn = document.getElementById('loginBtn');
-      if (loginBtn) {
-        loginBtn.disabled = false;
-        loginBtn.classList.remove('loading');
-      }
-      // Re-enable Google Sign-In button
       const googleBtn = document.getElementById('g_id_signin');
       if (googleBtn) {
         googleBtn.style.opacity = '1';
         googleBtn.style.pointerEvents = 'auto';
       }
     }
-
-    // Handle login form submission
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      showLoading();
-      
-      try {
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
-        
-        const response = await fetch(API_ENDPOINTS.LOGIN_USER, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ email, password })
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Invalid credentials');
-        }
-        
-        const user = await response.json();
-        
-        // Save user data to localStorage
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        
-        // Show success message
-        showSuccess('Login successful! Redirecting...');
-        
-        // Redirect after a short delay
-        setTimeout(() => {
-          window.location.href = 'PROFILE_FINAL.html';
-        }, 1500);
-        
-      } catch (error) {
-        showError(error.message || 'Login failed. Please check your credentials.');
-      } finally {
-        hideLoading();
-      }
-    });
-
-    // Initialize Google Sign-In on load
-    window.onload = initGoogleSignIn;
+    
+    // Initialize Google Sign-In when the page loads
+    document.addEventListener('DOMContentLoaded', initGoogleSignIn);
   </script>
 </body>
 </html>
