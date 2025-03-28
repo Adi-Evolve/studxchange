@@ -996,29 +996,9 @@ async function toggleWishlist(product) {
 
     async function fetchData() {
       try {
-        console.log("Fetching data from API endpoints...");
-        
-        // Try to fetch from MongoDB directly first
-        try {
-          console.log("Attempting to fetch products from MongoDB API...");
-          const response = await fetch(API_ENDPOINTS.GET_PRODUCTS);
-          if (response.ok) {
-            const products = await response.json();
-            console.log("Successfully fetched products from MongoDB:", products.length);
-            return { products, rooms: [], users: [], soldItems: [] };
-          } else {
-            console.warn("Failed to fetch products from MongoDB API:", response.status);
-          }
-        } catch (mongoError) {
-          console.error("Error fetching from MongoDB API:", mongoError);
-        }
-        
-        // Fallback to JSONBin if MongoDB fetch fails
-        console.log("Falling back to JSONBin...");
-        const response = await fetch("https://api.jsonbin.io/v3/b/65fac0c8266cfc3fde91c0a4", {
-          headers: {
-            "X-Master-Key": "$2a$10$rXu0VnZV5yCQmKGzXkV2C.HrSh0dqWoA3YFY1hXwDcCIGsJ9JvOdm"
-          }
+        console.log("Fetching data from JSONBin...");
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+          headers: { 'X-Master-Key': JSONBIN_API_KEY }
         });
         const data = await response.json();
         console.log("Raw data from JSONBin:", data);
@@ -1097,32 +1077,7 @@ async function toggleWishlist(product) {
         // Show loading indicator
         document.getElementById('loading').style.display = 'flex';
         
-        // Try to fetch product directly from API first
-        try {
-          console.log("Attempting to fetch product directly from API...");
-          const response = await fetch(`${API_ENDPOINTS.GET_PRODUCTS}?title=${encodeURIComponent(productTitleParam)}`);
-          
-          if (response.ok) {
-            const products = await response.json();
-            console.log("API response for direct product fetch:", products);
-            
-            if (Array.isArray(products) && products.length > 0) {
-              console.log("Found product directly from API:", products[0]);
-              currentProduct = products[0];
-              renderProductDetails();
-              document.getElementById('loading').style.display = 'none';
-              return;
-            } else {
-              console.log("No products found in direct API response");
-            }
-          } else {
-            console.warn("Failed to fetch product directly:", response.status);
-          }
-        } catch (directFetchError) {
-          console.error("Error fetching product directly:", directFetchError);
-        }
-        
-        // If direct fetch failed, try the regular data fetch
+        // Fetch all data from JSONBin
         const data = await fetchData();
         console.log("Loaded data structure:", Object.keys(data));
         
@@ -1165,7 +1120,7 @@ async function toggleWishlist(product) {
         // If not found in products, check in rooms collection
         if (!item && data.rooms) {
           if (Array.isArray(data.rooms)) {
-            console.log("Searching in MongoDB 'rooms' collection...");
+            console.log("Searching in rooms collection...");
             console.log("Number of rooms in data:", data.rooms.length);
             // Log all room titles to debug matching issues
             console.log("Available room titles:", data.rooms.map(r => r.title));
@@ -1206,12 +1161,31 @@ async function toggleWishlist(product) {
           console.log("Item not found in JSONBin data, trying direct MongoDB access...");
           // Try each variation
           for (const title of titleVariations) {
-            const roomData = await fetchRoomDirectly(title);
-            if (roomData) {
-              item = roomData;
-              item.category = 'Room';
-              console.log("Successfully retrieved room directly from MongoDB:", item);
-              break;
+            try {
+              // Try to fetch room data
+              const roomResponse = await fetch(`/api/rooms/title/${encodeURIComponent(title)}`);
+              if (roomResponse.ok) {
+                const roomData = await roomResponse.json();
+                if (roomData) {
+                  item = roomData;
+                  item.category = 'Room';
+                  console.log("Successfully retrieved room directly from MongoDB:", item);
+                  break;
+                }
+              }
+              
+              // Try to fetch product data
+              const productResponse = await fetch(`/api/products/title/${encodeURIComponent(title)}`);
+              if (productResponse.ok) {
+                const productData = await productResponse.json();
+                if (productData) {
+                  item = productData;
+                  console.log("Successfully retrieved product directly from MongoDB:", item);
+                  break;
+                }
+              }
+            } catch (apiError) {
+              console.error("Error fetching from API:", apiError);
             }
           }
         }
@@ -1220,10 +1194,31 @@ async function toggleWishlist(product) {
 
         if (!currentProduct) {
           console.error("Item not found in products or rooms. Title variations tried:", titleVariations);
-          displayError("Product not found. It may have been removed or sold.");
-          return;
+          
+          // Try direct debugging of the entire data object
+          console.log("Full data object for debugging:", JSON.stringify(data));
+          
+          // Last resort: Create a temporary room object for testing
+          if (confirm('Product not found in database. Would you like to view a temporary room for testing?')) {
+            currentProduct = {
+              title: productTitleParam,
+              price: "5000",
+              description: "This is a temporary room for testing. The actual room could not be found in the database.",
+              hostelName: "Test Hostel",
+              college: "Test College",
+              sellerEmail: "test@example.com",
+              sellerPhone: "1234567890",
+              category: "Room",
+              images: ["https://via.placeholder.com/400x300?text=Room+Image"]
+            };
+            console.log("Created temporary room for testing:", currentProduct);
+          } else {
+            displayError("Product not found. It may have been removed or sold.");
+            return;
+          }
         }
         
+        console.log("Found item:", currentProduct);
         renderProductDetails();
       } catch (error) {
         console.error("Error loading product details:", error);
