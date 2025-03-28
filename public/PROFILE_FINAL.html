@@ -536,6 +536,13 @@
             }
             loadListedItems();
             loadSoldItems();
+            
+            // Check if we need to open the phone modal (redirected from sell page)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('action') === 'addPhone') {
+                // Open the phone modal automatically
+                openPhoneModal();
+            }
         } else {
             window.location.href = 'login.html';
         }
@@ -556,12 +563,18 @@
             alert('Please enter a valid 10-digit phone number');
             return;
         }
+        
         try {
-            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-            currentUser.phone = newPhone;
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            // Show loading indicator
+            const saveButton = document.querySelector('#phoneModal button');
+            const originalText = saveButton.textContent;
+            saveButton.textContent = 'Saving...';
+            saveButton.disabled = true;
             
-            // Update user in MongoDB
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            
+            // Update user in MongoDB first
+            console.log('Updating phone number in database:', newPhone);
             const response = await fetch(API_ENDPOINTS.UPDATE_USER, {
                 method: 'PUT',
                 headers: {
@@ -574,15 +587,34 @@
             });
             
             if (!response.ok) {
-                throw new Error('Failed to update phone number');
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to update phone number');
             }
             
+            const updatedUser = await response.json();
+            console.log('Phone number updated successfully:', updatedUser);
+            
+            // Update local storage after successful server update
+            currentUser.phone = newPhone;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            // Update UI
             document.getElementById('profilePhone').textContent = newPhone;
             document.getElementById('addPhoneBtn').style.display = 'none';
+            
+            // Show success message
+            alert('Phone number saved successfully!');
+            
+            // Close modal
             closePhoneModal();
         } catch (error) {
             console.error('Error saving phone:', error);
-            alert('Failed to save phone number');
+            alert(`Failed to save phone number: ${error.message || 'Unknown error occurred'}`);
+        } finally {
+            // Reset button state
+            const saveButton = document.querySelector('#phoneModal button');
+            saveButton.textContent = 'Save';
+            saveButton.disabled = false;
         }
     }
 

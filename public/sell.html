@@ -1276,7 +1276,8 @@
 
         // Modal functions
         function redirectToProfile() {
-          window.location.href = 'PROFILE_FINAL.html';
+          // Add a query parameter to indicate we're coming from the sell page to add a phone number
+          window.location.href = 'PROFILE_FINAL.html?action=addPhone';
         }
 
         function closePhoneErrorModal() {
