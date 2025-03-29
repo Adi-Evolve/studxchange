@@ -6,6 +6,7 @@ const path = require('path');
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
+const compression = require('compression');
 
 // Set default JWT_SECRET if not provided in environment variables
 if (!process.env.JWT_SECRET) {
@@ -21,10 +22,27 @@ app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 
+// Add compression middleware for faster response times
+app.use(compression());
+
+// Add response time logging middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - ${res.statusCode} - ${duration}ms`);
+  });
+  next();
+});
+
 // Serve static files from the public directory
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: '1d' // Cache static assets for 1 day
+}));
 // Also serve static files from /public/ path for compatibility with Live Server
-app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/public', express.static(path.join(__dirname, 'public'), {
+  maxAge: '1d' // Cache static assets for 1 day
+}));
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -88,14 +106,19 @@ async function connectToDatabase() {
         connectTimeoutMS: 5000, // Further reduced connection timeout for serverless
         socketTimeoutMS: 10000, // Further reduced socket timeout for serverless
         family: 4, // Use IPv4, skip trying IPv6
-        maxPoolSize: 1, // Minimal pool size for serverless
-        minPoolSize: 1, // Maintain at least one connection
-        maxIdleTimeMS: 5000, // Close idle connections after 5 seconds
+        maxPoolSize: 10, // Increased pool size for better concurrency
+        minPoolSize: 3, // Maintain at least three connections
+        maxIdleTimeMS: 30000, // Close idle connections after 30 seconds
         serverApi: {
           version: '1',
           strict: false, // Less strict mode for better compatibility
           deprecationErrors: false // Disable deprecation errors
-        }
+        },
+        // Add read preference for better read performance
+        readPreference: 'secondaryPreferred',
+        // Add write concern for better write performance
+        w: 'majority',
+        wtimeoutMS: 2500
       });
       
       console.log('Connected to MongoDB successfully');
@@ -166,6 +189,14 @@ const productSchema = new mongoose.Schema({
   }
 });
 
+// Add indexes for frequently queried fields
+productSchema.index({ title: 1 });
+productSchema.index({ category: 1 });
+productSchema.index({ sellerEmail: 1 });
+productSchema.index({ createdAt: -1 });
+// Compound index for location-based queries
+productSchema.index({ "coordinates.lat": 1, "coordinates.lon": 1 });
+
 const roomSchema = new mongoose.Schema({
   college: String,
   title: String,
@@ -195,6 +226,14 @@ const roomSchema = new mongoose.Schema({
     lon: Number
   }
 });
+
+// Add indexes for frequently queried fields in rooms
+roomSchema.index({ title: 1 });
+roomSchema.index({ college: 1 });
+roomSchema.index({ sellerEmail: 1 });
+roomSchema.index({ createdAt: -1 });
+// Compound index for location-based queries
+roomSchema.index({ "coordinates.lat": 1, "coordinates.lon": 1 });
 
 const userSchema = new mongoose.Schema({
   name: String,
@@ -314,60 +353,94 @@ app.get('/api/health', (req, res) => {
   res.json(healthData);
 });
 
-// Get all products
+// Optimize the products API endpoint with projection and pagination
 app.get('/api/products', async (req, res) => {
   try {
     console.log('GET /api/products - Fetching products');
+    
+    // Parse query parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+    const category = req.query.category;
     
     // Ensure database connection
     await connectToDatabase();
     initModels();
     
-    // Check if sellerEmail filter is provided
-    const { sellerEmail } = req.query;
+    // Build query
     let query = {};
-    
-    if (sellerEmail) {
-      console.log(`GET /api/products - Filtering by sellerEmail: ${sellerEmail}`);
-      query.sellerEmail = sellerEmail;
+    if (category && category !== 'all') {
+      query.category = category;
     }
     
-    // Perform the query with retry logic for session expiration
-    let products;
-    let retryCount = 0;
-    const MAX_RETRIES = 3;
+    // Use lean() for faster queries and projection to return only needed fields
+    const products = await Product.find(query)
+      .select('title price images category createdAt college location coordinates')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean()
+      .exec();
     
-    while (retryCount < MAX_RETRIES) {
-      try {
-        products = await Product.find(query).sort({ createdAt: -1 });
-        break; // If successful, exit the loop
-      } catch (queryError) {
-        retryCount++;
-        console.error(`GET /api/products - Query error (attempt ${retryCount}/${MAX_RETRIES}):`, queryError.message);
-        
-        if (queryError.name === 'MongoExpiredSessionError' && retryCount < MAX_RETRIES) {
-          console.log('GET /api/products - Session expired, reconnecting...');
-          // Force a new connection
-          if (mongoose.connection.readyState !== 0) {
-            await mongoose.connection.close();
-          }
-          await connectToDatabase();
-          initModels();
-          continue; // Retry the query
-        }
-        
-        // If we've reached max retries or it's not a session error, throw it
-        if (retryCount >= MAX_RETRIES) {
-          throw queryError;
-        }
+    // Get total count for pagination (use countDocuments for better performance)
+    const total = await Product.countDocuments(query);
+    
+    // Return data with pagination info
+    res.json({
+      products,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit)
       }
-    }
-    
-    console.log(`GET /api/products - Found ${products.length} products`);
-    res.json(products);
+    });
   } catch (error) {
-    console.error('GET /api/products - Error:', error.message);
-    res.status(500).json({ message: error.message, stack: error.stack });
+    console.error('Error fetching products:', error);
+    res.status(500).json({ message: 'Error fetching products', error: error.message });
+  }
+});
+
+// Optimize the rooms API endpoint with projection and pagination
+app.get('/api/rooms', async (req, res) => {
+  try {
+    console.log('GET /api/rooms - Fetching rooms');
+    
+    // Parse query parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+    
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
+    // Use lean() for faster queries and projection to return only needed fields
+    const rooms = await Room.find()
+      .select('title price images hostelName college location coordinates createdAt')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean()
+      .exec();
+    
+    // Get total count for pagination (use countDocuments for better performance)
+    const total = await Room.countDocuments();
+    
+    // Return data with pagination info
+    res.json({
+      rooms,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching rooms:', error);
+    res.status(500).json({ message: 'Error fetching rooms', error: error.message });
   }
 });
 

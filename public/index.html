@@ -602,6 +602,24 @@
                 font-size: 14px;
             }
         }
+        .product-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 8px 8px 0 0;
+        }
+
+        /* Add image loading animation */
+        @keyframes imageLoading {
+            0% { background-position: -200px 0; }
+            100% { background-position: 200px 0; }
+        }
+
+        .image-loading {
+            background: linear-gradient(to right, #f0f0f0 8%, #e0e0e0 18%, #f0f0f0 33%);
+            background-size: 800px 104px;
+            animation: imageLoading 1.5s infinite linear forwards;
+        }
     </style>
     <!-- Add Bootstrap CSS -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -942,7 +960,7 @@ async function handleLocation() {
                     const featuredImage = item.images?.[0] || item.image || 'placeholder.jpg';
                     
                     productCard.innerHTML = `
-                <div class="product-image" style="background-image: url('${featuredImage}')"></div>
+                <div class="product-image image-loading" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 1 1\'%3E%3C/svg%3E')" data-bg="${featuredImage}"></div>
                 <div class="product-info">
                     <h3 class="product-title">${item.title}</h3>
                     <p class="product-price">₹${item.price}</p>
@@ -954,6 +972,9 @@ async function handleLocation() {
 
                 totalSlides = Math.ceil(reversedItems.length / 5);
                 updateSliderControls();
+
+                // Initialize lazy loading
+                initLazyLoading();
 
             } catch (error) {
                 console.error('Error loading featured products:', error);
@@ -984,6 +1005,37 @@ async function handleLocation() {
                 `<a class="nav-button profile-button" href="PROFILE_FINAL.html">Profile</a>` :
                 `<a class="nav-button signup-button" href="login.html">Login</a>`;
         }
+
+        function initLazyLoading() {
+            // Lazy load background images
+            const lazyBackgrounds = document.querySelectorAll('.product-image[data-bg]');
+            
+            if ('IntersectionObserver' in window) {
+                const imageObserver = new IntersectionObserver((entries, observer) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const bg = entry.target;
+                            bg.style.backgroundImage = `url('${bg.dataset.bg}')`;
+                            bg.classList.remove('image-loading');
+                            bg.removeAttribute('data-bg');
+                            imageObserver.unobserve(bg);
+                        }
+                    });
+                });
+                
+                lazyBackgrounds.forEach(bg => {
+                    imageObserver.observe(bg);
+                });
+            } else {
+                // Fallback for browsers that don't support IntersectionObserver
+                lazyBackgrounds.forEach(bg => {
+                    bg.style.backgroundImage = `url('${bg.dataset.bg}')`;
+                    bg.classList.remove('image-loading');
+                    bg.removeAttribute('data-bg');
+                });
+            }
+        }
+
         document.getElementById('locationButton')?.addEventListener('click', handleLocation);
         document.addEventListener('DOMContentLoaded', () => {
           // Restore location name if we have saved location

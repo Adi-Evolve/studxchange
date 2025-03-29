@@ -84,6 +84,18 @@
       object-fit: cover;
     }
 
+    /* Add image loading animation */
+    @keyframes imageLoading {
+      0% { background-position: -200px 0; }
+      100% { background-position: 200px 0; }
+    }
+
+    .image-loading {
+      background: linear-gradient(to right, #f0f0f0 8%, #e0e0e0 18%, #f0f0f0 33%);
+      background-size: 800px 104px;
+      animation: imageLoading 1.5s infinite linear forwards;
+    }
+
     .thumbnails {
       display: flex;
       gap: 0.75rem;
@@ -997,7 +1009,10 @@
       <div class="room-layout">
         <div class="product-images room-images">
           <div class="main-image-container">
-            <img class="main-image" id="mainImage" alt="Main product image" />
+            <img class="main-image image-loading" id="mainImage" alt="Main product image" 
+                 src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
+                 data-src="" 
+                 onload="this.classList.remove('image-loading')">
           </div>
           <div class="thumbnails" id="thumbnails"></div>
         </div>
@@ -1172,6 +1187,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       loadProductDetails();
       updateWishlistIcon();
+      initLazyLoading();
     });
 
     // Update wishlist icon based on current product
@@ -1233,7 +1249,9 @@
           const item = document.createElement('div');
           item.className = 'product-item';
           item.innerHTML = `
-            <img src="${product.images[0]}" alt="${product.title}">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
+                 data-src="${product.images[0]}" 
+                 alt="${product.title}">
             <span>${product.title}</span>
             <button onclick="selectProduct(${JSON.stringify(product).replace(/"/g, '&quot;')})">Select</button>
           `;
@@ -1504,29 +1522,27 @@
       let thumbnailsHTML = '';
       
       if (currentProduct.images && currentProduct.images.length > 0) {
-        // Main image
+        // Main image with lazy loading
         imagesHTML = `
           <div class="main-image-container">
-            <img src="${currentProduct.images[0]}" alt="${currentProduct.title}" class="main-image" id="mainImage">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
+                 data-src="${currentProduct.images[0]}" 
+                 alt="${currentProduct.title}" 
+                 class="main-image image-loading" 
+                 id="mainImage"
+                 onload="this.classList.remove('image-loading')">
           </div>
         `;
         
-        // Thumbnails
-        thumbnailsHTML = `<div class="thumbnails">`;
-        currentProduct.images.forEach((img, index) => {
-          thumbnailsHTML += `
-            <img src="${img}" alt="Thumbnail ${index + 1}" class="thumbnail" 
-                 onclick="document.getElementById('mainImage').src='${img}'">
-          `;
-        });
-        thumbnailsHTML += `</div>`;
-      } else {
-        // Placeholder if no images
-        imagesHTML = `
-          <div class="main-image-container">
-            <div class="no-image">No Image Available</div>
-          </div>
-        `;
+        // Generate thumbnails with lazy loading
+        thumbnailsHTML = currentProduct.images.map((img, index) => `
+          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
+               data-src="${img}" 
+               alt="Thumbnail ${index + 1}" 
+               class="thumbnail image-loading" 
+               onclick="document.getElementById('mainImage').src='${img}'; document.getElementById('mainImage').classList.remove('image-loading')"
+               onload="this.classList.remove('image-loading')">
+        `).join('');
       }
       
       // Determine price display
@@ -1737,7 +1753,11 @@
               <div class="similar-product-card">
                 <a href="${itemUrl}">
                   <div class="similar-product-image">
-                    <img src="${itemImage}" alt="${item.title}">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
+                         data-src="${itemImage}" 
+                         alt="${item.title}"
+                         class="image-loading"
+                         onload="this.classList.remove('image-loading')">
                   </div>
                   <div class="similar-product-details">
                     <h4>${item.title}</h4>
@@ -1998,7 +2018,11 @@
             items.forEach(item => {
               soldItemsHTML += `
                 <div class="sold-item-card">
-                  <img src="${item.images && item.images.length > 0 ? item.images[0] : 'placeholder.jpg'}" alt="${item.title}">
+                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
+                       data-src="${item.images && item.images.length > 0 ? item.images[0] : 'placeholder.jpg'}" 
+                       alt="${item.title}"
+                       class="image-loading"
+                       onload="this.classList.remove('image-loading')">
                   <div class="sold-item-details">
                     <h4>${item.title}</h4>
                     <p class="sold-price">₹${item.price}</p>
@@ -2060,6 +2084,34 @@
       } catch (error) {
         console.error('Error fetching sold items:', error);
         return [];
+      }
+    }
+
+    // Initialize lazy loading
+    function initLazyLoading() {
+      const lazyImages = document.querySelectorAll('img[data-src]');
+      
+      if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const img = entry.target;
+              img.src = img.dataset.src;
+              img.removeAttribute('data-src');
+              imageObserver.unobserve(img);
+            }
+          });
+        });
+        
+        lazyImages.forEach(img => {
+          imageObserver.observe(img);
+        });
+      } else {
+        // Fallback for browsers that don't support IntersectionObserver
+        lazyImages.forEach(img => {
+          img.src = img.dataset.src;
+          img.removeAttribute('data-src');
+        });
       }
     }
   </script>
