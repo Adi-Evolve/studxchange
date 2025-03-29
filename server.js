@@ -907,6 +907,28 @@ app.get('/api/sold-items', async (req, res) => {
   }
 });
 
+// Fetch sold items by seller email
+app.get('/api/solditems/seller/:email', async (req, res) => {
+  try {
+    console.log(`GET /api/solditems/seller/${req.params.email} - Fetching sold items by seller`);
+    
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
+    const sellerEmail = req.params.email;
+    
+    // Find sold items by seller email
+    const soldItems = await SoldItem.find({ sellerEmail });
+    
+    console.log(`Found ${soldItems.length} sold items for seller: ${sellerEmail}`);
+    res.json(soldItems);
+  } catch (error) {
+    console.error(`GET /api/solditems/seller/${req.params.email} - Error:`, error.message);
+    res.status(500).json({ message: error.message, stack: error.stack });
+  }
+});
+
 // Add endpoint to mark a product as sold
 app.post('/api/products/mark-sold', async (req, res) => {
   try {

@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Product Interface - StudXchange</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" />
-  <script src="js/db-config.js"></script>
+  <!-- MapLibre CSS -->
+  <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+  <!-- MapLibre JS -->
+  <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
   <style>
     :root {
       --primary-color: #2a3d56;
@@ -141,34 +144,50 @@
 
     .action-buttons {
       display: flex;
-      gap: 1rem;
-      margin: 1rem 0;
       flex-wrap: wrap;
+      gap: 10px;
+      margin: 20px 0;
     }
 
-    .btn {
-      padding: 0.75rem 1.5rem;
-      border: none;
+    .action-buttons .btn {
+      padding: 10px 15px;
       border-radius: 8px;
+      border: none;
+      font-weight: 600;
       cursor: pointer;
-      transition: background-color 0.3s, transform 0.2s;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      justify-content: center;
+      transition: all 0.3s ease;
+      flex: 1;
+      min-width: 150px;
     }
 
-    .btn-primary {
-      background-color: var(--accent-color);
-      color: var(--white-color);
+    .action-buttons .btn i {
+      margin-right: 8px;
+      font-size: 1.2rem;
     }
 
-    .btn-secondary {
-      background-color: var(--secondary-color);
-      color: var(--white-color);
+    .action-buttons .btn-primary {
+      background-color: #25D366;
+      color: white;
     }
 
-    .btn:hover {
-      transform: scale(1.02);
+    .action-buttons .btn-primary:hover {
+      background-color: #128C7E;
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .action-buttons .btn-secondary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .action-buttons .btn-secondary:hover {
+      background-color: #1e2e40;
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
 
     .product-description {
@@ -710,6 +729,239 @@
       grid-template-columns: repeat(2, 1fr);
     }
   }
+  /* Map styles */
+  .location-container {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+  }
+  
+  .location-text {
+    margin-right: 10px;
+  }
+  
+  .map-button {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.3s ease;
+  }
+  
+  .map-button i {
+    margin-right: 5px;
+  }
+  
+  .map-button:hover {
+    background-color: var(--primary-color);
+    transform: scale(1.05);
+  }
+  
+  #map-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .map-modal-content {
+    background-color: white;
+    margin: auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 800px;
+    position: relative;
+  }
+  
+  #map-container {
+    height: 400px;
+    width: 100%;
+    border-radius: 8px;
+    margin-top: 10px;
+  }
+  
+  /* Seller info styles */
+  .seller-profile {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+  }
+  
+  .seller-avatar {
+    font-size: 3rem;
+    color: var(--primary-color);
+    margin-right: 20px;
+  }
+  
+  .seller-details h3 {
+    margin-top: 0;
+    color: var(--primary-color);
+  }
+  
+  .seller-details ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .seller-details li {
+    margin-bottom: 5px;
+  }
+  
+  .sold-items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+  }
+  
+  .sold-item-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+  }
+  
+  .sold-item-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .sold-item-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+  }
+  
+  .sold-item-details {
+    padding: 10px;
+  }
+  
+  .sold-item-details h4 {
+    margin: 0 0 5px 0;
+    font-size: 1rem;
+    color: var(--primary-color);
+  }
+  
+  .sold-price {
+    font-weight: bold;
+    color: var(--accent-color);
+    margin: 0;
+  }
+  
+  /* Similar products styles */
+  #similarProductsSection {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+  }
+  
+  #similarProductsSection h2 {
+    margin-top: 0;
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+  }
+  
+  #similarProductsList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+  }
+  
+  .similar-product-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background-color: white;
+  }
+  
+  .similar-product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .similar-product-card a {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+  
+  .similar-product-image {
+    height: 150px;
+    overflow: hidden;
+  }
+  
+  .similar-product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  
+  .similar-product-card:hover .similar-product-image img {
+    transform: scale(1.05);
+  }
+  
+  .similar-product-details {
+    padding: 10px;
+  }
+  
+  .similar-product-details h4 {
+    margin: 0 0 5px 0;
+    font-size: 1rem;
+    color: var(--primary-color);
+  }
+  
+  .similar-product-price {
+    font-weight: bold;
+    color: var(--accent-color);
+    margin: 0;
+  }
+  
+  .loading-spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top: 4px solid var(--primary-color);
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .sold-items-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+  }
+  
+  .sold-items-section h3 {
+    margin-top: 0;
+    color: var(--primary-color);
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+  }
   </style>
 </head>
 <body>
@@ -871,8 +1123,31 @@
         <span class="modal-close" onclick="closeSellerInfoModal()">&times;</span>
         <h2>Seller Information</h2>
         <div id="sellerInfoContent"></div>
-        <h3>Sold Products</h3>
-        <div id="soldProductsList"></div>
+        <div class="sold-items-section">
+          <h3>Previously Sold Items</h3>
+          <div id="soldProductsList"></div>
+        </div>
+        <div class="chat-container">
+          <h3>Send a Message</h3>
+          <div class="chat-box" id="chatBox">
+            <div class="chat-message system-message">
+              Start a conversation with the seller.
+            </div>
+          </div>
+          <div class="chat-input">
+            <input type="text" id="messageInput" placeholder="Type your message...">
+            <button onclick="sendMessage()">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map Modal -->
+    <div id="map-modal">
+      <div class="map-modal-content">
+        <span class="modal-close" onclick="closeMapModal()">&times;</span>
+        <h2>Product Location</h2>
+        <div id="map-container"></div>
       </div>
     </div>
   </main>
@@ -881,6 +1156,7 @@
     <p>For any help, contact us at: Studxchange05@gmail.com | Phone: 8857053541</p>
   </footer>
 
+  <script src="js/db-config.js"></script>
   <script>
     // Constants
     const JSONBIN_BIN_ID = '6602e1f8266cfc3fde9d1f9e';
@@ -1322,14 +1598,22 @@
             <div class="price-section">
               ${priceHTML}
             </div>
-            <div class="location">
-              <i class="fas fa-map-marker-alt"></i> ${currentProduct.location || 'Location not specified'}
+            <div class="location-container">
+              <div class="location-text">
+                <i class="fas fa-map-marker-alt"></i> ${currentProduct.location || 'Location not specified'}
+              </div>
+              <button class="map-button" onclick="showLocationOnMap()">
+                <i class="fas fa-map"></i> Show in Map
+              </button>
             </div>
           </div>
           
           <div class="action-buttons">
-            <button class="btn btn-primary" onclick="showSellerInfo()">
-              <i class="fas fa-user"></i> Contact Seller
+            <button class="btn btn-primary" onclick="contactSellerWhatsApp()">
+              <i class="fab fa-whatsapp"></i> Contact on WhatsApp
+            </button>
+            <button class="btn btn-secondary" onclick="showSellerInfo()">
+              <i class="fas fa-user"></i> Seller Info
             </button>
             <button class="btn btn-secondary" id="wishlistButton" onclick="toggleWishlist(currentProduct)">
               <i class="fas fa-heart" id="wishlistIcon"></i> Add to Wishlist
@@ -1357,164 +1641,136 @@
       try {
         if (!data) return;
         
-        const similarContainer = document.getElementById('similarProducts');
+        const similarContainer = document.getElementById('similarProductsList');
         if (!similarContainer) return;
+        
+        // Show loading indicator in similar products section
+        similarContainer.innerHTML = '<div class="loading-spinner"></div>';
         
         // Determine if we're dealing with a room or product
         const isRoom = data.category === 'Room';
         const category = isRoom ? 'Room' : (data.category || 'Other');
         
-        // Fetch all products from JSONBin
-        const jsonbinData = await fetchData();
+        // Try to fetch similar products from MongoDB first
+        let similarItems = [];
         
-        // Determine which collection to use
-        let collection = isRoom ? jsonbinData.rooms : jsonbinData.products;
-        
-        if (!collection || !Array.isArray(collection)) {
-          console.error(`Collection not found or not an array: ${isRoom ? 'rooms' : 'products'}`);
-          return;
+        try {
+          // Fetch additional items from MongoDB
+          const endpoint = isRoom ? '/api/rooms' : '/api/products';
+          const response = await fetch(endpoint);
+          
+          if (response.ok) {
+            const items = await response.json();
+            
+            // Filter similar items
+            similarItems = items.filter(item => {
+              // Don't include the current item
+              if (item._id === data._id) return false;
+              
+              // For rooms, match by roomType
+              if (isRoom && item.roomType) {
+                return item.roomType === data.roomType;
+              }
+              
+              // For products, match by category
+              return item.category === category;
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching similar items from MongoDB:', error);
         }
         
-        // Filter similar items
-        let similarItems = collection.filter(item => {
-          // Don't include the current item
-          if (item.title === data.title) return false;
-          
-          // For rooms, match by roomType
-          if (isRoom && item.roomType) {
-            return item.roomType === data.roomType;
-          }
-          
-          // For products, match by category
-          return item.category === category;
-        });
-        
-        // Limit to 4 items
-        similarItems = similarItems.slice(0, 4);
-        
-        // If we don't have enough similar items, try to fetch from MongoDB
+        // If we don't have enough similar items from MongoDB, try JSONBin as fallback
         if (similarItems.length < 4) {
           try {
-            // Fetch additional items from MongoDB
-            const endpoint = isRoom ? '/api/rooms' : '/api/products';
-            const response = await fetch(endpoint);
+            // Fetch all products from JSONBin
+            const jsonbinData = await fetchData();
             
-            if (response.ok) {
-              const items = await response.json();
-              
-              // Filter and add items not already in similarItems
-              const existingTitles = similarItems.map(item => item.title);
-              
-              const additionalItems = items.filter(item => {
-                if (existingTitles.includes(item.title) || item.title === data.title) return false;
+            // Determine which collection to use
+            let collection = isRoom ? jsonbinData.rooms : jsonbinData.products;
+            
+            if (collection && Array.isArray(collection)) {
+              // Filter similar items
+              const jsonbinSimilarItems = collection.filter(item => {
+                // Don't include the current item
+                if (item.title === data.title) return false;
                 
+                // For rooms, match by roomType
                 if (isRoom && item.roomType) {
                   return item.roomType === data.roomType;
                 }
                 
+                // For products, match by category
                 return item.category === category;
               });
               
-              // Add additional items to fill up to 4
-              const neededCount = 4 - similarItems.length;
-              if (neededCount > 0 && additionalItems.length > 0) {
-                similarItems = [...similarItems, ...additionalItems.slice(0, neededCount)];
-              }
+              // Add unique items from JSONBin
+              jsonbinSimilarItems.forEach(item => {
+                // Check if this item is already in our similarItems array
+                const isDuplicate = similarItems.some(existingItem => 
+                  existingItem.title === item.title
+                );
+                
+                if (!isDuplicate) {
+                  similarItems.push(item);
+                }
+              });
             }
           } catch (error) {
-            console.error("Error fetching additional items from MongoDB:", error);
+            console.error('Error fetching similar items from JSONBin:', error);
           }
         }
         
-        // Render similar items
-        if (similarItems.length === 0) {
-          similarContainer.innerHTML = '<p>No similar items found.</p>';
-          return;
-        }
+        // Limit to 4 items
+        similarItems = similarItems.slice(0, 4);
         
-        let html = '<div class="similar-items-grid">';
-        
-        similarItems.forEach(item => {
-          const image = item.images && item.images.length > 0 ? 
-            item.images[0] : 'https://via.placeholder.com/150';
+        // Display similar items
+        if (similarItems.length > 0) {
+          let html = '';
           
-          html += `
-            <div class="similar-item">
-              <a href="product_interface.html?product=${encodeURIComponent(item.title)}">
-                <div class="similar-item-image">
-                  <img src="${image}" alt="${item.title}">
-                </div>
-                <div class="similar-item-details">
-                  <h3>${item.title}</h3>
-                  <p class="similar-item-price">₹${item.price}</p>
-                  <p class="similar-item-location">${item.location || 'Location not specified'}</p>
-                </div>
-              </a>
-            </div>
-          `;
-        });
-        
-        html += '</div>';
-        similarContainer.innerHTML = html;
-      } catch (error) {
-        console.error("Error loading similar products:", error);
-        document.getElementById('similarProducts').innerHTML = '<p>Failed to load similar items.</p>';
-      }
-    }
-
-    // Show seller information
-    function showSellerInfo() {
-      if (!currentProduct) return;
-      
-      const modal = document.getElementById('sellerInfoModal');
-      const content = document.getElementById('sellerInfoContent');
-      
-      if (!modal || !content) return;
-      
-      // Get seller information
-      const sellerName = currentProduct.sellerName || 'Anonymous';
-      const sellerEmail = currentProduct.sellerEmail || 'Not provided';
-      const sellerPhone = currentProduct.sellerPhone || 'Not provided';
-      
-      // Build content
-      content.innerHTML = `
-        <h2>Seller Information</h2>
-        <ul>
-          <li><strong>Name:</strong> ${sellerName}</li>
-          <li><strong>Email:</strong> ${sellerEmail}</li>
-          <li><strong>Phone:</strong> ${sellerPhone}</li>
-        </ul>
-        <div class="chat-container">
-          <h3>Send a Message</h3>
-          <div class="chat-box" id="chatBox">
-            <div class="chat-message system-message">
-              Start a conversation with the seller.
-            </div>
-          </div>
-          <div class="chat-input">
-            <input type="text" id="messageInput" placeholder="Type your message...">
-            <button onclick="sendMessage()">Send</button>
-          </div>
-        </div>
-      `;
-      
-      // Show modal
-      modal.style.display = 'flex';
-      
-      // Add close functionality
-      const closeBtn = modal.querySelector('.modal-close');
-      if (closeBtn) {
-        closeBtn.onclick = () => {
-          modal.style.display = 'none';
-        };
-      }
-      
-      // Close when clicking outside
-      window.onclick = (event) => {
-        if (event.target === modal) {
-          modal.style.display = 'none';
+          similarItems.forEach(item => {
+            const itemUrl = `product_interface.html?product=${encodeURIComponent(item.title)}`;
+            const itemImage = item.images && item.images.length > 0 ? 
+              item.images[0] : 'placeholder.jpg';
+            
+            html += `
+              <div class="similar-product-card">
+                <a href="${itemUrl}">
+                  <div class="similar-product-image">
+                    <img src="${itemImage}" alt="${item.title}">
+                  </div>
+                  <div class="similar-product-details">
+                    <h4>${item.title}</h4>
+                    <p class="similar-product-price">₹${item.price}</p>
+                  </div>
+                </a>
+              </div>
+            `;
+          });
+          
+          similarContainer.innerHTML = html;
+          
+          // Show the similar products section
+          const similarSection = document.getElementById('similarProductsSection');
+          if (similarSection) {
+            similarSection.style.display = 'block';
+          }
+        } else {
+          // Hide the similar products section if no similar items found
+          const similarSection = document.getElementById('similarProductsSection');
+          if (similarSection) {
+            similarSection.style.display = 'none';
+          }
         }
-      };
+      } catch (error) {
+        console.error('Error loading similar products:', error);
+        
+        // Hide the similar products section on error
+        const similarSection = document.getElementById('similarProductsSection');
+        if (similarSection) {
+          similarSection.style.display = 'none';
+        }
+      }
     }
 
     // Send message function (placeholder)
@@ -1547,6 +1803,218 @@
       
       // Scroll to bottom
       chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Show location on map
+    function showLocationOnMap() {
+      if (!currentProduct || !currentProduct.location) {
+        alert('Location information is not available for this product.');
+        return;
+      }
+      
+      // Show modal
+      const mapModal = document.getElementById('map-modal');
+      if (!mapModal) return;
+      
+      mapModal.style.display = 'flex';
+      
+      // Initialize map
+      setTimeout(() => {
+        initMap(currentProduct.location);
+      }, 100);
+    }
+    
+    // Close map modal
+    function closeMapModal() {
+      const mapModal = document.getElementById('map-modal');
+      if (mapModal) {
+        mapModal.style.display = 'none';
+      }
+    }
+    
+    // Initialize map with location
+    function initMap(locationString) {
+      // Default coordinates (center of India if geocoding fails)
+      let lat = 20.5937;
+      let lng = 78.9629;
+      
+      // Try to geocode the location string
+      geocodeLocation(locationString)
+        .then(coords => {
+          if (coords) {
+            lat = coords.lat;
+            lng = coords.lng;
+          }
+          
+          // Create map
+          const map = new maplibregl.Map({
+            container: 'map-container',
+            style: 'https://demotiles.maplibre.org/style.json',
+            center: [lng, lat],
+            zoom: 14
+          });
+          
+          // Add marker
+          new maplibregl.Marker()
+            .setLngLat([lng, lat])
+            .addTo(map);
+            
+          // Add navigation controls
+          map.addControl(new maplibregl.NavigationControl());
+        })
+        .catch(error => {
+          console.error('Error initializing map:', error);
+          document.getElementById('map-container').innerHTML = 
+            `<div class="error-message">Error loading map. Please try again later.</div>`;
+        });
+    }
+    
+    // Geocode location string to coordinates
+    async function geocodeLocation(locationString) {
+      try {
+        // Using OpenStreetMap Nominatim API for geocoding
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationString)}`);
+        const data = await response.json();
+        
+        if (data && data.length > 0) {
+          return {
+            lat: parseFloat(data[0].lat),
+            lng: parseFloat(data[0].lon)
+          };
+        }
+        return null;
+      } catch (error) {
+        console.error('Geocoding error:', error);
+        return null;
+      }
+    }
+    
+    // Contact seller via WhatsApp
+    function contactSellerWhatsApp() {
+      if (!currentProduct) return;
+      
+      const sellerPhone = currentProduct.sellerPhone || '';
+      
+      if (!sellerPhone) {
+        alert('Seller phone number is not available.');
+        return;
+      }
+      
+      // Format phone number (remove spaces, dashes, etc.)
+      const formattedPhone = sellerPhone.replace(/\D/g, '');
+      
+      // Create message
+      const message = `Hi, I am interested in buying your product "${currentProduct.title}" listed on StudXchange.`;
+      
+      // Create WhatsApp URL
+      const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
+      
+      // Open WhatsApp in new tab
+      window.open(whatsappUrl, '_blank');
+    }
+    
+    // Show seller information
+    function showSellerInfo() {
+      if (!currentProduct) return;
+      
+      const modal = document.getElementById('sellerInfoModal');
+      const content = document.getElementById('sellerInfoContent');
+      const soldProductsList = document.getElementById('soldProductsList');
+      
+      if (!modal || !content || !soldProductsList) return;
+      
+      // Get seller information
+      const sellerName = currentProduct.sellerName || 'Anonymous';
+      const sellerEmail = currentProduct.sellerEmail || 'Not provided';
+      const sellerPhone = currentProduct.sellerPhone || 'Not provided';
+      
+      // Build content
+      content.innerHTML = `
+        <div class="seller-profile">
+          <div class="seller-avatar">
+            <i class="fas fa-user-circle"></i>
+          </div>
+          <div class="seller-details">
+            <h3>${sellerName}</h3>
+            <ul>
+              <li><strong>Email:</strong> ${sellerEmail}</li>
+              <li><strong>Phone:</strong> ${sellerPhone}</li>
+            </ul>
+          </div>
+        </div>
+      `;
+      
+      // Fetch sold products by this seller
+      fetchSellerSoldItems(sellerEmail)
+        .then(items => {
+          if (items && items.length > 0) {
+            let soldItemsHTML = '<div class="sold-items-grid">';
+            items.forEach(item => {
+              soldItemsHTML += `
+                <div class="sold-item-card">
+                  <img src="${item.images && item.images.length > 0 ? item.images[0] : 'placeholder.jpg'}" alt="${item.title}">
+                  <div class="sold-item-details">
+                    <h4>${item.title}</h4>
+                    <p class="sold-price">₹${item.price}</p>
+                  </div>
+                </div>
+              `;
+            });
+            soldItemsHTML += '</div>';
+            soldProductsList.innerHTML = soldItemsHTML;
+          } else {
+            soldProductsList.innerHTML = '<p>No sold items found for this seller.</p>';
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching sold items:', error);
+          soldProductsList.innerHTML = '<p>Error loading sold items.</p>';
+        });
+      
+      // Show modal
+      modal.style.display = 'flex';
+      
+      // Add close functionality
+      const closeBtn = modal.querySelector('.modal-close');
+      if (closeBtn) {
+        closeBtn.onclick = () => {
+          modal.style.display = 'none';
+        };
+      }
+      
+      // Close when clicking outside
+      window.onclick = (event) => {
+        if (event.target === modal) {
+          modal.style.display = 'none';
+        }
+      };
+    }
+    
+    // Close seller info modal
+    function closeSellerInfoModal() {
+      const modal = document.getElementById('sellerInfoModal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    }
+    
+    // Fetch seller's sold items
+    async function fetchSellerSoldItems(sellerEmail) {
+      if (!sellerEmail) return [];
+      
+      try {
+        const response = await fetch(`/api/solditems/seller/${encodeURIComponent(sellerEmail)}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error('Error fetching sold items:', error);
+        return [];
+      }
     }
   </script>
 </body>
