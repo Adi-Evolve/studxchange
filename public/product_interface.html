@@ -1074,7 +1074,10 @@
     async function loadProductDetails() {
       try {
         // Show loading indicator
-        document.getElementById('loading').style.display = 'flex';
+        const loadingElement = document.getElementById('loading');
+        if (loadingElement) {
+          loadingElement.style.display = 'flex';
+        }
         
         // Get product title from URL
         const urlParams = new URLSearchParams(window.location.search);
@@ -1174,26 +1177,36 @@
         loadSimilarProducts(currentProduct);
         
         // Hide loading indicator
-        document.getElementById('loading').style.display = 'none';
+        if (loadingElement) {
+          loadingElement.style.display = 'none';
+        }
       } catch (error) {
         console.error("Error loading product details:", error);
         displayError("An error occurred while loading the product. Please try again later.");
-        document.getElementById('loading').style.display = 'none';
+        const loadingElement = document.getElementById('loading');
+        if (loadingElement) {
+          loadingElement.style.display = 'none';
+        }
       }
     }
 
     // Display error message
     function displayError(message) {
       const container = document.getElementById('productContainer');
-      container.innerHTML = `
-        <div class="error-container">
-          <div class="error-icon">⚠️</div>
-          <h2>Error</h2>
-          <p>${message}</p>
-          <a href="index.html" class="btn btn-primary">Return to Home</a>
-        </div>
-      `;
-      document.getElementById('loading').style.display = 'none';
+      if (container) {
+        container.innerHTML = `
+          <div class="error-container">
+            <div class="error-icon">⚠️</div>
+            <h2>Error</h2>
+            <p>${message}</p>
+            <a href="index.html" class="btn btn-primary">Return to Home</a>
+          </div>
+        `;
+      }
+      const loadingElement = document.getElementById('loading');
+      if (loadingElement) {
+        loadingElement.style.display = 'none';
+      }
     }
 
     // Render product details
