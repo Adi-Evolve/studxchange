@@ -1834,6 +1834,16 @@
     
     // Initialize map with location
     function initMap(locationString) {
+      // Get the map container
+      const mapContainer = document.getElementById('map-container');
+      if (!mapContainer) {
+        console.error('Map container not found');
+        return;
+      }
+      
+      // Clear any previous content
+      mapContainer.innerHTML = '<div class="loading-spinner"></div>';
+      
       // Default coordinates (center of India if geocoding fails)
       let lat = 20.5937;
       let lng = 78.9629;
@@ -1842,39 +1852,68 @@
       geocodeLocation(locationString)
         .then(coords => {
           if (coords) {
+            console.log('Geocoded coordinates:', coords);
             lat = coords.lat;
             lng = coords.lng;
+          } else {
+            console.log('Using default coordinates for India');
           }
           
-          // Create map
-          const map = new maplibregl.Map({
-            container: 'map-container',
-            style: 'https://demotiles.maplibre.org/style.json',
-            center: [lng, lat],
-            zoom: 14
-          });
-          
-          // Add marker
-          new maplibregl.Marker()
-            .setLngLat([lng, lat])
-            .addTo(map);
+          try {
+            // Create map
+            const map = new maplibregl.Map({
+              container: 'map-container',
+              style: 'https://demotiles.maplibre.org/style.json', // Use MapLibre demo style
+              center: [lng, lat],
+              zoom: 14
+            });
             
-          // Add navigation controls
-          map.addControl(new maplibregl.NavigationControl());
+            // Add marker
+            new maplibregl.Marker()
+              .setLngLat([lng, lat])
+              .addTo(map);
+              
+            // Add navigation controls
+            map.addControl(new maplibregl.NavigationControl());
+            
+            // Log success
+            console.log('Map initialized successfully');
+            
+            // Add error handling for map load
+            map.on('error', (e) => {
+              console.error('MapLibre error:', e);
+              mapContainer.innerHTML = `<div class="error-message">Error loading map: ${e.error ? e.error.message : 'Unknown error'}</div>`;
+            });
+            
+            // Add load event to confirm map loaded
+            map.on('load', () => {
+              console.log('Map loaded successfully');
+            });
+          } catch (error) {
+            console.error('Error creating MapLibre map:', error);
+            mapContainer.innerHTML = `<div class="error-message">Error creating map: ${error.message}</div>`;
+          }
         })
         .catch(error => {
           console.error('Error initializing map:', error);
-          document.getElementById('map-container').innerHTML = 
-            `<div class="error-message">Error loading map. Please try again later.</div>`;
+          mapContainer.innerHTML = `<div class="error-message">Error loading map: ${error.message}</div>`;
         });
     }
     
     // Geocode location string to coordinates
     async function geocodeLocation(locationString) {
       try {
+        console.log('Geocoding location:', locationString);
+        
         // Using OpenStreetMap Nominatim API for geocoding
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationString)}`);
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationString)}&limit=1&countrycodes=in`);
+        
+        if (!response.ok) {
+          throw new Error(`Geocoding API error: ${response.status} ${response.statusText}`);
+        }
+        
         const data = await response.json();
+        console.log('Geocoding response:', data);
         
         if (data && data.length > 0) {
           return {
@@ -1882,6 +1921,8 @@
             lng: parseFloat(data[0].lon)
           };
         }
+        
+        console.log('No geocoding results found');
         return null;
       } catch (error) {
         console.error('Geocoding error:', error);
@@ -1901,10 +1942,15 @@
       }
       
       // Format phone number (remove spaces, dashes, etc.)
-      const formattedPhone = sellerPhone.replace(/\D/g, '');
+      let formattedPhone = sellerPhone.replace(/\D/g, '');
+      
+      // Add +91 country code if not already present
+      if (!formattedPhone.startsWith('91') && !formattedPhone.startsWith('+91')) {
+        formattedPhone = '91' + formattedPhone;
+      }
       
       // Create message
-      const message = `Hi, I am interested in buying your product "${currentProduct.title}" listed on StudXchange.`;
+      const message = `Hi, I am interested in buying your product "${currentProduct.title}" listed on StudXchange. Is it still available?`;
       
       // Create WhatsApp URL
       const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
