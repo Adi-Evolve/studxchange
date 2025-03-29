@@ -578,6 +578,121 @@
     background-color: var(--primary-color);
     transform: scale(1.05);
   }
+  
+  .seller-profile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .seller-avatar {
+    font-size: 4rem;
+    color: #2a3d56;
+  }
+  
+  .seller-details {
+    text-align: center;
+  }
+  
+  .seller-details h3 {
+    margin-bottom: 1rem;
+    color: #2a3d56;
+  }
+  
+  .seller-details ul {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 1.5rem;
+    text-align: left;
+  }
+  
+  .seller-details li {
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .seller-contact-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    width: 100%;
+  }
+  
+  .seller-contact-buttons .btn {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+  }
+  
+  .seller-contact-buttons .btn i {
+    font-size: 1.2rem;
+  }
+  
+  .seller-contact-buttons .btn-primary {
+    background-color: #25D366;
+    border: none;
+  }
+  
+  .seller-contact-buttons .btn-primary:hover {
+    background-color: #128C7E;
+    transform: translateY(-2px);
+  }
+  
+  .seller-contact-buttons .btn-secondary {
+    background-color: #4285F4;
+    border: none;
+  }
+  
+  .seller-contact-buttons .btn-secondary:hover {
+    background-color: #3367D6;
+    transform: translateY(-2px);
+  }
+  
+  #sellerInfoModal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .seller-modal-content {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  }
+  
+  .seller-modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+    transition: color 0.3s ease;
+  }
+  
+  .seller-modal-close:hover {
+    color: #000;
+  }
   </style>
 </head>
 <body>
@@ -731,26 +846,14 @@
 </div>
 
     <!-- Seller Info Modal -->
-    <div id="sellerInfoModal" class="modal">
-      <div class="modal-content">
-        <span class="modal-close" onclick="closeSellerInfoModal()">&times;</span>
+    <div id="sellerInfoModal">
+      <div class="seller-modal-content">
+        <span class="seller-modal-close" onclick="closeSellerInfoModal()">&times;</span>
         <h2>Seller Information</h2>
         <div id="sellerInfoContent"></div>
         <div class="sold-items-section">
           <h3>Previously Sold Items</h3>
           <div id="soldProductsList"></div>
-        </div>
-        <div class="chat-container">
-          <h3>Send a Message</h3>
-          <div class="chat-box" id="chatBox">
-            <div class="chat-message system-message">
-              Start a conversation with the seller.
-            </div>
-          </div>
-          <div class="chat-input">
-            <input type="text" id="messageInput" placeholder="Type your message...">
-            <button onclick="sendMessage()">Send</button>
-          </div>
         </div>
       </div>
     </div>
@@ -1458,17 +1561,31 @@
       const sellerPhone = currentProduct.sellerPhone || '';
       
       if (!sellerPhone) {
-        alert('Seller phone number is not available');
+        alert('Seller phone number is not available. Please check seller info for contact details.');
         return;
       }
       
       // Format phone number (remove spaces, dashes, etc.)
       const formattedPhone = sellerPhone.replace(/[^0-9]/g, '');
       
+      // Check if the phone number is valid (at least 10 digits)
+      if (formattedPhone.length < 10) {
+        alert('Invalid phone number. Please check seller info for contact details.');
+        return;
+      }
+      
       // Ensure it has country code (assuming India +91)
-      const phoneWithCountryCode = formattedPhone.startsWith('91') 
-        ? formattedPhone 
-        : `91${formattedPhone}`;
+      let phoneWithCountryCode = formattedPhone;
+      if (formattedPhone.length === 10) {
+        // Add country code if it's a 10-digit number without country code
+        phoneWithCountryCode = `91${formattedPhone}`;
+      } else if (formattedPhone.startsWith('0')) {
+        // Replace leading 0 with 91
+        phoneWithCountryCode = `91${formattedPhone.substring(1)}`;
+      } else if (!formattedPhone.startsWith('91')) {
+        // Add 91 if it doesn't already have it
+        phoneWithCountryCode = `91${formattedPhone}`;
+      }
       
       // Create message text
       const message = `Hi, I'm interested in your product "${currentProduct.title}" on StudXchange.`;
@@ -1481,6 +1598,7 @@
       
       // Log the interaction
       console.log(`WhatsApp contact initiated for product: ${currentProduct.title}`);
+      console.log(`Phone number used: ${phoneWithCountryCode}`);
     }
     
     // Show seller information
@@ -1499,7 +1617,7 @@
       }
       
       // Get seller information from product
-      const sellerName = currentProduct.ownerName || 'Anonymous Seller';
+      const sellerName = currentProduct.sellerName || currentProduct.ownerName || 'Anonymous Seller';
       const sellerPhone = currentProduct.sellerPhone || 'Not provided';
       const sellerEmail = currentProduct.sellerEmail || 'Not provided';
       const sellerCollege = currentProduct.college || 'Not specified';
@@ -1517,15 +1635,43 @@
               <li><strong>Email:</strong> ${sellerEmail}</li>
               <li><strong>College:</strong> ${sellerCollege}</li>
             </ul>
+            <div class="seller-contact-buttons">
+              <button class="btn btn-primary" onclick="contactSellerWhatsApp()">
+                <i class="fab fa-whatsapp"></i> Contact on WhatsApp
+              </button>
+              <button class="btn btn-secondary" onclick="contactSellerEmail()">
+                <i class="fas fa-envelope"></i> Email Seller
+              </button>
+            </div>
           </div>
         </div>
       `;
       
       // Show the modal
-      sellerInfoModal.style.display = 'block';
+      sellerInfoModal.style.display = 'flex';
       
       // Log the interaction
       console.log(`Seller info viewed for: ${sellerName}`);
+    }
+    
+    // Contact seller via email
+    function contactSellerEmail() {
+      if (!currentProduct || !currentProduct.sellerEmail) {
+        alert('Seller email is not available');
+        return;
+      }
+      
+      const subject = `Inquiry about your listing: ${currentProduct.title}`;
+      const body = `Hi,\n\nI'm interested in your listing "${currentProduct.title}" on StudXchange.\n\nPlease let me know if it's still available.\n\nThanks!`;
+      
+      // Create mailto link
+      const mailtoLink = `mailto:${currentProduct.sellerEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      
+      // Open email client
+      window.location.href = mailtoLink;
+      
+      // Log the interaction
+      console.log(`Email contact initiated for product: ${currentProduct.title}`);
     }
     
     // Close seller info modal
@@ -1533,6 +1679,8 @@
       const modal = document.getElementById('sellerInfoModal');
       if (modal) {
         modal.style.display = 'none';
+        const sellerInfoContent = document.getElementById('sellerInfoContent');
+        sellerInfoContent.innerHTML = '';
       }
     }
     
