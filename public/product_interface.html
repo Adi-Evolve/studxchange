@@ -1545,10 +1545,7 @@
               <h3>Product Specifications</h3>
               <ul>
                 <li><strong>Condition:</strong> ${currentProduct.condition || 'Not specified'}</li>
-                <li><strong>Category:</strong> ${currentProduct.category || 'Not specified'}</li>
-                <li><strong>Brand:</strong> ${currentProduct.brand || 'Not specified'}</li>
-                ${currentProduct.age ? `<li><strong>Age:</strong> ${currentProduct.age}</li>` : ''}
-                ${currentProduct.warranty ? `<li><strong>Warranty:</strong> ${currentProduct.warranty}</li>` : ''}
+                <li><strong>Price:</strong> ₹${currentProduct.price || 'Not specified'}</li>
               </ul>
             </div>
           `;
