@@ -37,6 +37,18 @@ const API_ENDPOINTS = {
   GET_ROOMS_BY_TITLE: getApiUrl(`${API_BASE_URL}/rooms?title=`),
   GET_ROOM_BY_TITLE: getApiUrl(`${API_BASE_URL}/rooms/title/`),
   
+  // Search
+  SEARCH: (query, category, college) => {
+    let url = getApiUrl(`${API_BASE_URL}/search?query=${encodeURIComponent(query)}`);
+    if (category && category !== 'all') {
+      url += `&category=${encodeURIComponent(category)}`;
+    }
+    if (college && college !== 'all') {
+      url += `&college=${encodeURIComponent(college)}`;
+    }
+    return url;
+  },
+  
   // Users
   REGISTER_USER: getApiUrl(`${API_BASE_URL}/users/register`),
   LOGIN_USER: getApiUrl(`${API_BASE_URL}/users/login`),

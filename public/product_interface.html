@@ -67,60 +67,51 @@
     }
 
     .product-images {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
+      flex: 1;
+      max-width: 500px;
     }
-
+    
     .main-image-container {
       width: 100%;
       height: 400px;
-      border-radius: 12px;
       overflow: hidden;
-      background-color: #eaeaea;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      position: relative;
     }
-
+    
     .main-image {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      transition: transform 0.3s ease;
     }
-
-    /* Add image loading animation */
-    @keyframes imageLoading {
-      0% { background-position: -200px 0; }
-      100% { background-position: 200px 0; }
+    
+    .main-image:hover {
+      transform: scale(1.05);
     }
-
-    .image-loading {
-      background: linear-gradient(to right, #f0f0f0 8%, #e0e0e0 18%, #f0f0f0 33%);
-      background-size: 800px 104px;
-      animation: imageLoading 1.5s infinite linear forwards;
-    }
-
+    
     .thumbnails {
       display: flex;
-      gap: 0.75rem;
-      overflow-x: auto;
-      padding: 0.5rem 0;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      justify-content: center;
     }
-
+    
     .thumbnail {
-      flex: 0 0 auto;
       width: 80px;
       height: 80px;
-      border-radius: 8px;
       object-fit: cover;
+      border-radius: 4px;
       cursor: pointer;
-      transition: transform 0.2s, opacity 0.2s;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
     }
-
+    
     .thumbnail:hover {
-      transform: scale(1.05);
-      opacity: 0.8;
+      transform: scale(1.1);
+      border-color: var(--accent-color);
     }
 
     .product-details {
@@ -142,8 +133,9 @@
 
     .price-section {
       display: flex;
-      align-items: baseline;
-      gap: 1rem;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
       margin-bottom: 1rem;
     }
 
@@ -160,13 +152,13 @@
     }
     
     .condition-tag {
-      font-size: 1rem;
+      font-size: 0.9rem;
       color: #555;
-      margin-bottom: 1rem;
-      padding: 5px 10px;
+      padding: 4px 8px;
       background-color: #f5f5f5;
       border-radius: 4px;
       display: inline-block;
+      margin-top: 0.25rem;
     }
 
     .action-buttons {
@@ -636,10 +628,10 @@
                style="font-size: 1.5rem; cursor: pointer;"></i>
           </div>
           <div class="price-section">
-            <span class="current-price" id="productPrice"></span>
-            <span class="original-price" id="productMRP"></span>
+            <div class="current-price" id="productPrice"></div>
+            <div class="original-price" id="productMRP"></div>
+            <div class="condition-tag">Condition: ${currentProduct.condition || 'Not specified'}</div>
           </div>
-          <div class="condition-tag">Condition: ${currentProduct.condition || 'Not specified'}</div>
           <div class="location-container">
             <div class="location-text">
               <i class="fas fa-map-marker-alt"></i> ${currentProduct.location || 'Location not specified'}
@@ -1074,14 +1066,15 @@
           `).join('');
         }
         
-        // Rest of the function remains the same...
-        // Determine price display
-        const priceHTML = currentProduct.originalPrice ? 
-          `<div class="current-price">₹${currentProduct.price}</div>
-           <div class="original-price">₹${currentProduct.originalPrice}</div>` :
-          `<div class="current-price">₹${currentProduct.price}</div>`;
+        // Generate price HTML
+        const priceHTML = `
+          <div class="current-price">₹${currentProduct.price || '0'}</div>
+          ${currentProduct.mrp && currentProduct.mrp > currentProduct.price ? 
+            `<div class="original-price">₹${currentProduct.mrp}</div>` : ''}
+          ${!isRoom ? `<div class="condition-tag">Condition: ${currentProduct.condition || 'Not specified'}</div>` : ''}
+        `;
         
-        // Room-specific or product-specific details
+        // Generate room-specific details HTML if it's a room
         let specificDetailsHTML = '';
         
         if (isRoom) {
@@ -1131,7 +1124,6 @@
               <div class="price-section">
                 ${priceHTML}
               </div>
-              ${!isRoom ? `<div class="condition-tag">Condition: ${currentProduct.condition || 'Not specified'}</div>` : ''}
               <div class="location-container">
                 <div class="location-text">
                   <i class="fas fa-map-marker-alt"></i> ${currentProduct.location || 'Location not specified'}
@@ -1304,7 +1296,7 @@
 
     // Show location on map
     function showLocationOnMap() {
-      if (!currentProduct || !currentProduct.location) {
+      if (!currentProduct || (!currentProduct.location && !currentProduct.coordinates)) {
         alert('Location information is not available for this product.');
         return;
       }
@@ -1317,7 +1309,7 @@
       
       // Initialize map
       setTimeout(() => {
-        initMap(currentProduct.location);
+        initMap(currentProduct.location, currentProduct.coordinates);
       }, 100);
     }
     
@@ -1330,7 +1322,7 @@
     }
     
     // Initialize map with location
-    function initMap(locationString) {
+    function initMap(locationString, coordinates) {
       // Get the map container
       const mapContainer = document.getElementById('map-container');
       if (!mapContainer) {
@@ -1352,67 +1344,78 @@
       let lat = 20.5937;
       let lng = 78.9629;
       
-      // Try to geocode the location string
-      geocodeLocation(locationString)
-        .then(coords => {
-          if (coords) {
-            console.log('Geocoded coordinates:', coords);
-            lat = coords.lat;
-            lng = coords.lng;
-          } else {
-            console.log('Using default coordinates for India');
-          }
+      // If we have coordinates directly from the product, use them
+      if (coordinates && coordinates.lat && coordinates.lon) {
+        console.log('Using product coordinates:', coordinates);
+        lat = coordinates.lat;
+        lng = coordinates.lon;
+        createMap(lat, lng);
+      } else {
+        // Try to geocode the location string
+        geocodeLocation(locationString)
+          .then(coords => {
+            if (coords) {
+              console.log('Geocoded coordinates:', coords);
+              lat = coords.lat;
+              lng = coords.lng;
+            } else {
+              console.log('Using default coordinates for India');
+            }
+            createMap(lat, lng);
+          })
+          .catch(error => {
+            console.error('Error initializing map:', error);
+            mapContainer.innerHTML = `<div class="error-message">Error loading map: ${error.message}</div>`;
+          });
+      }
+      
+      function createMap(lat, lng) {
+        try {
+          // Create map
+          const map = new maplibregl.Map({
+            container: 'map-container',
+            style: 'https://demotiles.maplibre.org/style.json', // Use MapLibre demo style
+            center: [lng, lat],
+            zoom: 14,
+            attributionControl: true
+          });
           
-          try {
-            // Create map
-            const map = new maplibregl.Map({
-              container: 'map-container',
-              style: 'https://demotiles.maplibre.org/style.json', // Use MapLibre demo style
-              center: [lng, lat],
-              zoom: 14,
-              attributionControl: true
-            });
+          // Add marker
+          new maplibregl.Marker({
+            color: '#1a75ff' // Use accent color from our theme
+          })
+            .setLngLat([lng, lat])
+            .addTo(map);
             
-            // Add marker
-            new maplibregl.Marker({
-              color: '#1a75ff' // Use accent color from our theme
-            })
-              .setLngLat([lng, lat])
-              .addTo(map);
-              
-            // Add navigation controls
-            map.addControl(new maplibregl.NavigationControl());
-            
-            // Add fullscreen control
-            map.addControl(new maplibregl.FullscreenControl());
-            
-            // Log success
-            console.log('Map initialized successfully');
-            
-            // Add error handling for map load
-            map.on('error', (e) => {
-              console.error('MapLibre error:', e);
-              mapContainer.innerHTML = `<div class="error-message">Error loading map: ${e.error ? e.error.message : 'Unknown error'}</div>`;
-            });
-            
-            // Add load event to confirm map loaded
-            map.on('load', () => {
-              console.log('Map loaded successfully');
-              // Remove loading spinner if it's still there
-              const spinner = mapContainer.querySelector('.loading-spinner');
-              if (spinner) {
-                spinner.remove();
-              }
-            });
-          } catch (error) {
-            console.error('Error creating MapLibre map:', error);
-            mapContainer.innerHTML = `<div class="error-message">Error creating map: ${error.message}</div>`;
-          }
-        })
-        .catch(error => {
-          console.error('Error initializing map:', error);
-          mapContainer.innerHTML = `<div class="error-message">Error loading map: ${error.message}</div>`;
-        });
+          // Add navigation controls
+          map.addControl(new maplibregl.NavigationControl());
+          
+          // Add fullscreen control
+          map.addControl(new maplibregl.FullscreenControl());
+          
+          // Log success
+          console.log('Map initialized successfully');
+          
+          // Add error handling for map load
+          map.on('error', (e) => {
+            console.error('MapLibre error:', e);
+            mapContainer.innerHTML = `<div class="error-message">Error loading map: ${e.error ? e.error.message : 'Unknown error'}</div>`;
+          });
+          
+          // Add load event to confirm map loaded
+          map.on('load', () => {
+            console.log('Map loaded successfully');
+            // Remove loading spinner if it's still there
+            const spinner = mapContainer.querySelector('.loading-spinner');
+            if (spinner) {
+              spinner.remove();
+            }
+          });
+        } catch (error) {
+          console.error('Error creating MapLibre map:', error);
+          mapContainer.innerHTML = `<div class="error-message">Error creating map: ${error.message}</div>`;
+        }
+      }
     }
     
     // Geocode location string to coordinates
@@ -1447,50 +1450,62 @@
     
     // Contact seller via WhatsApp
     function contactSellerWhatsApp() {
-      if (!currentProduct) return;
+      if (!currentProduct) {
+        alert('Product information not available');
+        return;
+      }
       
       const sellerPhone = currentProduct.sellerPhone || '';
       
       if (!sellerPhone) {
-        alert('Seller phone number is not available.');
+        alert('Seller phone number is not available');
         return;
       }
       
       // Format phone number (remove spaces, dashes, etc.)
-      let formattedPhone = sellerPhone.replace(/\D/g, '');
+      const formattedPhone = sellerPhone.replace(/[^0-9]/g, '');
       
-      // Add +91 country code if not already present
-      if (!formattedPhone.startsWith('91') && !formattedPhone.startsWith('+91')) {
-        formattedPhone = '91' + formattedPhone;
-      }
+      // Ensure it has country code (assuming India +91)
+      const phoneWithCountryCode = formattedPhone.startsWith('91') 
+        ? formattedPhone 
+        : `91${formattedPhone}`;
       
-      // Create message
-      const message = `Hi, I am interested in buying your product "${currentProduct.title}" listed on StudXchange. Is it still available?`;
+      // Create message text
+      const message = `Hi, I'm interested in your product "${currentProduct.title}" on StudXchange.`;
       
       // Create WhatsApp URL
-      const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
+      const whatsappUrl = `https://wa.me/${phoneWithCountryCode}?text=${encodeURIComponent(message)}`;
       
       // Open WhatsApp in new tab
       window.open(whatsappUrl, '_blank');
+      
+      // Log the interaction
+      console.log(`WhatsApp contact initiated for product: ${currentProduct.title}`);
     }
     
     // Show seller information
     function showSellerInfo() {
-      if (!currentProduct) return;
+      if (!currentProduct) {
+        alert('Product information not available');
+        return;
+      }
       
-      const modal = document.getElementById('sellerInfoModal');
-      const content = document.getElementById('sellerInfoContent');
-      const soldProductsList = document.getElementById('soldProductsList');
+      const sellerInfoModal = document.getElementById('sellerInfoModal');
+      const sellerInfoContent = document.getElementById('sellerInfoContent');
       
-      if (!modal || !content || !soldProductsList) return;
+      if (!sellerInfoModal || !sellerInfoContent) {
+        console.error('Seller info modal elements not found');
+        return;
+      }
       
-      // Get seller information
-      const sellerName = currentProduct.sellerName || 'Anonymous';
-      const sellerEmail = currentProduct.sellerEmail || 'Not provided';
+      // Get seller information from product
+      const sellerName = currentProduct.ownerName || 'Anonymous Seller';
       const sellerPhone = currentProduct.sellerPhone || 'Not provided';
+      const sellerEmail = currentProduct.sellerEmail || 'Not provided';
+      const sellerCollege = currentProduct.college || 'Not specified';
       
-      // Build content
-      content.innerHTML = `
+      // Create seller info HTML
+      sellerInfoContent.innerHTML = `
         <div class="seller-profile">
           <div class="seller-avatar">
             <i class="fas fa-user-circle"></i>
@@ -1498,61 +1513,19 @@
           <div class="seller-details">
             <h3>${sellerName}</h3>
             <ul>
-              <li><strong>Email:</strong> ${sellerEmail}</li>
               <li><strong>Phone:</strong> ${sellerPhone}</li>
+              <li><strong>Email:</strong> ${sellerEmail}</li>
+              <li><strong>College:</strong> ${sellerCollege}</li>
             </ul>
           </div>
         </div>
       `;
       
-      // Fetch sold products by this seller
-      fetchSellerSoldItems(sellerEmail)
-        .then(items => {
-          if (items && items.length > 0) {
-            let soldItemsHTML = '<div class="sold-items-grid">';
-            items.forEach(item => {
-              soldItemsHTML += `
-                <div class="sold-item-card">
-                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
-                       data-src="${item.images && item.images.length > 0 ? item.images[0] : 'placeholder.jpg'}" 
-                       alt="${item.title}"
-                       class="image-loading"
-                       onload="this.classList.remove('image-loading')">
-                  <div class="sold-item-details">
-                    <h4>${item.title}</h4>
-                    <p class="sold-price">₹${item.price}</p>
-                  </div>
-                </div>
-              `;
-            });
-            soldItemsHTML += '</div>';
-            soldProductsList.innerHTML = soldItemsHTML;
-          } else {
-            soldProductsList.innerHTML = '<p>No sold items found for this seller.</p>';
-          }
-        })
-        .catch(error => {
-          console.error('Error fetching sold items:', error);
-          soldProductsList.innerHTML = '<p>Error loading sold items.</p>';
-        });
+      // Show the modal
+      sellerInfoModal.style.display = 'block';
       
-      // Show modal
-      modal.style.display = 'flex';
-      
-      // Add close functionality
-      const closeBtn = modal.querySelector('.modal-close');
-      if (closeBtn) {
-        closeBtn.onclick = () => {
-          modal.style.display = 'none';
-        };
-      }
-      
-      // Close when clicking outside
-      window.onclick = (event) => {
-        if (event.target === modal) {
-          modal.style.display = 'none';
-        }
-      };
+      // Log the interaction
+      console.log(`Seller info viewed for: ${sellerName}`);
     }
     
     // Close seller info modal

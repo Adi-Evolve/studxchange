@@ -692,50 +692,50 @@ async function getLocation() {
       const selectedCollege = urlParams.get('category')?.toLowerCase() || 'all';
 
       try {
-        // Fetch both products and rooms
-        const [products, rooms] = await Promise.all([
-          fetchProducts(),
-          fetchRooms()
-        ]);
+        // Update search title
+        document.getElementById('searchTitle').textContent = `Search Results for "${searchQuery}"`;
         
-        // Combine products and rooms
-        const allItems = [...products, ...rooms];
+        // Use the new advanced search API
+        console.log('Fetching search results with query:', searchQuery);
+        const searchUrl = API_ENDPOINTS.SEARCH(searchQuery, null, selectedCollege);
+        console.log('Search URL:', searchUrl);
         
-        const filteredItems = allItems.filter(item => {
-          const matchesQuery = searchQuery === '' || 
-            item.title?.toLowerCase().includes(searchQuery);
-          const matchesCollege = selectedCollege === 'all' || 
-            item.college?.toLowerCase() === selectedCollege;
-          return matchesQuery && matchesCollege;
-        });
-
-        // Add distance calculation if user location is available
-        let itemsWithDistance = filteredItems;
-        if (userLocation) {
-          itemsWithDistance = filteredItems.map(item => {
-            if (item.coordinates) {
-              const distance = calculateDistance(
-                userLocation.lat, 
-                userLocation.lon, 
-                item.coordinates.lat, 
-                item.coordinates.lon
-              );
-              return { ...item, distance };
-            }
-            return { ...item, distance: Infinity };
-          });
-          
-          // Sort by distance
-          itemsWithDistance.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
+        const response = await fetch(searchUrl);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-
+        
+        const data = await response.json();
+        console.log('Search results:', data);
+        
         const searchResultsDiv = document.getElementById('searchResults');
         searchResultsDiv.innerHTML = '';
-
-        if (itemsWithDistance.length > 0) {
+        
+        if (data.results && data.results.length > 0) {
+          // Add distance calculation if user location is available
+          let itemsWithDistance = data.results;
+          if (userLocation) {
+            itemsWithDistance = data.results.map(item => {
+              if (item.coordinates) {
+                const distance = calculateDistance(
+                  userLocation.lat, 
+                  userLocation.lon, 
+                  item.coordinates.lat, 
+                  item.coordinates.lon
+                );
+                return { ...item, distance };
+              }
+              return { ...item, distance: Infinity };
+            });
+            
+            // Sort by distance
+            itemsWithDistance.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
+          }
+          
+          // Display search results
           itemsWithDistance.forEach(product => {
             // Check if it's a room listing
-            if (product.category?.toLowerCase() === 'room') {
+            if (product.type === 'room' || product.category?.toLowerCase() === 'room') {
               // Create room product card
               const roomProduct = document.createElement('div');
               roomProduct.className = 'room-product';

@@ -213,19 +213,35 @@ async function connectToDatabase() {
 const productSchema = new mongoose.Schema({
   college: String,
   title: { type: String, index: true }, // Add index for faster title searches
-  category: { type: String, index: true }, // Add index for faster category filtering
+  description: { type: String, index: true }, // Add index for faster description searches
   price: String,
   images: [String],
-  description: String,
+  category: { type: String, index: true }, // Add index for faster category filtering
   condition: String,
   sellerPhone: String,
   sellerEmail: String,
   createdAt: { type: Date, default: Date.now, index: true }, // Add index for sorting by date
-  location: String,
+  location: { type: String, index: true }, // Add index for location searches
   coordinates: {
-    lat: Number,
-    lon: Number
+    lat: { type: Number, required: true, default: 0 },
+    lon: { type: Number, required: true, default: 0 }
   }
+});
+
+// Add text index for advanced search
+productSchema.index({ 
+  title: 'text', 
+  description: 'text',
+  category: 'text',
+  condition: 'text'
+}, {
+  weights: {
+    title: 10,
+    description: 5,
+    category: 3,
+    condition: 1
+  },
+  name: "ProductTextIndex"
 });
 
 // Add compound indexes for common query patterns
@@ -235,13 +251,16 @@ productSchema.index({ title: 'text', description: 'text' }); // For text search
 const roomSchema = new mongoose.Schema({
   college: String,
   title: { type: String, index: true }, // Add index for faster title searches
+  description: { type: String, index: true }, // Add index for faster description searches
+  price: String,
   category: { type: String, default: 'Room', index: true }, // Add index for faster category filtering
   hostelName: String,
   ownerName: String,
   contact1: String,
   contact2: String,
-  images: [String],
-  collegeDistance: Number,
+  roomType: String,
+  images: [String], // Add back the images field
+  collegeDistance: Number, // Add back the collegeDistance field
   occupancy: Number,
   amenities: [String],
   hasAC: Boolean,
@@ -250,16 +269,32 @@ const roomSchema = new mongoose.Schema({
   hasMess: Boolean,
   messPrice: String,
   hasInstallment: Boolean,
-  price: String,
-  priceType: String,
   sellerPhone: String,
   sellerEmail: String,
   createdAt: { type: Date, default: Date.now, index: true }, // Add index for sorting by date
-  location: String,
+  location: { type: String, index: true }, // Add index for location searches
   coordinates: {
-    lat: Number,
-    lon: Number
+    lat: { type: Number, required: true, default: 0 },
+    lon: { type: Number, required: true, default: 0 }
   }
+});
+
+// Add text index for advanced search
+roomSchema.index({ 
+  title: 'text', 
+  description: 'text',
+  hostelName: 'text',
+  roomType: 'text',
+  amenities: 'text'
+}, {
+  weights: {
+    title: 10,
+    description: 5,
+    hostelName: 3,
+    roomType: 2,
+    amenities: 1
+  },
+  name: "RoomTextIndex"
 });
 
 // Add compound indexes for common query patterns
@@ -1135,6 +1170,130 @@ app.delete('/api/products/:id', async (req, res) => {
   } catch (error) {
     console.error(`DELETE /api/products/${req.params.id} - Error:`, error.message);
     res.status(500).json({ message: error.message, stack: error.stack });
+  }
+});
+
+// Advanced search endpoint with fuzzy matching
+app.get('/api/search', async (req, res) => {
+  try {
+    console.log('GET /api/search - Performing advanced search');
+    
+    // Get search parameters
+    const { query, category, college } = req.query;
+    
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
+    if (!query || query.trim() === '') {
+      return res.status(400).json({ message: 'Search query is required' });
+    }
+    
+    console.log(`GET /api/search - Query: "${query}", Category: ${category || 'All'}, College: ${college || 'All'}`);
+    
+    // Create search patterns for fuzzy matching
+    const searchTerms = query.trim().split(/\s+/).filter(term => term.length > 1);
+    
+    // Create different variations of the search terms for fuzzy matching
+    const searchPatterns = [];
+    
+    // Add the original query for exact matches (highest priority)
+    searchPatterns.push(new RegExp(query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'i'));
+    
+    // Add individual terms for partial matches
+    searchTerms.forEach(term => {
+      // Exact term match
+      searchPatterns.push(new RegExp(`\\b${term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i'));
+      
+      // Allow for common spelling mistakes (letter swaps, missing letters)
+      if (term.length > 3) {
+        // Missing one letter (e.g., "lapto" for "laptop")
+        searchPatterns.push(new RegExp(`\\b${term.substring(0, term.length-1).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\w?\\b`, 'i'));
+        
+        // One letter different (using word boundaries and wildcards)
+        for (let i = 1; i < term.length - 1; i++) {
+          const pattern = `\\b${term.substring(0, i).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\w?${term.substring(i+1).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`;
+          searchPatterns.push(new RegExp(pattern, 'i'));
+        }
+      }
+    });
+    
+    // Create MongoDB query with fuzzy matching
+    let mongoQuery = {
+      $or: [
+        // Text search for best overall match
+        { $text: { $search: query } },
+        
+        // Title matches using regex patterns for fuzzy matching
+        ...searchPatterns.map(pattern => ({ title: pattern })),
+        
+        // Description matches using regex patterns
+        ...searchPatterns.map(pattern => ({ description: pattern }))
+      ]
+    };
+    
+    // Add category filter if provided
+    if (category && category !== 'all') {
+      mongoQuery.category = category;
+    }
+    
+    // Add college filter if provided
+    if (college && college !== 'all') {
+      mongoQuery.college = college;
+    }
+    
+    console.log('GET /api/search - Executing search query');
+    
+    // Search in products
+    const products = await Product.find(mongoQuery)
+      .select('title price images category createdAt college location coordinates')
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean();
+    
+    // Search in rooms with the same query
+    const rooms = await Room.find(mongoQuery)
+      .select('title price images category hostelName college location coordinates createdAt')
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean();
+    
+    // Combine and sort results
+    const results = [
+      ...products.map(p => ({ ...p, type: 'product' })),
+      ...rooms.map(r => ({ ...r, type: 'room' }))
+    ];
+    
+    // Sort by relevance (exact matches first, then by date)
+    results.sort((a, b) => {
+      // Check for exact title match (highest priority)
+      const aExactMatch = a.title.toLowerCase() === query.toLowerCase();
+      const bExactMatch = b.title.toLowerCase() === query.toLowerCase();
+      
+      if (aExactMatch && !bExactMatch) return -1;
+      if (!aExactMatch && bExactMatch) return 1;
+      
+      // Check for title contains query (second priority)
+      const aContains = a.title.toLowerCase().includes(query.toLowerCase());
+      const bContains = b.title.toLowerCase().includes(query.toLowerCase());
+      
+      if (aContains && !bContains) return -1;
+      if (!aContains && bContains) return 1;
+      
+      // Otherwise sort by date (newest first)
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+    
+    console.log(`GET /api/search - Found ${results.length} results (${products.length} products, ${rooms.length} rooms)`);
+    
+    res.json({
+      query,
+      results,
+      total: results.length
+    });
+  } catch (error) {
+    console.error('GET /api/search - Error:', error);
+    res.status(500).json({ message: 'Error performing search', error: error.message });
   }
 });
 
