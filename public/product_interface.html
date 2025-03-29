@@ -503,292 +503,7 @@
   padding: 5px;
   border-radius: 50%;
 }
-  </style>
-  <style>
-    .chat-box {
-      height: 300px;
-      overflow-y: auto;
-      border: 1px solid #ddd;
-      padding: 10px;
-      margin-bottom: 10px;
-      background: var(--bg-color);
-    }
-    .chat-message {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px;
-      background: var(--white-color);
-      border-radius: 8px;
-      margin-bottom: 5px;
-      position: relative;
-    }
-    .chat-delete {
-      display: none;
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      cursor: pointer;
-      color: red;
-      font-size: 0.9rem;
-    }
-    .chat-message:hover .chat-delete {
-      display: inline;
-    }
-    .chat-input {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-
-.chat-input input {
-  flex: 1;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-}
-
-.chat-input button {
-  padding: 0.75rem 1.5rem;
-  background-color: var(--accent-color);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-/* Add to existing styles */
-.fa-heart.wishlist-toggle {
-  transition: all 0.3s ease;
-  color: #ccc; /* Default gray */
-}
-
-.fa-heart.wishlist-toggle.fas {
-  color: #ff4757; /* Filled red */
-}
-
-.reviews-list {
-  margin-top: 1rem;
-}
-
-.review-item {
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-}
-
-.review-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
-
-.review-rating {
-  color: #ffc107;
-}
-
-.review-content {
-  color: #333;
-}
-
-.average-rating {
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.star-rating {
-  color: #ffc107;
-}
-
-.rating-input {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.rating-input select {
-  padding: 0.5rem;
-  border-radius: 4px;
-  border: 1px solid #ddd;
-}
-
-.star-rating-selector {
-  display: flex;
-  gap: 0.5rem;
-  font-size: 1.5rem;
-}
-
-.star-rating-selector i {
-  cursor: pointer;
-  color: #ddd;
-  transition: color 0.2s;
-}
-
-.star-rating-selector i.active {
-  color: #ffc107;
-}
-
-.amenities-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 1rem 0;
-}
-
-.amenity-badge {
-  background: #f0f4f8;
-  color: #2a3d56;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.amenity-badge i {
-  color: #1a75ff;
-}
-
-.room-details {
-  margin: 1rem 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.detail-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: #f8f9fa;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-}
-
-.detail-item i {
-  color: #1a75ff;
-}
-
-.room-layout {
-  display: contents;
-}
-
-/* Similar Products Section Styles */
-  .similar-products-section {
-    margin-top: 2rem;
-    padding-top: 2rem;
-    border-top: 1px solid #eee;
-  }
-  
-  .similar-products-section h3 {
-    margin-bottom: 1.5rem;
-    color: var(--secondary-color);
-  }
-  
-  .similar-products-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1.5rem;
-  }
-  
-  .similar-product-card {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    cursor: pointer;
-  }
-  
-  .similar-product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
-  }
-  
-  .similar-product-img {
-    width: 100%;
-    height: 150px;
-    object-fit: cover;
-  }
-  
-  .similar-product-info {
-    padding: 1rem;
-  }
-  
-  .similar-product-title {
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: var(--secondary-color);
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    height: 2.8em;
-  }
-  
-  .similar-product-price {
-    color: var(--accent-color);
-    font-weight: bold;
-  }
-  
-  .similar-product-college {
-    font-size: 0.8rem;
-    color: #777;
-    margin-top: 0.5rem;
-  }
-  
-  @media (max-width: 768px) {
-    .similar-products-list {
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .similar-products-list {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
   /* Map styles */
-  .location-container {
-    display: flex;
-    align-items: center;
-    margin: 10px 0;
-  }
-  
-  .location-text {
-    margin-right: 10px;
-  }
-  
-  .map-button {
-    background-color: var(--accent-color);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 5px 10px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    display: inline-flex;
-    align-items: center;
-    transition: all 0.3s ease;
-  }
-  
-  .map-button i {
-    margin-right: 5px;
-  }
-  
-  .map-button:hover {
-    background-color: var(--primary-color);
-    transform: scale(1.05);
-  }
-  
   #map-modal {
     display: none;
     position: fixed;
@@ -808,186 +523,68 @@
     margin: auto;
     padding: 20px;
     border-radius: 8px;
-    width: 80%;
+    width: 90%;
     max-width: 800px;
     position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   }
   
   #map-container {
-    height: 400px;
+    height: 500px;
     width: 100%;
     border-radius: 8px;
     margin-top: 10px;
+    position: relative;
+    overflow: hidden;
   }
-  
-  /* Seller info styles */
-  .seller-profile {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
+
+  .error-message {
     padding: 15px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
+    background-color: #ffebee;
+    color: #c62828;
+    border-radius: 4px;
+    margin: 10px 0;
+    text-align: center;
   }
-  
-  .seller-avatar {
-    font-size: 3rem;
-    color: var(--primary-color);
-    margin-right: 20px;
-  }
-  
-  .seller-details h3 {
-    margin-top: 0;
-    color: var(--primary-color);
-  }
-  
-  .seller-details ul {
-    list-style: none;
-    padding: 0;
-  }
-  
-  .seller-details li {
-    margin-bottom: 5px;
-  }
-  
-  .sold-items-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 15px;
-    margin-top: 15px;
-  }
-  
-  .sold-item-card {
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    overflow: hidden;
-    transition: transform 0.3s ease;
-  }
-  
-  .sold-item-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  }
-  
-  .sold-item-card img {
-    width: 100%;
-    height: 150px;
-    object-fit: cover;
-  }
-  
-  .sold-item-details {
-    padding: 10px;
-  }
-  
-  .sold-item-details h4 {
-    margin: 0 0 5px 0;
-    font-size: 1rem;
-    color: var(--primary-color);
-  }
-  
-  .sold-price {
-    font-weight: bold;
-    color: var(--accent-color);
-    margin: 0;
-  }
-  
-  /* Similar products styles */
-  #similarProductsSection {
-    margin-top: 30px;
-    padding: 20px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-  }
-  
-  #similarProductsSection h2 {
-    margin-top: 0;
-    color: var(--primary-color);
-    font-size: 1.5rem;
-    margin-bottom: 15px;
-  }
-  
-  #similarProductsList {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 15px;
-  }
-  
-  .similar-product-card {
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    background-color: white;
-  }
-  
-  .similar-product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  }
-  
-  .similar-product-card a {
-    text-decoration: none;
-    color: inherit;
-    display: block;
-  }
-  
-  .similar-product-image {
-    height: 150px;
-    overflow: hidden;
-  }
-  
-  .similar-product-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-  }
-  
-  .similar-product-card:hover .similar-product-image img {
-    transform: scale(1.05);
-  }
-  
-  .similar-product-details {
-    padding: 10px;
-  }
-  
-  .similar-product-details h4 {
-    margin: 0 0 5px 0;
-    font-size: 1rem;
-    color: var(--primary-color);
-  }
-  
-  .similar-product-price {
-    font-weight: bold;
-    color: var(--accent-color);
-    margin: 0;
-  }
-  
+
   .loading-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     border: 4px solid rgba(0, 0, 0, 0.1);
     border-radius: 50%;
-    border-top: 4px solid var(--primary-color);
-    width: 30px;
-    height: 30px;
+    border-top: 4px solid var(--accent-color);
+    width: 40px;
+    height: 40px;
     animation: spin 1s linear infinite;
-    margin: 20px auto;
   }
-  
+
   @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
   }
-  .sold-items-section {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid #eee;
+
+  .map-button {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.3s ease;
   }
   
-  .sold-items-section h3 {
-    margin-top: 0;
-    color: var(--primary-color);
-    font-size: 1.3rem;
-    margin-bottom: 15px;
+  .map-button i {
+    margin-right: 5px;
+  }
+  
+  .map-button:hover {
+    background-color: var(--primary-color);
+    transform: scale(1.05);
   }
   </style>
 </head>
@@ -1180,7 +777,10 @@
     <p>For any help, contact us at: Studxchange05@gmail.com | Phone: 8857053541</p>
   </footer>
 
-  <script src="js/db-config.js"></script>
+  <!-- Use minified scripts for better performance -->
+  <script src="dist/scripts.min.js"></script>
+  <!-- MapLibre JS needs to be loaded directly -->
+  <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
   <script defer>
     // Constants
     const JSONBIN_BIN_ID = '6602e1f8266cfc3fde9d1f9e';
@@ -1634,7 +1234,8 @@
                   <div class="similar-product-image">
                     <img src="${itemImage}" 
                          alt="${item.title}"
-                         class="similar-product-img">
+                         class="image-loading"
+                         onload="this.classList.remove('image-loading')">
                   </div>
                   <div class="similar-product-details">
                     <h4>${item.title}</h4>
@@ -1644,7 +1245,6 @@
               </div>
             `;
           });
-          
           similarContainer.innerHTML = html;
           
           // Show the similar products section
@@ -1741,6 +1341,13 @@
       // Clear any previous content
       mapContainer.innerHTML = '<div class="loading-spinner"></div>';
       
+      // Check if maplibregl is available
+      if (typeof maplibregl === 'undefined') {
+        console.error('MapLibre GL JS is not loaded');
+        mapContainer.innerHTML = '<div class="error-message">Map library not loaded. Please refresh the page and try again.</div>';
+        return;
+      }
+      
       // Default coordinates (center of India if geocoding fails)
       let lat = 20.5937;
       let lng = 78.9629;
@@ -1762,16 +1369,22 @@
               container: 'map-container',
               style: 'https://demotiles.maplibre.org/style.json', // Use MapLibre demo style
               center: [lng, lat],
-              zoom: 14
+              zoom: 14,
+              attributionControl: true
             });
             
             // Add marker
-            new maplibregl.Marker()
+            new maplibregl.Marker({
+              color: '#1a75ff' // Use accent color from our theme
+            })
               .setLngLat([lng, lat])
               .addTo(map);
               
             // Add navigation controls
             map.addControl(new maplibregl.NavigationControl());
+            
+            // Add fullscreen control
+            map.addControl(new maplibregl.FullscreenControl());
             
             // Log success
             console.log('Map initialized successfully');
@@ -1785,6 +1398,11 @@
             // Add load event to confirm map loaded
             map.on('load', () => {
               console.log('Map loaded successfully');
+              // Remove loading spinner if it's still there
+              const spinner = mapContainer.querySelector('.loading-spinner');
+              if (spinner) {
+                spinner.remove();
+              }
             });
           } catch (error) {
             console.error('Error creating MapLibre map:', error);
