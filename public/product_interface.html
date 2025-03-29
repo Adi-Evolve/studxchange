@@ -153,6 +153,16 @@
       text-decoration: line-through;
       font-size: 1rem;
     }
+    
+    .condition-tag {
+      font-size: 1rem;
+      color: #555;
+      margin-bottom: 1rem;
+      padding: 5px 10px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      display: inline-block;
+    }
 
     .action-buttons {
       display: flex;
@@ -1027,19 +1037,14 @@
             <span class="current-price" id="productPrice"></span>
             <span class="original-price" id="productMRP"></span>
           </div>
-          
-          <!-- Room details section (will be shown only for rooms) -->
-          <div id="roomDetailsSection" style="display: none;">
-            <div class="room-details" id="roomDetails">
-              <!-- Room details will be dynamically populated -->
+          <div class="condition-tag">Condition: ${currentProduct.condition || 'Not specified'}</div>
+          <div class="location-container">
+            <div class="location-text">
+              <i class="fas fa-map-marker-alt"></i> ${currentProduct.location || 'Location not specified'}
             </div>
-            <div class="amenities-list" id="amenitiesList">
-              <!-- Amenities will be dynamically populated -->
-            </div>
-          </div>
-          
-          <div class="action-buttons" id="actionButtons">
-            <!-- Buttons will be dynamically populated based on product type -->
+            <button class="map-button" onclick="showLocationOnMap()">
+              <i class="fas fa-map"></i> Show in Map
+            </button>
           </div>
         </div>
         
@@ -1248,9 +1253,10 @@
           const item = document.createElement('div');
           item.className = 'product-item';
           item.innerHTML = `
-            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
-                 data-src="${product.images[0]}" 
-                 alt="${product.title}">
+            <img src="${product.images[0]}" 
+                 alt="${product.title}"
+                 class="image-loading"
+                 onload="this.classList.remove('image-loading')">
             <span>${product.title}</span>
             <button onclick="selectProduct(${JSON.stringify(product).replace(/"/g, '&quot;')})">Select</button>
           `;
@@ -1493,17 +1499,7 @@
               </div>
             </div>
           `;
-        } else {
-          specificDetailsHTML = `
-            <div class="product-specs">
-              <h3>Product Specifications</h3>
-              <ul>
-                <li><strong>Condition:</strong> ${currentProduct.condition || 'Not specified'}</li>
-                <li><strong>Price:</strong> ₹${currentProduct.price || 'Not specified'}</li>
-              </ul>
-            </div>
-          `;
-        }
+        } 
         
         // Build full HTML
         container.innerHTML = `
@@ -1518,6 +1514,7 @@
               <div class="price-section">
                 ${priceHTML}
               </div>
+              ${!isRoom ? `<div class="condition-tag">Condition: ${currentProduct.condition || 'Not specified'}</div>` : ''}
               <div class="location-container">
                 <div class="location-text">
                   <i class="fas fa-map-marker-alt"></i> ${currentProduct.location || 'Location not specified'}
