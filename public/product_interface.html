@@ -1369,7 +1369,7 @@
       try {
         // Get product title from URL
         const urlParams = new URLSearchParams(window.location.search);
-        const title = urlParams.get('title');
+        const title = urlParams.get('title') || urlParams.get('product');
         
         if (!title) {
           displayError('No product title specified');
