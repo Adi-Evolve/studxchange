@@ -363,6 +363,7 @@ app.get('/api/products', async (req, res) => {
     const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
     const category = req.query.category;
+    const { sellerEmail } = req.query;
     
     // Ensure database connection
     await connectToDatabase();
@@ -374,9 +375,14 @@ app.get('/api/products', async (req, res) => {
       query.category = category;
     }
     
+    if (sellerEmail) {
+      console.log(`GET /api/products - Filtering by sellerEmail: ${sellerEmail}`);
+      query.sellerEmail = sellerEmail;
+    }
+    
     // Use lean() for faster queries and projection to return only needed fields
     const products = await Product.find(query)
-      .select('title price images category createdAt college location coordinates')
+      .select('title price images category createdAt college location coordinates sellerEmail sellerPhone')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -386,16 +392,10 @@ app.get('/api/products', async (req, res) => {
     // Get total count for pagination (use countDocuments for better performance)
     const total = await Product.countDocuments(query);
     
+    console.log(`GET /api/products - Found ${products.length} products`);
+    
     // Return data with pagination info
-    res.json({
-      products,
-      pagination: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit)
-      }
-    });
+    res.json(products);
   } catch (error) {
     console.error('Error fetching products:', error);
     res.status(500).json({ message: 'Error fetching products', error: error.message });
@@ -411,64 +411,14 @@ app.get('/api/rooms', async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
-    
-    // Ensure database connection
-    await connectToDatabase();
-    initModels();
-    
-    // Use lean() for faster queries and projection to return only needed fields
-    const rooms = await Room.find()
-      .select('title price images hostelName college location coordinates createdAt')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean()
-      .exec();
-    
-    // Get total count for pagination (use countDocuments for better performance)
-    const total = await Room.countDocuments();
-    
-    // Return data with pagination info
-    res.json({
-      rooms,
-      pagination: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit)
-      }
-    });
-  } catch (error) {
-    console.error('Error fetching rooms:', error);
-    res.status(500).json({ message: 'Error fetching rooms', error: error.message });
-  }
-});
-
-// Get all rooms
-app.get('/api/rooms', async (req, res) => {
-  try {
-    console.log('GET /api/rooms - Fetching rooms');
-    
-    // Ensure database connection
-    await connectToDatabase();
-    console.log('GET /api/rooms - Database connection successful');
-    
-    // Initialize models
-    initModels();
-    console.log('GET /api/rooms - Models initialized');
-    
-    // Check if Room model is properly initialized
-    if (!Room) {
-      console.error('GET /api/rooms - Room model not initialized');
-      return res.status(500).json({ message: 'Room model not initialized' });
-    }
-    
-    console.log('GET /api/rooms - Room model is properly initialized');
-    
-    // Check if title or sellerEmail filter is provided
     const { title, sellerEmail } = req.query;
-    let query = {};
     
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
+    // Build query
+    let query = {};
     if (sellerEmail) {
       console.log(`GET /api/rooms - Filtering by sellerEmail: ${sellerEmail}`);
       query.sellerEmail = sellerEmail;
@@ -482,53 +432,25 @@ app.get('/api/rooms', async (req, res) => {
     
     console.log('GET /api/rooms - Executing query:', JSON.stringify(query));
     
-    // Perform the query with retry logic for session expiration
-    let rooms;
-    let retryCount = 0;
-    const MAX_RETRIES = 3;
+    // Use lean() for faster queries and projection to return only needed fields
+    const rooms = await Room.find(query)
+      .select('title price images hostelName college location coordinates createdAt sellerEmail sellerPhone')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean()
+      .exec();
     
-    while (retryCount < MAX_RETRIES) {
-      try {
-        rooms = await Room.find(query).sort({ createdAt: -1 });
-        break; // If successful, exit the loop
-      } catch (queryError) {
-        retryCount++;
-        console.error(`GET /api/rooms - Query error (attempt ${retryCount}/${MAX_RETRIES}):`, queryError.message);
-        
-        if (queryError.name === 'MongoExpiredSessionError' && retryCount < MAX_RETRIES) {
-          console.log('GET /api/rooms - Session expired, reconnecting...');
-          // Force a new connection
-          if (mongoose.connection.readyState !== 0) {
-            await mongoose.connection.close();
-          }
-          await connectToDatabase();
-          initModels();
-          continue; // Retry the query
-        }
-        
-        // If we've reached max retries or it's not a session error, throw it
-        if (retryCount >= MAX_RETRIES) {
-          throw queryError;
-        }
-      }
-    }
+    // Get total count for pagination (use countDocuments for better performance)
+    const total = await Room.countDocuments(query);
     
     console.log(`GET /api/rooms - Found ${rooms.length} rooms`);
     
-    // Log the first room if available
-    if (rooms.length > 0) {
-      console.log('GET /api/rooms - First room:', JSON.stringify(rooms[0]));
-    }
-    
+    // Return data with pagination info
     res.json(rooms);
   } catch (error) {
-    console.error('GET /api/rooms - Error:', error.message);
-    console.error('GET /api/rooms - Stack:', error.stack);
-    res.status(500).json({ 
-      message: 'Failed to fetch rooms',
-      error: error.message,
-      stack: process.env.NODE_ENV === 'production' ? null : error.stack
-    });
+    console.error('Error fetching rooms:', error);
+    res.status(500).json({ message: 'Error fetching rooms', error: error.message });
   }
 });
 

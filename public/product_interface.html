@@ -1009,9 +1009,8 @@
       <div class="room-layout">
         <div class="product-images room-images">
           <div class="main-image-container">
-            <img class="main-image image-loading" id="mainImage" alt="Main product image" 
-                 src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
-                 data-src="" 
+            <img class="main-image" id="mainImage" alt="Main product image" 
+                 src="" 
                  onload="this.classList.remove('image-loading')">
           </div>
           <div class="thumbnails" id="thumbnails"></div>
@@ -1300,16 +1299,17 @@
         const response = await fetch(`/api/products/title/${encodedTitle}`);
         
         if (!response.ok) {
-          console.error(`Error fetching product: ${response.status} ${response.statusText}`);
-          return null;
+          const errorData = await response.json();
+          console.error('Error fetching product:', errorData);
+          throw new Error(errorData.message || 'Failed to fetch product');
         }
         
         const product = await response.json();
-        console.log("Product fetched successfully:", product);
+        console.log('Product data received:', product);
         return product;
       } catch (error) {
-        console.error("Error fetching product:", error);
-        return null;
+        console.error('Error in fetchProductByTitle:', error);
+        throw error;
       }
     }
 
@@ -1367,120 +1367,78 @@
     // Main function to load product details
     async function loadProductDetails() {
       try {
-        // Show loading indicator
-        const loadingElement = document.getElementById('loading');
-        if (loadingElement) {
-          loadingElement.style.display = 'flex';
-        }
-        
         // Get product title from URL
         const urlParams = new URLSearchParams(window.location.search);
-        const rawParam = urlParams.get('product');
+        const title = urlParams.get('title');
         
-        if (!rawParam) {
-          console.error("No product parameter provided in URL");
-          displayError("No product specified. Please select a product from the home page.");
+        if (!title) {
+          displayError('No product title specified');
           return;
         }
         
-        // Try different decoding methods to handle potential double encoding
-        const productTitleParam = decodeURIComponent(rawParam);
-        const doubleDecodedParam = decodeURIComponent(productTitleParam);
+        console.log('Loading product details for:', title);
         
-        console.log("Loading product/room with:");
-        console.log("- Raw param:", rawParam);
-        console.log("- Decoded once:", productTitleParam);
-        console.log("- Decoded twice:", doubleDecodedParam);
-        
-        // Try all title variations
-        const titleVariations = [
-          productTitleParam,
-          doubleDecodedParam,
-          encodeURIComponent(productTitleParam)
-        ];
-        
-        // First try to fetch product directly from MongoDB
-        let item = null;
-        
-        // Try each title variation
-        for (const title of titleVariations) {
-          if (!title) continue;
+        // Try to fetch from MongoDB first
+        try {
+          // Determine if it's a room or product
+          let product = null;
           
-          // Try to fetch product
-          item = await fetchProductByTitle(title);
-          if (item) {
-            console.log("Found product in MongoDB:", item);
-            break;
+          // First try to fetch as a product
+          try {
+            product = await fetchProductByTitle(title);
+            if (product) {
+              console.log('Found as product:', product);
+              renderProductDetails(product);
+              loadSimilarProducts(product);
+              return;
+            }
+          } catch (productError) {
+            console.log('Not found as product, trying room...');
           }
           
           // If not found as product, try as room
-          item = await fetchRoomByTitle(title);
-          if (item) {
-            console.log("Found room in MongoDB:", item);
-            break;
-          }
-        }
-        
-        // If not found in MongoDB, try JSONBin as fallback
-        if (!item) {
-          console.log("Item not found in MongoDB, trying JSONBin...");
-          const data = await fetchData();
-          
-          // Check in products collection
-          if (data.products && Array.isArray(data.products)) {
-            for (const title of titleVariations) {
-              item = data.products.find(p => 
-                p.title && (p.title === title || p.title.toLowerCase() === title.toLowerCase())
-              );
-              if (item) {
-                console.log("Found in JSONBin products collection:", item);
-                break;
-              }
+          try {
+            const room = await fetchRoomByTitle(title);
+            if (room) {
+              console.log('Found as room:', room);
+              renderProductDetails(room);
+              loadSimilarProducts(room);
+              return;
             }
+          } catch (roomError) {
+            console.log('Not found as room either');
           }
           
-          // If not found in products, check in rooms collection
-          if (!item && data.rooms && Array.isArray(data.rooms)) {
-            for (const title of titleVariations) {
-              item = data.rooms.find(r => 
-                r.title && (r.title === title || r.title.toLowerCase() === title.toLowerCase())
-              );
-              if (item) {
-                console.log("Found in JSONBin rooms collection:", item);
-                item.category = 'Room';
-                break;
-              }
+          // If we get here, neither product nor room was found
+          throw new Error('Product or room not found');
+          
+        } catch (error) {
+          console.error('Error fetching from MongoDB:', error);
+          
+          // Fallback to JSONBin if MongoDB fetch fails
+          try {
+            console.log('Falling back to fetchData()');
+            const data = await fetchData();
+            
+            // Find the product or room by title
+            const allItems = [...data.products, ...data.rooms];
+            const item = allItems.find(item => item.title === title);
+            
+            if (item) {
+              console.log('Found in fallback data:', item);
+              renderProductDetails(item);
+              loadSimilarProducts(item);
+            } else {
+              displayError('Product not found');
             }
+          } catch (fallbackError) {
+            console.error('Fallback also failed:', fallbackError);
+            displayError('Failed to load product details');
           }
-        }
-        
-        // Set current product
-        currentProduct = item;
-        
-        // Handle case when product is not found
-        if (!currentProduct) {
-          console.error("Product not found in any source. Title variations tried:", titleVariations);
-          displayError("Product not found. Please try another product or contact support.");
-          return;
-        }
-        
-        // Render product details
-        renderProductDetails();
-        
-        // Load similar products
-        loadSimilarProducts(currentProduct);
-        
-        // Hide loading indicator
-        if (loadingElement) {
-          loadingElement.style.display = 'none';
         }
       } catch (error) {
-        console.error("Error loading product details:", error);
-        displayError("An error occurred while loading the product. Please try again later.");
-        const loadingElement = document.getElementById('loading');
-        if (loadingElement) {
-          loadingElement.style.display = 'none';
-        }
+        console.error('Error in loadProductDetails:', error);
+        displayError('An error occurred while loading product details');
       }
     }
 
@@ -1504,152 +1462,150 @@
     }
 
     // Render product details
-    function renderProductDetails() {
-      if (!currentProduct) return;
-      
-      const isRoom = currentProduct.category === 'Room';
-      const container = document.getElementById('productContainer');
-      
-      // Determine if the container should show room layout
-      if (isRoom) {
-        container.classList.add('room-layout');
-      } else {
-        container.classList.remove('room-layout');
-      }
-      
-      // Prepare images HTML
-      let imagesHTML = '';
-      let thumbnailsHTML = '';
-      
-      if (currentProduct.images && currentProduct.images.length > 0) {
-        // Main image with lazy loading
-        imagesHTML = `
-          <div class="main-image-container">
-            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
-                 data-src="${currentProduct.images[0]}" 
-                 alt="${currentProduct.title}" 
-                 class="main-image image-loading" 
-                 id="mainImage"
-                 onload="this.classList.remove('image-loading')">
-          </div>
-        `;
+    function renderProductDetails(product) {
+      try {
+        const currentProduct = product;
+        const container = document.getElementById('productContainer');
         
-        // Generate thumbnails with lazy loading
-        thumbnailsHTML = currentProduct.images.map((img, index) => `
-          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
-               data-src="${img}" 
-               alt="Thumbnail ${index + 1}" 
-               class="thumbnail image-loading" 
-               onclick="document.getElementById('mainImage').src='${img}'; document.getElementById('mainImage').classList.remove('image-loading')"
-               onload="this.classList.remove('image-loading')">
-        `).join('');
-      }
-      
-      // Determine price display
-      const priceHTML = currentProduct.originalPrice ? 
-        `<div class="current-price">₹${currentProduct.price}</div>
-         <div class="original-price">₹${currentProduct.originalPrice}</div>` :
-        `<div class="current-price">₹${currentProduct.price}</div>`;
-      
-      // Room-specific or product-specific details
-      let specificDetailsHTML = '';
-      
-      if (isRoom) {
-        specificDetailsHTML = `
-          <div class="room-details">
-            <div class="room-info-section">
-              <h3>Room Details</h3>
-              <ul>
-                <li><strong>Type:</strong> ${currentProduct.roomType || 'Not specified'}</li>
-                <li><strong>Size:</strong> ${currentProduct.size || 'Not specified'}</li>
-                <li><strong>Furnishing:</strong> ${currentProduct.furnishing || 'Not specified'}</li>
-                <li><strong>Available From:</strong> ${currentProduct.availableFrom || 'Immediately'}</li>
-              </ul>
-            </div>
-            
-            <div class="room-amenities">
-              <h3>Amenities</h3>
-              <ul class="amenities-list">
-                ${currentProduct.amenities ? currentProduct.amenities.map(amenity => 
-                  `<li><i class="fas fa-check"></i> ${amenity}</li>`).join('') : 
-                  '<li>No amenities listed</li>'}
-              </ul>
-            </div>
-            
-            <div class="room-rules">
-              <h3>House Rules</h3>
-              <ul class="rules-list">
-                ${currentProduct.rules ? currentProduct.rules.map(rule => 
-                  `<li><i class="fas fa-info-circle"></i> ${rule}</li>`).join('') : 
-                  '<li>No specific rules listed</li>'}
-              </ul>
-            </div>
-          </div>
-        `;
-      } else {
-        specificDetailsHTML = `
-          <div class="product-specs">
-            <h3>Product Specifications</h3>
-            <ul>
-              <li><strong>Condition:</strong> ${currentProduct.condition || 'Not specified'}</li>
-              <li><strong>Category:</strong> ${currentProduct.category || 'Not specified'}</li>
-              <li><strong>Brand:</strong> ${currentProduct.brand || 'Not specified'}</li>
-              ${currentProduct.age ? `<li><strong>Age:</strong> ${currentProduct.age}</li>` : ''}
-              ${currentProduct.warranty ? `<li><strong>Warranty:</strong> ${currentProduct.warranty}</li>` : ''}
-            </ul>
-          </div>
-        `;
-      }
-      
-      // Build full HTML
-      container.innerHTML = `
-        <div class="product-images ${isRoom ? 'room-images' : ''}">
-          ${imagesHTML}
-          ${thumbnailsHTML}
-        </div>
+        // Check if we're dealing with a room or a product
+        const isRoom = currentProduct.category === 'Room';
         
-        <div class="product-details">
-          <div class="product-header">
-            <h1 class="product-title">${currentProduct.title}</h1>
-            <div class="price-section">
-              ${priceHTML}
+        // Set page title
+        document.title = `${currentProduct.title} - StudXchange`;
+        
+        let imagesHTML = '';
+        let thumbnailsHTML = '';
+        
+        if (currentProduct.images && currentProduct.images.length > 0) {
+          // Main image with lazy loading
+          imagesHTML = `
+            <div class="main-image-container">
+              <img src="${currentProduct.images[0]}" 
+                   alt="${currentProduct.title}" 
+                   class="main-image" 
+                   id="mainImage"
+                   onload="this.classList.remove('image-loading')">
             </div>
-            <div class="location-container">
-              <div class="location-text">
-                <i class="fas fa-map-marker-alt"></i> ${currentProduct.location || 'Location not specified'}
+          `;
+          
+          // Generate thumbnails with lazy loading
+          thumbnailsHTML = currentProduct.images.map((img, index) => `
+            <img src="${img}" 
+                 alt="Thumbnail ${index + 1}" 
+                 class="thumbnail" 
+                 onclick="document.getElementById('mainImage').src='${img}'; document.getElementById('mainImage').classList.remove('image-loading')">
+          `).join('');
+        }
+        
+        // Rest of the function remains the same...
+        // Determine price display
+        const priceHTML = currentProduct.originalPrice ? 
+          `<div class="current-price">₹${currentProduct.price}</div>
+           <div class="original-price">₹${currentProduct.originalPrice}</div>` :
+          `<div class="current-price">₹${currentProduct.price}</div>`;
+        
+        // Room-specific or product-specific details
+        let specificDetailsHTML = '';
+        
+        if (isRoom) {
+          specificDetailsHTML = `
+            <div class="room-details">
+              <div class="room-info-section">
+                <h3>Room Details</h3>
+                <ul>
+                  <li><strong>Type:</strong> ${currentProduct.roomType || 'Not specified'}</li>
+                  <li><strong>Size:</strong> ${currentProduct.size || 'Not specified'}</li>
+                  <li><strong>Furnishing:</strong> ${currentProduct.furnishing || 'Not specified'}</li>
+                  <li><strong>Available From:</strong> ${currentProduct.availableFrom || 'Immediately'}</li>
+                </ul>
               </div>
-              <button class="map-button" onclick="showLocationOnMap()">
-                <i class="fas fa-map"></i> Show in Map
+              
+              <div class="room-amenities">
+                <h3>Amenities</h3>
+                <ul class="amenities-list">
+                  ${currentProduct.amenities ? currentProduct.amenities.map(amenity => 
+                    `<li><i class="fas fa-check"></i> ${amenity}</li>`).join('') : 
+                    '<li>No amenities listed</li>'}
+                </ul>
+              </div>
+              
+              <div class="room-rules">
+                <h3>House Rules</h3>
+                <ul class="rules-list">
+                  ${currentProduct.rules ? currentProduct.rules.map(rule => 
+                    `<li><i class="fas fa-info-circle"></i> ${rule}</li>`).join('') : 
+                    '<li>No specific rules listed</li>'}
+                </ul>
+              </div>
+            </div>
+          `;
+        } else {
+          specificDetailsHTML = `
+            <div class="product-specs">
+              <h3>Product Specifications</h3>
+              <ul>
+                <li><strong>Condition:</strong> ${currentProduct.condition || 'Not specified'}</li>
+                <li><strong>Category:</strong> ${currentProduct.category || 'Not specified'}</li>
+                <li><strong>Brand:</strong> ${currentProduct.brand || 'Not specified'}</li>
+                ${currentProduct.age ? `<li><strong>Age:</strong> ${currentProduct.age}</li>` : ''}
+                ${currentProduct.warranty ? `<li><strong>Warranty:</strong> ${currentProduct.warranty}</li>` : ''}
+              </ul>
+            </div>
+          `;
+        }
+        
+        // Build full HTML
+        container.innerHTML = `
+          <div class="product-images ${isRoom ? 'room-images' : ''}">
+            ${imagesHTML}
+            ${thumbnailsHTML}
+          </div>
+          
+          <div class="product-details">
+            <div class="product-header">
+              <h1 class="product-title">${currentProduct.title}</h1>
+              <div class="price-section">
+                ${priceHTML}
+              </div>
+              <div class="location-container">
+                <div class="location-text">
+                  <i class="fas fa-map-marker-alt"></i> ${currentProduct.location || 'Location not specified'}
+                </div>
+                <button class="map-button" onclick="showLocationOnMap()">
+                  <i class="fas fa-map"></i> Show in Map
+                </button>
+              </div>
+            </div>
+            
+            <div class="action-buttons">
+              <button class="btn btn-primary" onclick="contactSellerWhatsApp()">
+                <i class="fab fa-whatsapp"></i> Contact on WhatsApp
+              </button>
+              <button class="btn btn-secondary" onclick="showSellerInfo()">
+                <i class="fas fa-user"></i> Seller Info
+              </button>
+              <button class="btn btn-secondary" id="wishlistButton" onclick="toggleWishlist(currentProduct)">
+                <i class="fas fa-heart" id="wishlistIcon"></i> Add to Wishlist
+              </button>
+              <button class="btn compare-btn" onclick="openCompareModal()">
+                <i class="fas fa-exchange-alt"></i> Compare
               </button>
             </div>
+            
+            <div class="product-description">
+              <h3>Description</h3>
+              <p>${currentProduct.description || 'No description provided.'}</p>
+            </div>
+            
+            ${specificDetailsHTML}
           </div>
-          
-          <div class="action-buttons">
-            <button class="btn btn-primary" onclick="contactSellerWhatsApp()">
-              <i class="fab fa-whatsapp"></i> Contact on WhatsApp
-            </button>
-            <button class="btn btn-secondary" onclick="showSellerInfo()">
-              <i class="fas fa-user"></i> Seller Info
-            </button>
-            <button class="btn btn-secondary" id="wishlistButton" onclick="toggleWishlist(currentProduct)">
-              <i class="fas fa-heart" id="wishlistIcon"></i> Add to Wishlist
-            </button>
-            <button class="btn compare-btn" onclick="openCompareModal()">
-              <i class="fas fa-exchange-alt"></i> Compare
-            </button>
-          </div>
-          
-          <div class="product-description">
-            <h3>Description</h3>
-            <p>${currentProduct.description || 'No description provided.'}</p>
-          </div>
-          
-          ${specificDetailsHTML}
-        </div>
-      `;
-      
-      // Update wishlist icon
-      updateWishlistIcon();
+        `;
+        
+        // Update wishlist icon
+        updateWishlistIcon();
+      } catch (error) {
+        console.error('Error rendering product details:', error);
+      }
     }
 
     // Load similar products
@@ -1745,7 +1701,7 @@
           let html = '';
           
           similarItems.forEach(item => {
-            const itemUrl = `product_interface.html?product=${encodeURIComponent(item.title)}`;
+            const itemUrl = `product_interface.html?title=${encodeURIComponent(item.title)}`;
             const itemImage = item.images && item.images.length > 0 ? 
               item.images[0] : 'placeholder.jpg';
             
@@ -1753,11 +1709,9 @@
               <div class="similar-product-card">
                 <a href="${itemUrl}">
                   <div class="similar-product-image">
-                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
-                         data-src="${itemImage}" 
+                    <img src="${itemImage}" 
                          alt="${item.title}"
-                         class="image-loading"
-                         onload="this.classList.remove('image-loading')">
+                         class="similar-product-img">
                   </div>
                   <div class="similar-product-details">
                     <h4>${item.title}</h4>
