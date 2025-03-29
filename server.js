@@ -23,7 +23,29 @@ app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 
 // Add compression middleware for faster response times
-app.use(compression());
+app.use(compression({
+  level: 6, // Higher compression level (0-9, where 9 is max compression but slower)
+  threshold: 0 // Compress all responses
+}));
+
+// Add cache control headers for static assets
+const setCache = function (req, res, next) {
+  // Skip caching for API routes
+  if (req.path.startsWith('/api/')) {
+    return next();
+  }
+  
+  // Set cache headers for static assets
+  const period = 60 * 60 * 24; // 1 day in seconds
+  if (req.method === 'GET') {
+    res.set('Cache-Control', `public, max-age=${period}`);
+  } else {
+    // For other methods, no caching
+    res.set('Cache-Control', 'no-store');
+  }
+  next();
+};
+app.use(setCache);
 
 // Add response time logging middleware
 app.use((req, res, next) => {
@@ -173,15 +195,15 @@ async function connectToDatabase() {
 // Define MongoDB Schemas and Models
 const productSchema = new mongoose.Schema({
   college: String,
-  title: String,
-  category: String,
+  title: { type: String, index: true }, // Add index for faster title searches
+  category: { type: String, index: true }, // Add index for faster category filtering
   price: String,
   images: [String],
   description: String,
   condition: String,
   sellerPhone: String,
   sellerEmail: String,
-  createdAt: { type: Date, default: Date.now },
+  createdAt: { type: Date, default: Date.now, index: true }, // Add index for sorting by date
   location: String,
   coordinates: {
     lat: Number,
@@ -189,18 +211,14 @@ const productSchema = new mongoose.Schema({
   }
 });
 
-// Add indexes for frequently queried fields
-productSchema.index({ title: 1 });
-productSchema.index({ category: 1 });
-productSchema.index({ sellerEmail: 1 });
-productSchema.index({ createdAt: -1 });
-// Compound index for location-based queries
-productSchema.index({ "coordinates.lat": 1, "coordinates.lon": 1 });
+// Add compound indexes for common query patterns
+productSchema.index({ category: 1, "coordinates.lat": 1, "coordinates.lon": 1 }); // For filtering by category and location
+productSchema.index({ title: 'text', description: 'text' }); // For text search
 
 const roomSchema = new mongoose.Schema({
   college: String,
-  title: String,
-  category: { type: String, default: 'Room' },
+  title: { type: String, index: true }, // Add index for faster title searches
+  category: { type: String, default: 'Room', index: true }, // Add index for faster category filtering
   hostelName: String,
   ownerName: String,
   contact1: String,
@@ -219,7 +237,7 @@ const roomSchema = new mongoose.Schema({
   priceType: String,
   sellerPhone: String,
   sellerEmail: String,
-  createdAt: { type: Date, default: Date.now },
+  createdAt: { type: Date, default: Date.now, index: true }, // Add index for sorting by date
   location: String,
   coordinates: {
     lat: Number,
@@ -227,13 +245,9 @@ const roomSchema = new mongoose.Schema({
   }
 });
 
-// Add indexes for frequently queried fields in rooms
-roomSchema.index({ title: 1 });
-roomSchema.index({ college: 1 });
-roomSchema.index({ sellerEmail: 1 });
-roomSchema.index({ createdAt: -1 });
-// Compound index for location-based queries
-roomSchema.index({ "coordinates.lat": 1, "coordinates.lon": 1 });
+// Add compound indexes for common query patterns
+roomSchema.index({ category: 1, "coordinates.lat": 1, "coordinates.lon": 1 }); // For filtering by category and location
+roomSchema.index({ title: 'text', description: 'text' }); // For text search
 
 const userSchema = new mongoose.Schema({
   name: String,
@@ -504,7 +518,7 @@ app.get('/api/products/:id', async (req, res) => {
   }
 });
 
-// Get product by title
+// Get product by title (optimized)
 app.get('/api/products/title/:title', async (req, res) => {
   try {
     console.log(`GET /api/products/title/${req.params.title} - Fetching product by title`);
@@ -513,56 +527,52 @@ app.get('/api/products/title/:title', async (req, res) => {
     await connectToDatabase();
     initModels();
     
-    const title = req.params.title;
-    console.log(`GET /api/products/title/${title} - Searching for product with title: ${title}`);
+    const title = decodeURIComponent(req.params.title);
+    console.log('Decoded title:', title);
     
-    // Perform the query with retry logic for session expiration
-    let product;
-    let retryCount = 0;
-    const MAX_RETRIES = 3;
-    
-    while (retryCount < MAX_RETRIES) {
-      try {
-        // Use case-insensitive regex for title search
-        product = await Product.findOne({ title: { $regex: new RegExp(title, 'i') } });
-        break; // If successful, exit the loop
-      } catch (queryError) {
-        retryCount++;
-        console.error(`GET /api/products/title/${title} - Query error (attempt ${retryCount}/${MAX_RETRIES}):`, queryError.message);
-        
-        if (queryError.name === 'MongoExpiredSessionError' && retryCount < MAX_RETRIES) {
-          console.log(`GET /api/products/title/${title} - Session expired, reconnecting...`);
-          // Force a new connection
-          if (mongoose.connection.readyState !== 0) {
-            await mongoose.connection.close();
-          }
-          await connectToDatabase();
-          initModels();
-          continue; // Retry the query
-        }
-        
-        // If we've reached max retries or it's not a session error, throw it
-        if (retryCount >= MAX_RETRIES) {
-          throw queryError;
-        }
-      }
-    }
+    // Use lean() to get plain JavaScript objects instead of Mongoose documents
+    // This is faster and uses less memory
+    const product = await Product.findOne({ title: { $regex: new RegExp('^' + title.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '$', 'i') } }).lean();
     
     if (!product) {
-      console.log(`GET /api/products/title/${title} - Product not found`);
+      console.log('Product not found:', title);
       return res.status(404).json({ message: 'Product not found' });
     }
     
-    console.log(`GET /api/products/title/${title} - Found product: ${product.title}`);
+    console.log('Product found:', product.title);
     res.json(product);
   } catch (error) {
-    console.error(`GET /api/products/title/${req.params.title} - Error:`, error.message);
-    console.error(`GET /api/products/title/${req.params.title} - Stack:`, error.stack);
-    res.status(500).json({ 
-      message: 'Failed to fetch product by title',
-      error: error.message,
-      stack: process.env.NODE_ENV === 'production' ? null : error.stack
-    });
+    console.error('Error fetching product by title:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Get room by title (optimized)
+app.get('/api/rooms/title/:title', async (req, res) => {
+  try {
+    console.log(`GET /api/rooms/title/${req.params.title} - Fetching room by title`);
+    
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
+    const title = decodeURIComponent(req.params.title);
+    console.log('Decoded title:', title);
+    
+    // Use lean() to get plain JavaScript objects instead of Mongoose documents
+    // This is faster and uses less memory
+    const room = await Room.findOne({ title: { $regex: new RegExp('^' + title.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '$', 'i') } }).lean();
+    
+    if (!room) {
+      console.log('Room not found:', title);
+      return res.status(404).json({ message: 'Room not found' });
+    }
+    
+    console.log('Room found:', room.title);
+    res.json(room);
+  } catch (error) {
+    console.error('Error fetching room by title:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
@@ -1108,78 +1118,6 @@ app.delete('/api/products/:id', async (req, res) => {
   } catch (error) {
     console.error(`DELETE /api/products/${req.params.id} - Error:`, error.message);
     res.status(500).json({ message: error.message, stack: error.stack });
-  }
-});
-
-// Get room by title
-app.get('/api/rooms/title/:title', async (req, res) => {
-  try {
-    console.log(`GET /api/rooms/title/${req.params.title} - Fetching room by title`);
-    
-    // Ensure database connection
-    await connectToDatabase();
-    console.log(`GET /api/rooms/title/${req.params.title} - Database connection successful`);
-    
-    // Initialize models
-    initModels();
-    console.log(`GET /api/rooms/title/${req.params.title} - Models initialized`);
-    
-    // Check if Room model is properly initialized
-    if (!Room) {
-      console.error(`GET /api/rooms/title/${req.params.title} - Room model not initialized`);
-      return res.status(500).json({ message: 'Room model not initialized' });
-    }
-    
-    const title = req.params.title;
-    console.log(`GET /api/rooms/title/${title} - Searching for room with title: ${title}`);
-    
-    // Perform the query with retry logic for session expiration
-    let room;
-    let retryCount = 0;
-    const MAX_RETRIES = 3;
-    
-    while (retryCount < MAX_RETRIES) {
-      try {
-        // Use case-insensitive regex for title search
-        room = await Room.findOne({ title: { $regex: new RegExp(title, 'i') } });
-        break; // If successful, exit the loop
-      } catch (queryError) {
-        retryCount++;
-        console.error(`GET /api/rooms/title/${title} - Query error (attempt ${retryCount}/${MAX_RETRIES}):`, queryError.message);
-        
-        if (queryError.name === 'MongoExpiredSessionError' && retryCount < MAX_RETRIES) {
-          console.log(`GET /api/rooms/title/${title} - Session expired, reconnecting...`);
-          // Force a new connection
-          if (mongoose.connection.readyState !== 0) {
-            await mongoose.connection.close();
-          }
-          await connectToDatabase();
-          initModels();
-          continue; // Retry the query
-        }
-        
-        // If we've reached max retries or it's not a session error, throw it
-        if (retryCount >= MAX_RETRIES) {
-          throw queryError;
-        }
-      }
-    }
-    
-    if (!room) {
-      console.log(`GET /api/rooms/title/${title} - Room not found`);
-      return res.status(404).json({ message: 'Room not found' });
-    }
-    
-    console.log(`GET /api/rooms/title/${title} - Found room: ${room.title}`);
-    res.json(room);
-  } catch (error) {
-    console.error(`GET /api/rooms/title/${req.params.title} - Error:`, error.message);
-    console.error(`GET /api/rooms/title/${req.params.title} - Stack:`, error.stack);
-    res.status(500).json({ 
-      message: 'Failed to fetch room by title',
-      error: error.message,
-      stack: process.env.NODE_ENV === 'production' ? null : error.stack
-    });
   }
 });
 

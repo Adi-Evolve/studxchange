@@ -4,11 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Product Interface - StudXchange</title>
+  
+  <!-- Preload critical resources -->
+  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" as="style" />
+  <link rel="preload" href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" as="style" />
+  <link rel="preload" href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js" as="script" />
+  
+  <!-- Stylesheets -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" />
-  <!-- MapLibre CSS -->
   <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
-  <!-- MapLibre JS -->
-  <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+  
   <style>
     :root {
       --primary-color: #2a3d56;
@@ -1176,7 +1181,7 @@
   </footer>
 
   <script src="js/db-config.js"></script>
-  <script>
+  <script defer>
     // Constants
     const JSONBIN_BIN_ID = '6602e1f8266cfc3fde9d1f9e';
     const JSONBIN_API_KEY = '$2a$10$0Ow7aOKYGXxZEQz1Zj8cUeEMF.2aMtfUGlQIlxRjHLNRbCGTVPBqS';
@@ -1437,22 +1442,34 @@
         let thumbnailsHTML = '';
         
         if (currentProduct.images && currentProduct.images.length > 0) {
+          // Process images to use optimized versions if available
+          const optimizedImages = currentProduct.images.map(img => {
+            // Check if the image is from ImgBB
+            if (img.includes('i.ibb.co')) {
+              // Replace with medium size version (if available)
+              return img.replace('/upload/', '/upload/medium/');
+            }
+            return img;
+          });
+          
           // Main image with lazy loading
           imagesHTML = `
             <div class="main-image-container">
-              <img src="${currentProduct.images[0]}" 
+              <img src="${optimizedImages[0]}" 
                    alt="${currentProduct.title}" 
                    class="main-image" 
                    id="mainImage"
+                   loading="eager"
                    onload="this.classList.remove('image-loading')">
             </div>
           `;
           
           // Generate thumbnails with lazy loading
-          thumbnailsHTML = currentProduct.images.map((img, index) => `
+          thumbnailsHTML = optimizedImages.map((img, index) => `
             <img src="${img}" 
                  alt="Thumbnail ${index + 1}" 
                  class="thumbnail" 
+                 loading="lazy"
                  onclick="document.getElementById('mainImage').src='${img}'; document.getElementById('mainImage').classList.remove('image-loading')">
           `).join('');
         }
