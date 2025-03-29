@@ -509,6 +509,68 @@ app.get('/api/products/:id', async (req, res) => {
   }
 });
 
+// Get product by title
+app.get('/api/products/title/:title', async (req, res) => {
+  try {
+    console.log(`GET /api/products/title/${req.params.title} - Fetching product by title`);
+    
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
+    const title = req.params.title;
+    console.log(`GET /api/products/title/${title} - Searching for product with title: ${title}`);
+    
+    // Perform the query with retry logic for session expiration
+    let product;
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+    
+    while (retryCount < MAX_RETRIES) {
+      try {
+        // Use case-insensitive regex for title search
+        product = await Product.findOne({ title: { $regex: new RegExp(title, 'i') } });
+        break; // If successful, exit the loop
+      } catch (queryError) {
+        retryCount++;
+        console.error(`GET /api/products/title/${title} - Query error (attempt ${retryCount}/${MAX_RETRIES}):`, queryError.message);
+        
+        if (queryError.name === 'MongoExpiredSessionError' && retryCount < MAX_RETRIES) {
+          console.log(`GET /api/products/title/${title} - Session expired, reconnecting...`);
+          // Force a new connection
+          if (mongoose.connection.readyState !== 0) {
+            await mongoose.connection.close();
+          }
+          await connectToDatabase();
+          initModels();
+          continue; // Retry the query
+        }
+        
+        // If we've reached max retries or it's not a session error, throw it
+        if (retryCount >= MAX_RETRIES) {
+          throw queryError;
+        }
+      }
+    }
+    
+    if (!product) {
+      console.log(`GET /api/products/title/${title} - Product not found`);
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    
+    console.log(`GET /api/products/title/${title} - Found product: ${product.title}`);
+    res.json(product);
+  } catch (error) {
+    console.error(`GET /api/products/title/${req.params.title} - Error:`, error.message);
+    console.error(`GET /api/products/title/${req.params.title} - Stack:`, error.stack);
+    res.status(500).json({ 
+      message: 'Failed to fetch product by title',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'production' ? null : error.stack
+    });
+  }
+});
+
 // Add a new product
 app.post('/api/products', async (req, res) => {
   try {
