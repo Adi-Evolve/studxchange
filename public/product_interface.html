@@ -708,7 +708,43 @@
 .room-layout {
   display: contents;
 }
+
+/* Map styles */
+#mapContainer {
+  width: 100%;
+  height: 300px;
+  margin: 2rem 0;
+  border-radius: 12px;
+  overflow: hidden;
+  display: none;
+}
+
+.map-card {
+  margin: 2rem 0;
+  padding: 1rem;
+  background: var(--white-color);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.map-header h3 {
+  margin: 0;
+}
+
+.map-controls {
+  display: flex;
+  gap: 0.5rem;
+}
   </style>
+  <link href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
 </head>
 <body>
   <header>
@@ -778,6 +814,18 @@
         <div class="product-description room-description">
           <h3>Description</h3>
           <p id="productDescription"></p>
+        </div>
+        
+        <!-- Map section -->
+        <div class="map-card" id="mapSection" style="display: none;">
+          <div class="map-header">
+            <h3>Location</h3>
+            <div class="map-controls">
+              <button class="btn btn-secondary" onclick="zoomIn()"><i class="fas fa-plus"></i></button>
+              <button class="btn btn-secondary" onclick="zoomOut()"><i class="fas fa-minus"></i></button>
+            </div>
+          </div>
+          <div id="mapContainer"></div>
         </div>
         
         <div id="reviewSection" style="display: none; margin-top: 2rem;">
@@ -885,37 +933,73 @@
 
 
   function updateWishlistIcon() {
-  const wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
-  const wishlistIcon = document.querySelector('.wishlist-toggle');
-  
-  // Always start with far (outline)
-  wishlistIcon.classList.add('far');
-  wishlistIcon.classList.remove('fas');
-
-  if (wishlist.some(item => item.title === currentProduct.title)) {
-    wishlistIcon.classList.add('fas');
-    wishlistIcon.classList.remove('far');
+    const wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+    const wishlistIcon = document.querySelector('.wishlist-toggle');
+    
+    if (!wishlistIcon) {
+      console.error("Wishlist icon element not found");
+      return;
+    }
+    
+    // Always start with far (outline)
+    wishlistIcon.classList.remove('fas', 'far');
+    
+    if (wishlist.some(item => item.title === currentProduct?.title)) {
+      wishlistIcon.classList.add('fas');
+      wishlistIcon.style.color = '#ff4757';
+    } else {
+      wishlistIcon.classList.add('far');
+      wishlistIcon.style.color = '#ccc';
+    }
   }
-}
 
-async function toggleWishlist(product) {
-  let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
-  const index = wishlist.findIndex(item => item.title === product.title);
-  
-  if (index === -1) {
-    wishlist.push({
-      title: product.title,
-      price: product.price,
-      image: product.images?.[0] || product.image,
-      category: product.category
-    });
-  } else {
-    wishlist.splice(index, 1);
+  async function toggleWishlist(product) {
+    if (!product) {
+      console.error("No product provided to toggleWishlist");
+      return;
+    }
+    
+    // Find the wishlist icon element
+    const wishlistIcon = document.querySelector('.wishlist-toggle');
+    if (!wishlistIcon) {
+      console.error("Wishlist icon element not found");
+      return;
+    }
+    
+    // Add a temporary animation class
+    wishlistIcon.classList.add('fa-spin');
+    
+    try {
+      let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+      const index = wishlist.findIndex(item => item.title === product.title);
+      
+      if (index === -1) {
+        // Add to wishlist
+        wishlist.push({
+          title: product.title,
+          price: product.price,
+          image: product.images?.[0] || product.image,
+          category: product.category
+        });
+        console.log("Added to wishlist:", product.title);
+      } else {
+        // Remove from wishlist
+        wishlist.splice(index, 1);
+        console.log("Removed from wishlist:", product.title);
+      }
+      
+      localStorage.setItem('wishlist', JSON.stringify(wishlist));
+      
+      // Small delay for visual feedback
+      setTimeout(() => {
+        wishlistIcon.classList.remove('fa-spin');
+        updateWishlistIcon();
+      }, 500);
+    } catch (error) {
+      console.error("Error updating wishlist:", error);
+      wishlistIcon.classList.remove('fa-spin');
+    }
   }
-  
-  localStorage.setItem('wishlist', JSON.stringify(wishlist));
-  updateWishlistIcon();
-}
 
   async function fetchProducts() {
     const data = await fetchData();
@@ -988,29 +1072,50 @@ async function toggleWishlist(product) {
 
     async function fetchData() {
       try {
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
-          headers: { 'X-Master-Key': JSONBIN_API_KEY }
-        });
-        const data = await response.json();
-        console.log("Raw data from JSONBin:", data);
-        if (!data.record) {
-          console.error("No record found in JSONBin response");
-        } else {
-          console.log("Products count:", data.record.products?.length || 0);
-          console.log("Rooms count:", data.record.rooms?.length || 0);
-          // Log first item of each collection to verify structure
-          if (data.record.products?.length > 0) {
-            console.log("Sample product:", data.record.products[0]);
-          }
-          if (data.record.rooms?.length > 0) {
-            console.log("Sample room:", data.record.rooms[0]);
-          } else {
-            console.warn("The 'rooms' collection exists but is empty or not found in the response");
-          }
+        console.log("Fetching data from MongoDB API...");
+        
+        // Fetch products from MongoDB API
+        const productsResponse = await fetch(API_ENDPOINTS.GET_PRODUCTS);
+        if (!productsResponse.ok) {
+          console.error("Failed to fetch products:", productsResponse.status);
+          throw new Error(`Failed to fetch products: ${productsResponse.status}`);
         }
-        return data.record || { products: [], users: [], soldItems: [], rooms: [] };
+        const products = await productsResponse.json();
+        console.log("Products fetched successfully:", products.length);
+        
+        // Fetch rooms from MongoDB API
+        const roomsResponse = await fetch(API_ENDPOINTS.GET_ROOMS);
+        if (!roomsResponse.ok) {
+          console.error("Failed to fetch rooms:", roomsResponse.status);
+          throw new Error(`Failed to fetch rooms: ${roomsResponse.status}`);
+        }
+        const rooms = await roomsResponse.json();
+        console.log("Rooms fetched successfully:", rooms.length);
+        
+        // Create a composite object similar to the JSONBin structure
+        const data = {
+          products: products,
+          rooms: rooms,
+          users: [], // Will be populated on demand
+          soldItems: [] // Will be populated on demand
+        };
+        
+        console.log("Combined data structure:", {
+          productsCount: data.products.length,
+          roomsCount: data.rooms.length
+        });
+        
+        // Log sample data for debugging
+        if (data.products.length > 0) {
+          console.log("Sample product:", data.products[0]);
+        }
+        if (data.rooms.length > 0) {
+          console.log("Sample room:", data.rooms[0]);
+        }
+        
+        return data;
       } catch (error) {
-        console.error("Failed to load data:", error);
+        console.error("Failed to load data from MongoDB:", error);
         return { products: [], users: [], soldItems: [], rooms: [] };
       }
     }
@@ -1019,11 +1124,16 @@ async function toggleWishlist(product) {
     async function fetchRoomDirectly(roomTitle) {
       try {
         console.log("Attempting to fetch room directly from MongoDB:", roomTitle);
-        // Try the /api/rooms endpoint
-        const response = await fetch(API_ENDPOINTS.GET_ROOMS_BY_TITLE + encodeURIComponent(roomTitle));
+        
+        // First try by title parameter in query
+        const encodedTitle = encodeURIComponent(roomTitle);
+        console.log("Making request to: " + API_ENDPOINTS.GET_ROOMS + "?title=" + encodedTitle);
+        
+        const response = await fetch(API_ENDPOINTS.GET_ROOMS + "?title=" + encodedTitle);
         if (response.ok) {
           const data = await response.json();
-          console.log("Response from MongoDB:", data);
+          console.log("Response from MongoDB rooms endpoint:", data);
+          
           // Check if we got an array or a single object
           if (Array.isArray(data) && data.length > 0) {
             console.log("Found room in array:", data[0]);
@@ -1031,14 +1141,28 @@ async function toggleWishlist(product) {
           } else if (data && typeof data === 'object' && data.title) {
             console.log("Found room as object:", data);
             return data;
-          } else {
-            console.log("No matching room found in MongoDB response");
-            return null;
           }
         } else {
-          console.error("Failed to fetch room directly:", response.status);
-          return null;
+          console.error("Failed to fetch room by query param:", response.status);
         }
+        
+        // If not found, try direct GET_ROOM_BY_TITLE endpoint
+        console.log("Trying specific room endpoint: " + API_ENDPOINTS.GET_ROOM_BY_TITLE + encodedTitle);
+        
+        const specificResponse = await fetch(API_ENDPOINTS.GET_ROOM_BY_TITLE + encodedTitle);
+        if (specificResponse.ok) {
+          const roomData = await specificResponse.json();
+          console.log("Room data from specific endpoint:", roomData);
+          
+          if (roomData) {
+            return roomData;
+          }
+        } else {
+          console.error("Failed to fetch room from specific endpoint:", specificResponse.status);
+        }
+        
+        console.log("No matching room found in MongoDB");
+        return null;
       } catch (error) {
         console.error("Error fetching room directly:", error);
         return null;
@@ -1372,6 +1496,9 @@ async function toggleWishlist(product) {
         }
 
         updateWishlistIcon();
+        
+        // Initialize map if coordinates are available
+        setupMap();
       } catch (error) {
         console.error('Error loading product:', error);
         alert('Error loading product details');
@@ -1381,22 +1508,32 @@ async function toggleWishlist(product) {
 
     async function showSellerInfo() {
       try {
-        const data = await fetchData();
-        const seller = data.users.find(user => user.email === currentProduct.sellerEmail);
+        if (!currentProduct || !currentProduct.sellerEmail) {
+          console.error("No seller email available for this product");
+          alert("Seller information not available");
+          return;
+        }
+        
+        console.log("Fetching seller info for email:", currentProduct.sellerEmail);
         
         // Build seller info content
         const sellerInfoContent = document.getElementById('sellerInfoContent');
+        sellerInfoContent.innerHTML = '<p>Loading seller information...</p>';
         
+        // Show the modal while loading data
+        document.getElementById('sellerInfoModal').style.display = 'flex';
+        
+        // For room listings - display hostel information
         if (currentProduct.category === 'Room') {
-          // Display hostel information for rooms
           sellerInfoContent.innerHTML = `
             <ul>
               <li><strong>Hostel Name:</strong> ${currentProduct.hostelName || 'Not available'}</li>
               <li><strong>College:</strong> ${currentProduct.college || 'Not specified'}</li>
-              <li><strong>Owner:</strong> ${seller?.name || 'Not available'}</li>
-              <li><strong>Contact:</strong> ${seller?.phone || 'Not provided'}</li>
-              <li><strong>Email:</strong> ${currentProduct.sellerEmail}</li>
+              <li><strong>Owner:</strong> ${currentProduct.ownerName || 'Not available'}</li>
+              <li><strong>Contact:</strong> ${currentProduct.sellerPhone || currentProduct.contact1 || 'Not provided'}</li>
+              <li><strong>Email:</strong> ${currentProduct.sellerEmail || 'Not provided'}</li>
               ${currentProduct.amenities ? `<li><strong>Amenities:</strong> ${currentProduct.amenities.join(', ')}</li>` : ''}
+              ${currentProduct.location ? `<li><strong>Location:</strong> ${currentProduct.location}</li>` : ''}
             </ul>
           `;
           
@@ -1404,37 +1541,58 @@ async function toggleWishlist(product) {
           document.querySelector('#sellerInfoModal h3').style.display = 'none';
           document.getElementById('soldProductsList').style.display = 'none';
         } else {
-          // For regular products, show seller info
-          const soldItems = data.soldItems.filter(item => item.sellerEmail === currentProduct.sellerEmail);
-          
-          sellerInfoContent.innerHTML = `
-            <ul>
-              <li><strong>Name:</strong> ${seller?.name || 'Not available'}</li>
-              <li><strong>Email:</strong> ${currentProduct.sellerEmail}</li>
-              <li><strong>Phone:</strong> ${seller?.phone || 'Not provided'}</li>
-              <li><strong>Total Items Sold:</strong> ${soldItems.length}</li>
-            </ul>
-          `;
-          
-          // Show sold products for regular products
-          document.querySelector('#sellerInfoModal h3').style.display = 'block';
-          document.getElementById('soldProductsList').style.display = 'block';
-          
-          // Build sold products list
-          const soldProductsList = document.getElementById('soldProductsList');
-          soldProductsList.innerHTML = soldItems.length > 0 
-            ? soldItems.map(item => `
-                <div style="padding: 0.5rem; background: #f8f9fa; margin: 0.5rem 0; border-radius: 8px;">
-                  <strong>${item.title}</strong> - ₹${item.price}
-                </div>
-              `).join('')
-            : '<p>No items sold yet</p>';
+          // For regular products, show seller info from user database
+          try {
+            // Try to fetch sold items by this seller
+            const soldItemsResponse = await fetch(API_ENDPOINTS.GET_SOLD_ITEMS + "?sellerEmail=" + encodeURIComponent(currentProduct.sellerEmail));
+            let soldItems = [];
+            
+            if (soldItemsResponse.ok) {
+              soldItems = await soldItemsResponse.json();
+              console.log("Sold items fetched:", soldItems);
+            } else {
+              console.error("Failed to fetch sold items:", soldItemsResponse.status);
+            }
+            
+            sellerInfoContent.innerHTML = `
+              <ul>
+                <li><strong>Name:</strong> ${currentProduct.sellerName || 'Not available'}</li>
+                <li><strong>Email:</strong> ${currentProduct.sellerEmail}</li>
+                <li><strong>Phone:</strong> ${currentProduct.sellerPhone || 'Not provided'}</li>
+                <li><strong>College:</strong> ${currentProduct.college || 'Not specified'}</li>
+                <li><strong>Total Items Sold:</strong> ${soldItems.length}</li>
+              </ul>
+            `;
+            
+            // Show sold products for regular products
+            document.querySelector('#sellerInfoModal h3').style.display = 'block';
+            document.getElementById('soldProductsList').style.display = 'block';
+            
+            // Build sold products list
+            const soldProductsList = document.getElementById('soldProductsList');
+            soldProductsList.innerHTML = soldItems.length > 0 
+              ? soldItems.map(item => `
+                  <div style="padding: 0.5rem; background: #f8f9fa; margin: 0.5rem 0; border-radius: 8px;">
+                    <strong>${item.title}</strong> - ₹${item.price}
+                    ${item.image ? `<img src="${item.image}" alt="${item.title}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; margin-left: 10px; float: right;">` : ''}
+                  </div>
+                `).join('')
+              : '<p>No items sold yet</p>';
+          } catch (error) {
+            console.error("Error fetching seller data:", error);
+            sellerInfoContent.innerHTML = `
+              <ul>
+                <li><strong>Name:</strong> ${currentProduct.sellerName || 'Not available'}</li>
+                <li><strong>Email:</strong> ${currentProduct.sellerEmail}</li>
+                <li><strong>Phone:</strong> ${currentProduct.sellerPhone || 'Not provided'}</li>
+                <li><strong>Error:</strong> Could not load additional seller data</li>
+              </ul>
+            `;
+          }
         }
-
-        document.getElementById('sellerInfoModal').style.display = 'flex';
       } catch (error) {
         console.error('Error loading seller/hostel info:', error);
-        alert('Failed to load information');
+        document.getElementById('sellerInfoContent').innerHTML = '<p>Failed to load seller information. Please try again.</p>';
       }
     }
 
@@ -1616,9 +1774,12 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function contactOwner() {
-  if (!currentProduct) return;
+  if (!currentProduct) {
+    console.error("No product data available");
+    return;
+  }
 
-  const sellerPhone = currentProduct.sellerPhone;
+  const sellerPhone = currentProduct.sellerPhone || currentProduct.contact1;
   if (!sellerPhone) {
     alert('Owner contact information not available');
     return;
@@ -1627,8 +1788,21 @@ function contactOwner() {
   const user = JSON.parse(localStorage.getItem('currentUser'));
   if (!user) {
     alert('Please sign in to contact the owner');
-    window.location.href = 'signuppage.html';
+    window.location.href = 'login.html';
     return;
+  }
+
+  // Show loading animation on button
+  const contactButton = document.querySelector('button.btn-primary');
+  if (contactButton) {
+    const originalText = contactButton.innerHTML;
+    contactButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Opening WhatsApp...';
+    contactButton.disabled = true;
+    
+    setTimeout(() => {
+      contactButton.innerHTML = originalText;
+      contactButton.disabled = false;
+    }, 2000);
   }
 
   const formattedPhone = sellerPhone.startsWith('+') ? sellerPhone : `+91${sellerPhone}`;
@@ -1808,6 +1982,93 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Other DOM initialization code...
 });
+
+// MapLibre implementation
+let map = null;
+
+function initMap(coordinates) {
+  if (!coordinates || !coordinates.lat || !coordinates.lon) {
+    console.log("No valid coordinates provided for map");
+    return;
+  }
+  
+  try {
+    console.log("Initializing map with coordinates:", coordinates);
+    
+    // Show the map section
+    document.getElementById('mapSection').style.display = 'block';
+    document.getElementById('mapContainer').style.display = 'block';
+    
+    // Create the map
+    map = new maplibregl.Map({
+      container: 'mapContainer',
+      style: 'https://api.maptiler.com/maps/streets/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL',
+      center: [coordinates.lon, coordinates.lat],
+      zoom: 13
+    });
+    
+    // Add navigation controls
+    map.addControl(new maplibregl.NavigationControl());
+    
+    // Add marker
+    new maplibregl.Marker()
+      .setLngLat([coordinates.lon, coordinates.lat])
+      .addTo(map);
+      
+    // Add popup
+    new maplibregl.Popup({closeOnClick: false})
+      .setLngLat([coordinates.lon, coordinates.lat])
+      .setHTML(`<strong>${currentProduct.title}</strong><br>${currentProduct.location || ''}`)
+      .addTo(map);
+      
+    console.log("Map initialized successfully");
+  } catch (error) {
+    console.error("Error initializing map:", error);
+    document.getElementById('mapSection').style.display = 'none';
+  }
+}
+
+function zoomIn() {
+  if (map) {
+    map.zoomIn();
+  }
+}
+
+function zoomOut() {
+  if (map) {
+    map.zoomOut();
+  }
+}
+
+// Call this function in loadProductDetails after setting currentProduct
+function setupMap() {
+  // If product has coordinates, init map
+  if (currentProduct && currentProduct.coordinates) {
+    initMap(currentProduct.coordinates);
+  } 
+  // If it has location but no coordinates, try to geocode the location
+  else if (currentProduct && currentProduct.location) {
+    console.log("Product has location but no coordinates:", currentProduct.location);
+    
+    // Set default coordinates for demonstration
+    const defaultCoordinates = {
+      lat: 18.5204, // Default Pune coordinates
+      lon: 73.8567
+    };
+    
+    document.getElementById('mapSection').style.display = 'block';
+    document.getElementById('mapSection').innerHTML = `
+      <div class="map-header">
+        <h3>Location</h3>
+      </div>
+      <p>${currentProduct.location}</p>
+      <p><i class="fas fa-info-circle"></i> Exact coordinates not available</p>
+    `;
+  } else {
+    // Hide map section
+    document.getElementById('mapSection').style.display = 'none';
+  }
+}
   </script>
  
 
