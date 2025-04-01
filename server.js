@@ -1087,6 +1087,37 @@ app.use((err, req, res, next) => {
     stack: process.env.NODE_ENV === 'production' ? null : err.stack
   });
 });
+app.get('/auth/google/callback', 
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  (req, res) => {
+      res.redirect('/index.html'); // Redirect to home page on success
+  }
+);
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const passport = require('passport');
+
+passport.use(new GoogleStrategy({
+    clientID: "YOUR_CLIENT_ID",
+    clientSecret: "YOUR_CLIENT_SECRET",
+    callbackURL: "/auth/google/callback"
+}, async (accessToken, refreshToken, profile, done) => {
+    // Save user to MongoDB (modify as needed)
+    let user = await User.findOne({ googleId: profile.id });
+
+    if (!user) {
+        user = new User({
+            googleId: profile.id,
+            name: profile.displayName,
+            email: profile.emails[0].value
+        });
+
+        await user.save();
+    }
+
+    return done(null, user);
+}));
+
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 app.post('/api/auth/google', require('./controllers/authController').googleAuth);
 // Export the Express API for Vercel
