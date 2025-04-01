@@ -373,9 +373,9 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #2a3d56;
+    background-color: var(--primary-color);
     padding: 15px 30px;
-    /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
+    box-shadow: var(--shadow);
   }
   .navlogo img {
     height: 100px;
@@ -390,91 +390,15 @@
   .searchbar {
     display: flex;
     align-items: center;
-    background: white;
+    background: var(--white-color);
     border-radius: 30px;
     padding: 2px;
     width: 100%;
     max-width: 600px;
   }
   .category-select {
-    background: #2a3d56;
-    color: white;
-    border-radius: 30px 0 0 30px;
-    padding: 6px 10px;
-    font-size: 0.85rem;
-    width: 80px;
-    text-align: center;
-  }
-  .searchbar input {
-    flex-grow: 1;
-    padding: 8px 12px;
-    font-size: 0.9rem;
-  }
-  .searchbar button {
-    background: #2a3d56;
-    color: white;
-    border-radius: 0 30px 30px 0;
-    padding: 8px 15px;
-    font-size: 1rem;
-    transition: background 0.3s;
-  }
-  .searchbar button:hover {
-    background: #1a75ff;
-  }
-  .button-container {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-  }
-  .wishlist-button {
-    color: white;
-    font-size: 1.5rem;
-    transition: color 0.3s;
-  }
-  .wishlist-button:hover {
-    color: #ff4757;
-  }
-  .profile-button {
-    color: white;
-    padding: 10px 15px;
-    border-radius: 25px;
-    text-decoration: none;
-    background: transparent;
-    border: 2px solid white;
-    transition: all 0.3s;
-  }
-  .profile-button:hover {
-    background: rgba(255, 255, 255, 0.2);
-  }.navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #2a3d56;
-    padding: 15px 30px;
-    /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
-  }
-  .navlogo img {
-    height: 100px;
-    width: 200px;
-  }
-  .search-container {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    margin: 0 20px;
-  }
-  .searchbar {
-    display: flex;
-    align-items: center;
-    background: white;
-    border-radius: 30px;
-    padding: 2px;
-    width: 100%;
-    max-width: 600px;
-  }
-  .category-select {
-    background: #2a3d56;
-    color: white;
+    background: var(--primary-color);
+    color: var(--white-color);
     border-radius: 30px 0 0 30px;
     padding: 10px;
     font-size: 0.85rem;
@@ -485,17 +409,21 @@
     flex-grow: 1;
     padding: 8px 12px;
     font-size: 0.9rem;
+    border: none;
+    outline: none;
   }
   .searchbar button {
-    background: #2a3d56;
-    color: white;
+    background: var(--primary-color);
+    color: var(--white-color);
+    border: none;
     border-radius: 0 30px 30px 0;
-    padding: 8px;
+    padding: 8px 15px;
     font-size: 1rem;
     transition: background 0.3s;
+    cursor: pointer;
   }
   .searchbar button:hover {
-    background: #1a75ff;
+    background: var(--accent-color);
   }
   .button-container {
     display: flex;
@@ -503,20 +431,21 @@
     align-items: center;
   }
   .wishlist-button {
-    color: white;
+    color: var(--white-color);
     font-size: 1.5rem;
     transition: color 0.3s;
+    text-decoration: none;
   }
   .wishlist-button:hover {
     color: #ff4757;
   }
   .profile-button {
-    color: white;
+    color: var(--white-color);
     padding: 10px 15px;
     border-radius: 25px;
     text-decoration: none;
     background: transparent;
-    border: 2px solid white;
+    border: 2px solid var(--white-color);
     transition: all 0.3s;
   }
   .profile-button:hover {
@@ -743,52 +672,64 @@
   gap: 0.5rem;
 }
 
-  /* Loading animation */
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
+.map-control-btn {
+  background: var(--white-color);
+  border: 1px solid var(--secondary-color);
+  border-radius: 4px;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.map-control-btn:hover {
+  background: var(--accent-color);
+  color: var(--white-color);
+  border-color: var(--accent-color);
+}
+
+#mapError {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 1rem;
+  border-radius: 4px;
+  margin: 0.5rem 0;
+  text-align: center;
+  display: none;
+}
+
+.map-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  background: var(--white-color);
+  border-radius: 8px;
+}
+
+.map-loading .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--accent-color);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.map-loading p {
+  color: var(--text-color);
+  font-size: 1rem;
+}
+
+/* Loading animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
   </style>
   <link href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" rel="stylesheet" />
   <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
-  /* Map loading animation */
-  .map-loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 300px;
-    background: #f5f5f5;
-    border-radius: 8px;
-    color: var(--text-color);
-  }
-  
-  .map-loading .loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid rgba(0, 0, 0, 0.1);
-    border-radius: 50%;
-    border-top-color: var(--accent-color);
-    animation: spin 1s linear infinite;
-    margin-bottom: 10px;
-  }
-  
-  /* Loading animation for initMap */
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-
-  /* Map error message */
-  .map-error {
-    padding: 15px;
-    background-color: #ffebee;
-    color: #c62828;
-    border-radius: 8px;
-    text-align: center;
-    margin: 15px 0;
-    border: 1px solid #ef9a9a;
-  }
 </head>
 <body>
   <header>
@@ -888,11 +829,12 @@
           <div class="map-header">
             <h3>Location</h3>
             <div class="map-controls">
-              <button class="btn btn-secondary" onclick="zoomIn()"><i class="fas fa-plus"></i></button>
-              <button class="btn btn-secondary" onclick="zoomOut()"><i class="fas fa-minus"></i></button>
+              <button onclick="zoomIn()" class="map-control-btn"><i class="fas fa-plus"></i></button>
+              <button onclick="zoomOut()" class="map-control-btn"><i class="fas fa-minus"></i></button>
             </div>
           </div>
-          <div id="mapContainer"></div>
+          <div id="mapError" style="display: none;"></div>
+          <div id="map" style="width: 100%; height: 400px;"></div>
         </div>
         
         <div id="reviewSection" style="display: none; margin-top: 2rem;">
@@ -998,6 +940,7 @@
   let selectedProduct1 = null;
   let selectedProduct2 = null;
 
+  let map = null; // Global map variable
 
   function updateWishlistIcon() {
     const wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
@@ -1138,492 +1081,164 @@
   }
 
     async function fetchData() {
+      const loadingIndicator = document.getElementById('loadingIndicator');
+      const productContainer = document.getElementById('productContainer');
+      
       try {
-        console.log("Fetching data from MongoDB API...");
-        
-        // Fetch products from MongoDB API
-        const productsResponse = await fetch(API_ENDPOINTS.GET_PRODUCTS);
-        if (!productsResponse.ok) {
-          console.error("Failed to fetch products:", productsResponse.status);
-          throw new Error(`Failed to fetch products: ${productsResponse.status}`);
+        loadingIndicator.style.display = 'flex';
+        productContainer.style.display = 'none';
+
+        const [productsResponse, roomsResponse] = await Promise.all([
+          fetch(API_ENDPOINTS.PRODUCTS),
+          fetch(API_ENDPOINTS.ROOMS)
+        ]);
+
+        if (!productsResponse.ok || !roomsResponse.ok) {
+          throw new Error('Failed to fetch data');
         }
-        const products = await productsResponse.json();
-        console.log("Products fetched successfully:", products.length);
-        
-        // Fetch rooms from MongoDB API
-        const roomsResponse = await fetch(API_ENDPOINTS.GET_ROOMS);
-        if (!roomsResponse.ok) {
-          console.error("Failed to fetch rooms:", roomsResponse.status);
-          throw new Error(`Failed to fetch rooms: ${roomsResponse.status}`);
+
+        const [productsData, roomsData] = await Promise.all([
+          productsResponse.json(),
+          roomsResponse.json()
+        ]);
+
+        if (productsData.success && roomsData.success) {
+          window.products = productsData.data;
+          window.rooms = roomsData.data;
+          console.log('Products:', window.products);
+          console.log('Rooms:', window.rooms);
+        } else {
+          throw new Error('Invalid data format');
         }
-        const rooms = await roomsResponse.json();
-        console.log("Rooms fetched successfully:", rooms.length);
-        
-        // Create a composite object similar to the JSONBin structure
-        const data = {
-          products: products,
-          rooms: rooms,
-          users: [], // Will be populated on demand
-          soldItems: [] // Will be populated on demand
-        };
-        
-        console.log("Combined data structure:", {
-          productsCount: data.products.length,
-          roomsCount: data.rooms.length
-        });
-        
-        // Log sample data for debugging
-        if (data.products.length > 0) {
-          console.log("Sample product:", data.products[0]);
-        }
-        if (data.rooms.length > 0) {
-          console.log("Sample room:", data.rooms[0]);
-        }
-        
-        return data;
+
+        loadingIndicator.style.display = 'none';
+        productContainer.style.display = 'block';
       } catch (error) {
-        console.error("Failed to load data from MongoDB:", error);
-        return { products: [], users: [], soldItems: [], rooms: [] };
+        console.error('Error fetching data:', error);
+        showError('Failed to load data. Please try again later.');
+        loadingIndicator.style.display = 'none';
+        productContainer.style.display = 'block';
       }
     }
 
-    // Direct function to fetch a room from MongoDB
-    async function fetchRoomDirectly(roomTitle) {
+    async function fetchRoomDirectly(title) {
+      const mapContainer = document.getElementById('map');
       try {
-        console.log("Attempting to fetch room directly from MongoDB:", roomTitle);
-        
-        // First try by title parameter in query
-        const encodedTitle = encodeURIComponent(roomTitle);
-        console.log("Making request to: " + API_ENDPOINTS.GET_ROOMS + "?title=" + encodedTitle);
-        
-        const response = await fetch(API_ENDPOINTS.GET_ROOMS + "?title=" + encodedTitle);
-        if (response.ok) {
-          const data = await response.json();
-          console.log("Response from MongoDB rooms endpoint:", data);
-          
-          // Check if we got an array or a single object
-          if (Array.isArray(data) && data.length > 0) {
-            console.log("Found room in array:", data[0]);
-            return data[0];
-          } else if (data && typeof data === 'object' && data.title) {
-            console.log("Found room as object:", data);
-            return data;
-          }
-        } else {
-          console.error("Failed to fetch room by query param:", response.status);
+        mapContainer.classList.add('loading');
+        const response = await fetch(API_ENDPOINTS.ROOMS);
+        if (!response.ok) {
+          throw new Error('Failed to fetch rooms');
         }
-        
-        // If not found, try direct GET_ROOM_BY_TITLE endpoint
-        console.log("Trying specific room endpoint: " + API_ENDPOINTS.GET_ROOM_BY_TITLE + encodedTitle);
-        
-        const specificResponse = await fetch(API_ENDPOINTS.GET_ROOM_BY_TITLE + encodedTitle);
-        if (specificResponse.ok) {
-          const roomData = await specificResponse.json();
-          console.log("Room data from specific endpoint:", roomData);
-          
-          if (roomData) {
-            return roomData;
+        const data = await response.json();
+        if (data.success) {
+          const room = data.data.find(r => r.title === title);
+          if (room) {
+            return room;
           }
-        } else {
-          console.error("Failed to fetch room from specific endpoint:", specificResponse.status);
         }
-        
-        console.log("No matching room found in MongoDB");
-        return null;
+        throw new Error('Room not found');
       } catch (error) {
-        console.error("Error fetching room directly:", error);
+        console.error('Error fetching room:', error);
+        showError('Failed to load room details. Please try again later.');
         return null;
+      } finally {
+        mapContainer.classList.remove('loading');
       }
+    }
+
+    function showError(message) {
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'error-message';
+      errorDiv.textContent = message;
+      document.body.appendChild(errorDiv);
+      
+      setTimeout(() => {
+        errorDiv.remove();
+      }, 5000);
     }
 
     async function loadProductDetails() {
-      // Show loading indicator
-      document.getElementById('loadingIndicator').style.display = 'flex';
-      document.getElementById('productContainer').style.display = 'none';
+      const loadingIndicator = document.getElementById('loadingIndicator');
+      const productContainer = document.getElementById('productContainer');
       
-      const urlParams = new URLSearchParams(window.location.search);
-      const rawParam = urlParams.get('product');
-      
-      // Try different decoding methods to handle potential double encoding
-      const productTitleParam = decodeURIComponent(rawParam);
-      const doubleDecodedParam = decodeURIComponent(productTitleParam);
-      
-      console.log("Loading product/room with:");
-      console.log("- Raw param:", rawParam);
-      console.log("- Decoded once:", productTitleParam);
-      console.log("- Decoded twice:", doubleDecodedParam);
-
       try {
-        const data = await fetchData();
-        console.log("Loaded data structure:", Object.keys(data));
-        
-        // First check in products collection
-        let item = null;
-        const titleVariations = [
-          productTitleParam,
-          doubleDecodedParam,
-          encodeURIComponent(productTitleParam)
-        ];
-        
-        if (data.products && Array.isArray(data.products)) {
-          console.log("Searching in products collection...");
-          // Try all title variations
-          for (const title of titleVariations) {
-            item = data.products.find(p => p.title === title);
-            if (item) {
-              console.log("Found in products collection with variation:", title);
-              break;
-            }
-          }
+        loadingIndicator.style.display = 'flex';
+        productContainer.style.display = 'none';
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('id');
+        const productType = urlParams.get('type');
+
+        if (!productId || !productType) {
+          throw new Error('Invalid product information');
+        }
+
+        let product;
+        if (productType === 'room') {
+          product = await fetchRoomDirectly(productId);
         } else {
-          console.error("Products collection missing or not an array");
-        }
-        
-        // If not found in products, check in rooms collection
-        if (!item && data.rooms) {
-          if (Array.isArray(data.rooms)) {
-            console.log("Searching in MongoDB 'rooms' collection...");
-            console.log("Number of rooms in data:", data.rooms.length);
-            // Log all room titles to debug matching issues
-            console.log("Available room titles:", data.rooms.map(r => r.title));
-            
-            // Try all title variations
-            for (const title of titleVariations) {
-              item = data.rooms.find(r => r.title === title);
-              if (item) {
-                console.log("Found in rooms collection with variation:", title);
-                item.category = 'Room';
-                break;
-              }
-            }
-            
-            if (!item) {
-              // Try case-insensitive search as fallback
-              console.log("Trying case-insensitive match...");
-              for (const title of titleVariations) {
-                item = data.rooms.find(r => 
-                  r.title && r.title.toLowerCase() === title.toLowerCase()
-                );
-                if (item) {
-                  console.log("Found with case-insensitive match:", item);
-                  item.category = 'Room';
-                  break;
-                }
-              }
-            }
-          } else {
-            console.error("Rooms collection is not an array:", data.rooms);
-          }
-        } else {
-          console.warn("No 'rooms' array found in the data. Key properties:", Object.keys(data));
-        }
-        
-        // Try fetching directly from MongoDB via API if not found
-        if (!item) {
-          console.log("Item not found in JSONBin data, trying direct MongoDB access...");
-          // Try each variation
-          for (const title of titleVariations) {
-            const roomData = await fetchRoomDirectly(title);
-            if (roomData) {
-              item = roomData;
-              item.category = 'Room';
-              console.log("Successfully retrieved room directly from MongoDB:", item);
-              break;
-            }
-          }
-        }
-        
-        // If still not found, try direct API access to get room data
-        if (!item) {
-          console.log("Item not found, trying API endpoint for room data...");
-          try {
-            const title = productTitleParam.toLowerCase();
-            // Check if we're looking for a room listing
-            if (title.includes("hostel") || title.includes("room") || title.includes("pg")) {
-              // Make direct API request to server for room data
-              const response = await fetch(API_ENDPOINTS.GET_ROOM_BY_TITLE + encodeURIComponent(productTitleParam));
-              if (response.ok) {
-                const roomData = await response.json();
-                console.log("Fetched room data from API:", roomData);
-                if (roomData) {
-                  item = roomData;
-                  item.category = 'Room';
-                }
-              } else {
-                console.error("API room search failed:", response.status);
-              }
-            }
-          } catch (apiError) {
-            console.error("Error accessing room API:", apiError);
-          }
-        }
-        
-        // Last resort - create a static room for the specific "boys hostel" title
-        if (!item && (productTitleParam === "boys hostel" || rawParam === "boys%20hostel" || 
-                productTitleParam.toLowerCase().includes("hostel") || productTitleParam.toLowerCase().includes("boys"))) {
-          console.log("Creating static data for hostel listing");
-          item = {
-            title: productTitleParam || "Boys Hostel",
-            price: "5000",
-            description: "Well-maintained boys hostel near college with all amenities including WiFi, hot water, and security. Monthly rent includes electricity and water charges.",
-            hostelName: "College Square Boys Hostel",
-            college: "PICT",
-            location: "Pune, Maharashtra",
-            sellerEmail: "hostelowner@example.com",
-            sellerPhone: "9876543210",
-            category: "Room",
-            amenities: ["WiFi", "Hot Water", "Security", "Cleaning Service", "Power Backup"],
-            images: [
-              "https://images.pexels.com/photos/1457842/pexels-photo-1457842.jpeg",
-              "https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg",
-              "https://images.pexels.com/photos/2507016/pexels-photo-2507016.jpeg"
-            ]
-          };
-        }
-        
-        currentProduct = item;
-
-        if (!currentProduct) {
-          console.error("Item not found in products or rooms. Title variations tried:", titleVariations);
-          // Try direct debugging of the entire data object
-          console.log("Full data object for debugging:", JSON.stringify(data));
-          
-          // Hide loading indicator and show error
-          document.getElementById('loadingIndicator').style.display = 'none';
-          
-          // Last resort: Create a temporary room object for testing
-          if (confirm('Product not found in database. Would you like to view a temporary room for testing?')) {
-            currentProduct = {
-              title: productTitleParam,
-              price: "5000",
-              description: "This is a temporary room for testing. The actual room could not be found in the database.",
-              hostelName: "Test Hostel",
-              college: "Test College",
-              sellerEmail: "test@example.com",
-              sellerPhone: "1234567890",
-              category: "Room",
-              images: ["https://via.placeholder.com/400x300?text=Room+Image"]
-            };
-            console.log("Created temporary room for testing:", currentProduct);
-          } else {
-            window.location.href = 'index.html';
-            return;
-          }
+          product = window.products.find(p => p._id === productId);
         }
 
-        console.log("Found item:", currentProduct);
-
-        // Update product details
-        document.getElementById('productTitle').textContent = currentProduct.title;
-        document.getElementById('productPrice').textContent = `₹${currentProduct.price}`;
-        
-        // Price display differs based on category
-        if (currentProduct.category === 'Room') {
-          document.getElementById('productMRP').textContent = 'per month';
-        } else {
-          document.getElementById('productMRP').textContent = `MRP: ₹${(currentProduct.price * 1.2).toFixed(2)}`;
-        }
-        
-        document.getElementById('productDescription').textContent = currentProduct.description;
-
-        // Set main image
-        const mainImage = document.getElementById('mainImage');
-        const primaryImage = currentProduct.images?.[0] || currentProduct.image || 'placeholder.jpg';
-        mainImage.src = primaryImage;
-
-        // Show condition for products
-        if (currentProduct.category !== 'Room' && currentProduct.condition) {
-          document.getElementById('conditionSection').style.display = 'block';
-          const conditionEl = document.getElementById('productCondition');
-          conditionEl.textContent = currentProduct.condition;
-          
-          // Add color based on condition
-          switch(currentProduct.condition.toLowerCase()) {
-            case 'new':
-              conditionEl.style.backgroundColor = '#e8f5e9';
-              conditionEl.style.color = '#2e7d32';
-              break;
-            case 'like new':
-              conditionEl.style.backgroundColor = '#e3f2fd';
-              conditionEl.style.color = '#1565c0';
-              break;
-            case 'good':
-              conditionEl.style.backgroundColor = '#fff3e0';
-              conditionEl.style.color = '#ef6c00';
-              break;
-            case 'used':
-              conditionEl.style.backgroundColor = '#ffebee';
-              conditionEl.style.color = '#c62828';
-              break;
-            default:
-              // Default styling already set in CSS
-          }
-        } else {
-          document.getElementById('conditionSection').style.display = 'none';
+        if (!product) {
+          throw new Error('Product not found');
         }
 
-        // Create thumbnails
-        const thumbnailsContainer = document.getElementById('thumbnails');
-        thumbnailsContainer.innerHTML = '';
+        updateProductUI(product);
         
-        const imagesToShow = currentProduct.images?.length ? 
-          currentProduct.images : 
-          (currentProduct.image ? [currentProduct.image] : []);
-
-        imagesToShow.forEach(imgUrl => {
-          const thumb = document.createElement('img');
-          thumb.src = imgUrl;
-          thumb.className = 'thumbnail';
-          thumb.alt = "Product thumbnail";
-          thumb.onclick = () => { mainImage.src = imgUrl; };
-          thumbnailsContainer.appendChild(thumb);
-        });
-
-        // Update action buttons based on product type
-        const actionButtons = document.getElementById('actionButtons');
-        actionButtons.innerHTML = '';
-
-        if (currentProduct.category === 'Room') {
-          // For room listings - only the Contact Owner button
-          actionButtons.innerHTML = `
-            <button class="btn btn-primary" style="background-color: #4CAF50;" onclick="contactOwner()">
-              <i class="fab fa-whatsapp"></i> Contact Owner
-            </button>
-          `;
-          
-          // Show room details
-          const roomDetailsSection = document.getElementById('roomDetailsSection');
-          roomDetailsSection.style.display = 'block';
-          
-          // Populate room details
-          const roomDetails = document.getElementById('roomDetails');
-          roomDetails.innerHTML = '';
-          
-          // Add hostel name
-          if (currentProduct.hostelName) {
-            const hostelNameDetail = document.createElement('div');
-            hostelNameDetail.className = 'detail-item';
-            hostelNameDetail.innerHTML = `
-              <i class="fas fa-building"></i> 
-              <span>${currentProduct.hostelName}</span>
-            `;
-            roomDetails.appendChild(hostelNameDetail);
-          }
-          
-          // Add college
-          if (currentProduct.college) {
-            const collegeDetail = document.createElement('div');
-            collegeDetail.className = 'detail-item';
-            collegeDetail.innerHTML = `
-              <i class="fas fa-graduation-cap"></i> 
-              <span>${currentProduct.college}</span>
-            `;
-            roomDetails.appendChild(collegeDetail);
-          }
-          
-          // Add location
-          if (currentProduct.location) {
-            const locationDetail = document.createElement('div');
-            locationDetail.className = 'detail-item';
-            locationDetail.innerHTML = `
-              <i class="fas fa-map-marker-alt"></i> 
-              <span>${currentProduct.location}</span>
-            `;
-            roomDetails.appendChild(locationDetail);
-          }
-          
-          // Display amenities if available
-          const amenitiesList = document.getElementById('amenitiesList');
-          amenitiesList.innerHTML = '';
-          
-          if (currentProduct.amenities && currentProduct.amenities.length > 0) {
-            // Map of amenity names to icons
-            const amenityIcons = {
-              'WiFi': 'fa-wifi',
-              'Hot Water': 'fa-hot-tub',
-              'AC': 'fa-snowflake',
-              'Non-AC': 'fa-fan',
-              'Mess': 'fa-utensils',
-              'Security': 'fa-shield-alt',
-              'Laundry': 'fa-tshirt',
-              'Cleaning': 'fa-broom',
-              'Parking': 'fa-parking',
-              'TV': 'fa-tv',
-              'Refrigerator': 'fa-refrigerator',
-              'Study Table': 'fa-table',
-              'Cupboard': 'fa-door-closed',
-              'Power Backup': 'fa-bolt',
-              'Gym': 'fa-dumbbell',
-              'Cleaning Service': 'fa-broom'
-            };
-            
-            currentProduct.amenities.forEach(amenity => {
-              const amenityBadge = document.createElement('div');
-              amenityBadge.className = 'amenity-badge';
-              
-              // Choose the right icon or default to fa-check
-              const iconClass = amenityIcons[amenity] || 'fa-check';
-              
-              amenityBadge.innerHTML = `
-                <i class="fas ${iconClass}"></i>
-                <span>${amenity}</span>
-              `;
-              amenitiesList.appendChild(amenityBadge);
-            });
-          }
-          
-          document.getElementById('reviewSection').style.display = 'block';
-          loadReviews();
-          
-          // Update seller info modal title for rooms
-          document.querySelector('#sellerInfoModal h2').textContent = 'Hostel Information';
-        } else {
-          // For regular products - keep all buttons
-          actionButtons.innerHTML = `
-            <button class="btn btn-primary" style="background-color: #4CAF50;" onclick="openBuyModal()">
-              <i class="fas fa-shopping-cart"></i> Buy Now
-            </button>
-            <button class="btn btn-secondary" style="background-color: #2196F3;" onclick="showSellerInfo()">
-              <i class="fas fa-user"></i> Seller Info
-            </button>
-            <button class="btn btn-secondary" style="background-color: #F44336;" onclick="openCompareModal()">
-              <i class="fas fa-exchange-alt"></i> Compare
-            </button>
-          `;
-          document.getElementById('reviewSection').style.display = 'none';
-          document.getElementById('roomDetailsSection').style.display = 'none';
-          
-          // Reset seller info modal title for regular products
-          document.querySelector('#sellerInfoModal h2').textContent = 'Seller Information';
-        }
-
-        updateWishlistIcon();
-        
-        // Initialize map if coordinates are available
-        setupMap();
+        loadingIndicator.style.display = 'none';
+        productContainer.style.display = 'block';
       } catch (error) {
-        console.error('Error loading product:', error);
-        alert('Error loading product details');
-        window.location.href = 'index.html';
+        console.error('Error loading product details:', error);
+        showError(error.message || 'Failed to load product details');
+        loadingIndicator.style.display = 'none';
+        productContainer.style.display = 'block';
       }
-
-      // After all loading is complete, hide loading indicator and show product
-      document.getElementById('loadingIndicator').style.display = 'none';
-      document.getElementById('productContainer').style.display = 'grid';
-      
-      // Update product details
-      document.getElementById('productTitle').textContent = currentProduct.title;
     }
 
-    async function showSellerInfo() {
+    function updateProductUI(product) {
+      const imageContainer = document.getElementById('productImages');
+      const productTitle = document.getElementById('productTitle');
+      const productPrice = document.getElementById('productPrice');
+      const productDescription = document.getElementById('productDescription');
+      const mapContainer = document.getElementById('map');
+
+      // Update product images
+      imageContainer.innerHTML = '';
+      product.images.forEach(image => {
+        const img = document.createElement('img');
+        img.src = image;
+        img.alt = product.title;
+        img.onclick = () => showFullImage(image);
+        imageContainer.appendChild(img);
+      });
+
+      // Update product details
+      productTitle.textContent = product.title;
+      productPrice.textContent = `₹${product.price}`;
+      productDescription.textContent = product.description;
+      
+      // Update seller information
+      showSellerInfo(product.sellerEmail);
+      
+      // Update map with proper coordinates
+      if (product.location && product.location.coordinates) {
+        const [lng, lat] = product.location.coordinates;
+        initMap(lat, lng);
+      } else if (product.coordinates) {
+        initMap(product.coordinates.lat, product.coordinates.lon);
+      }
+    }
+
+    async function showSellerInfo(sellerEmail) {
       try {
-        if (!currentProduct || !currentProduct.sellerEmail) {
-          console.error("No seller email available for this product");
+        if (!sellerEmail) {
+          console.error("No seller email provided");
           alert("Seller information not available");
           return;
         }
         
-        console.log("Fetching seller info for email:", currentProduct.sellerEmail);
+        console.log("Fetching seller info for email:", sellerEmail);
         
         // Build seller info content
         const sellerInfoContent = document.getElementById('sellerInfoContent');
@@ -1633,12 +1248,12 @@
         document.getElementById('sellerInfoModal').style.display = 'flex';
         
         // Try to fetch user profile data
-        let sellerName = currentProduct.sellerName || 'Not available';
-        let sellerPhone = currentProduct.sellerPhone || currentProduct.contact1 || 'Not provided';
+        let sellerName = 'Not available';
+        let sellerPhone = 'Not provided';
         
         try {
           // Attempt to fetch user data from server based on email
-          const userDataResponse = await fetch(API_ENDPOINTS.GET_USER_BY_EMAIL(currentProduct.sellerEmail));
+          const userDataResponse = await fetch(API_ENDPOINTS.GET_USER_BY_EMAIL(sellerEmail));
           if (userDataResponse.ok) {
             const userData = await userDataResponse.json();
             if (userData && userData.name) {
@@ -1664,7 +1279,7 @@
               <li><strong>College:</strong> ${currentProduct.college || 'Not specified'}</li>
               <li><strong>Owner:</strong> ${sellerName}</li>
               <li><strong>Contact:</strong> ${sellerPhone}</li>
-              <li><strong>Email:</strong> ${currentProduct.sellerEmail || 'Not provided'}</li>
+              <li><strong>Email:</strong> ${sellerEmail || 'Not provided'}</li>
               ${currentProduct.amenities ? `<li><strong>Amenities:</strong> ${currentProduct.amenities.join(', ')}</li>` : ''}
               ${currentProduct.location ? `<li><strong>Location:</strong> ${currentProduct.location}</li>` : ''}
             </ul>
@@ -1677,7 +1292,7 @@
           // For regular products, show seller info from user database
           try {
             // Try to fetch sold items by this seller
-            const soldItemsResponse = await fetch(API_ENDPOINTS.GET_SOLD_ITEMS + "?sellerEmail=" + encodeURIComponent(currentProduct.sellerEmail));
+            const soldItemsResponse = await fetch(API_ENDPOINTS.GET_SOLD_ITEMS + "?sellerEmail=" + encodeURIComponent(sellerEmail));
             let soldItems = [];
             
             if (soldItemsResponse.ok) {
@@ -1690,7 +1305,7 @@
             sellerInfoContent.innerHTML = `
               <ul>
                 <li><strong>Name:</strong> ${sellerName}</li>
-                <li><strong>Email:</strong> ${currentProduct.sellerEmail}</li>
+                <li><strong>Email:</strong> ${sellerEmail}</li>
                 <li><strong>Phone:</strong> ${sellerPhone}</li>
                 <li><strong>College:</strong> ${currentProduct.college || 'Not specified'}</li>
                 <li><strong>Total Items Sold:</strong> ${soldItems.length}</li>
@@ -1716,7 +1331,7 @@
             sellerInfoContent.innerHTML = `
               <ul>
                 <li><strong>Name:</strong> ${sellerName}</li>
-                <li><strong>Email:</strong> ${currentProduct.sellerEmail}</li>
+                <li><strong>Email:</strong> ${sellerEmail}</li>
                 <li><strong>Phone:</strong> ${sellerPhone}</li>
                 <li><strong>Error:</strong> Could not load additional seller data</li>
               </ul>
@@ -2117,121 +1732,80 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // MapLibre implementation
-let map = null;
 let mapVisible = false;
 
 function toggleMap() {
   const mapSection = document.getElementById('mapSection');
+  const mapContainer = document.getElementById('map');
   
-  if (mapVisible) {
-    mapSection.style.display = 'none';
-    document.getElementById('showMapBtn').innerHTML = '<i class="fas fa-map-marker-alt"></i> Show on Map';
-  } else {
-    mapSection.style.display = 'block';
-    document.getElementById('showMapBtn').innerHTML = '<i class="fas fa-times"></i> Hide Map';
-    
-    // Make sure the map section has the loading indicator
-    if (!mapSection.querySelector('.map-loading') && !document.getElementById('mapContainer')) {
-      mapSection.innerHTML = `
-        <div class="map-loading"><div class="loading-spinner"></div><p>Loading map...</p></div>
-        <div id="mapContainer" style="width: 100%; height: 400px; display: none;"></div>
-      `;
-    }
-    
-    // Initialize map if not already done
-    if (!map && currentProduct && (currentProduct.coordinates || currentProduct.location)) {
-      const coords = currentProduct.coordinates || {
-        lat: 18.5204, // Default Pune coordinates
-        lon: 73.8567
-      };
-      initMap(coords);
-    } else if (map) {
-      // If map is already initialized, just show it
-      const mapContainer = document.getElementById('mapContainer');
-      if (mapContainer) mapContainer.style.display = 'block';
-      
-      const loadingIndicator = mapSection.querySelector('.map-loading');
-      if (loadingIndicator) loadingIndicator.style.display = 'none';
-    }
+  if (!mapContainer) {
+    mapSection.innerHTML = `
+      <div class="map-loading"><div class="loading-spinner"></div><p>Loading map...</p></div>
+      <div id="map" style="width: 100%; height: 400px; display: none;"></div>
+      <div id="mapError" style="display: none;"></div>
+    `;
   }
   
-  mapVisible = !mapVisible;
+  if (currentProduct && (currentProduct.location?.coordinates || currentProduct.coordinates)) {
+    const coords = currentProduct.location?.coordinates || currentProduct.coordinates;
+    const [lng, lat] = currentProduct.location?.coordinates || [coords.lon, coords.lat];
+    initMap(lat, lng);
+  }
+  
+  mapSection.style.display = mapSection.style.display === 'none' ? 'block' : 'none';
 }
 
-function initMap(coordinates) {
-  if (!coordinates || !coordinates.lat || !coordinates.lon) {
-    console.log("No valid coordinates provided for map");
-    document.getElementById('mapSection').innerHTML = 
-      '<div class="map-error">Unable to display map: No valid coordinates available</div>';
+async function initMap(lat, lng) {
+  const mapContainer = document.getElementById('map');
+  const mapError = document.getElementById('mapError');
+  
+  if (!lat || !lng) {
+    mapError.textContent = 'Location coordinates not available';
+    mapError.style.display = 'block';
+    mapContainer.style.display = 'none';
     return;
   }
-  
+
   try {
-    console.log("Initializing map with coordinates:", coordinates);
-    
-    // Show the map container with loading state
-    const mapSection = document.getElementById('mapSection');
-    const mapContainer = document.getElementById('mapContainer');
-    
-    // Make sure map container exists
-    if (!mapContainer) {
-      mapSection.innerHTML = `
-        <div class="map-loading"><div class="loading-spinner"></div><p>Loading map...</p></div>
-        <div id="mapContainer" style="width: 100%; height: 400px; display: none;"></div>
-      `;
+    mapContainer.classList.add('loading');
+    mapError.style.display = 'none';
+    mapContainer.style.display = 'block';
+
+    // Destroy existing map if it exists
+    if (map) {
+      map.remove();
     }
-    
-    // MapTiler API key - replace with your own for production
-    // Show the map container
-    document.getElementById('mapContainer').style.display = 'block';
-    
-    // MapTiler API key - replace with your own for production
-    const mapTilerKey = "NORQCtupfJJ7qm57OFEU";
-    
-    // Create the map
+
     map = new maplibregl.Map({
-      container: 'mapContainer',
-      style: `https://api.maptiler.com/maps/streets/style.json?key=${mapTilerKey}`,
-      center: [coordinates.lon, coordinates.lat],
-      zoom: 14
+      container: 'map',
+      style: 'https://api.maptiler.com/maps/streets/style.json?key=' + MAPTILER_API_KEY,
+      center: [lng, lat],
+      zoom: 15,
+      attributionControl: false
     });
-    
-    // Add navigation controls
-    map.addControl(new maplibregl.NavigationControl());
-    
-    // Add marker
-    new maplibregl.Marker({
-      color: "#F44336"
-    })
-      .setLngLat([coordinates.lon, coordinates.lat])
-      .addTo(map);
-      
-    // Add popup
-    new maplibregl.Popup({
-      closeOnClick: false,
-      offset: 25
-    })
-      .setLngLat([coordinates.lon, coordinates.lat])
-      .setHTML(`
-        <strong>${currentProduct.title}</strong><br>
-        ${currentProduct.location || ''}
-      `)
-      .addTo(map);
-      
-    console.log("Map initialized successfully");
-    
-    // Wait for map to load then notify
-    map.on('load', function() {
-      console.log("Map fully loaded");
+
+    map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+    map.on('load', () => {
+      mapContainer.classList.remove('loading');
+      new maplibregl.Marker()
+        .setLngLat([lng, lat])
+        .addTo(map);
+    });
+
+    map.on('error', (e) => {
+      console.error('Map error:', e);
+      mapError.textContent = 'Failed to load map. Please try again later.';
+      mapError.style.display = 'block';
+      mapContainer.style.display = 'none';
     });
   } catch (error) {
-    console.error("Error initializing map:", error);
-    document.getElementById('mapSection').innerHTML = `
-      <div class="map-header">
-        <h3>Location</h3>
-      </div>
-      <p>Error loading map: ${error.message}</p>
-    `;
+    console.error('Error initializing map:', error);
+    mapError.textContent = 'Failed to load map. Please try again later.';
+    mapError.style.display = 'block';
+    mapContainer.style.display = 'none';
+  } finally {
+    mapContainer.classList.remove('loading');
   }
 }
 
