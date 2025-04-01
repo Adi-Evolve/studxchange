@@ -430,13 +430,49 @@
     width: calc(100% - 24px);
   }
 }
+
+/* Loading animation styles */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  width: 100%;
+  padding: 50px 0;
+}
+
+.loader {
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #2a3d56;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+.loading-text {
+  margin-top: 20px;
+  font-size: 18px;
+  color: #2a3d56;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
   </style>
 </head>
 <body>
   <!-- Common Navbar -->
   <header id="common-navbar"></header>
+  
+  <!-- Loading animation -->
+  <div id="loadingContainer" class="loading-container">
+    <div class="loader"></div>
+    <div class="loading-text">Fetching results...</div>
+  </div>
 
-  <div id="searchResults"></div>
+  <div id="searchResults" style="display: none;"></div>
 
   <footer>
     <p>For any help, contact us at: Studxchange05@gmail.com | Phone: 8857053541</p>
@@ -455,6 +491,12 @@
       
       console.log("Toggle wishlist clicked for:", product.title); // Debug log
       
+      // Get the clicked icon
+      const heartIcon = event.target;
+      
+      // Add loading animation to the heart icon
+      heartIcon.classList.add('fa-spin');
+      
       let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
       const index = wishlist.findIndex(item => item.title === product.title);
       
@@ -466,16 +508,28 @@
           image: product.images?.[0] || product.image,
           category: product.category
         });
-        event.target.classList.remove('far');
-        event.target.classList.add('fas');
-        event.target.style.color = '#ff4757';
+        
+        // Update icon appearance
+        setTimeout(() => {
+          heartIcon.classList.remove('fa-spin');
+          heartIcon.classList.remove('far');
+          heartIcon.classList.add('fas');
+          heartIcon.style.color = '#ff4757';
+        }, 500);
+        
         console.log("Added to wishlist"); // Debug log
       } else {
         // Remove from wishlist
         wishlist.splice(index, 1);
-        event.target.classList.remove('fas');
-        event.target.classList.add('far');
-        event.target.style.color = '#ccc';
+        
+        // Update icon appearance
+        setTimeout(() => {
+          heartIcon.classList.remove('fa-spin');
+          heartIcon.classList.remove('fas');
+          heartIcon.classList.add('far');
+          heartIcon.style.color = '#ccc';
+        }, 500);
+        
         console.log("Removed from wishlist"); // Debug log
       }
       
@@ -571,6 +625,10 @@ async function getLocation() {
       const selectedCollege = urlParams.get('category')?.toLowerCase() || 'all';
 
       try {
+        // Show loading animation
+        document.getElementById('loadingContainer').style.display = 'flex';
+        document.getElementById('searchResults').style.display = 'none';
+        
         // Fetch both products and rooms
         const [products, rooms] = await Promise.all([
           fetchProducts(),
@@ -697,7 +755,10 @@ async function getLocation() {
                   ${product.distance ? `<i class="fas fa-map-marker-alt"></i> ~${product.distance.toFixed(1)} km away` : ''}
                 </p>
                 <button class="buy-now" 
-                        onclick="event.stopPropagation(); window.location.href='product_interface.html?product=${encodeURIComponent(product.title)}'">
+                        onclick="event.stopPropagation(); 
+                                 this.innerHTML = '<i class=\'fas fa-spinner fa-spin\'></i> Loading...'; 
+                                 this.disabled = true;
+                                 window.location.href='product_interface.html?product=${encodeURIComponent(product.title)}'">
                   Buy Now
                 </button>
               `;
@@ -707,9 +768,17 @@ async function getLocation() {
         } else {
           searchResultsDiv.innerHTML = "<p>No products found.</p>";
         }
+        
+        // Hide loading animation and show results
+        document.getElementById('loadingContainer').style.display = 'none';
+        document.getElementById('searchResults').style.display = 'flex';
       } catch (error) {
         console.error('Error loading results:', error);
         searchResultsDiv.innerHTML = '<p>Error loading products. Please try again.</p>';
+        
+        // Hide loading animation and show error message
+        document.getElementById('loadingContainer').style.display = 'none';
+        document.getElementById('searchResults').style.display = 'flex';
       }
     }
 

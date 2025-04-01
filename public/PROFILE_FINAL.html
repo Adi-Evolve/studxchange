@@ -431,11 +431,21 @@ button, select {
   <script>
     // When the page loads, load user data from localStorage and display profile info.
     document.addEventListener('DOMContentLoaded', () => {
+        // Check if user is logged in
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        if (!isLoggedIn) {
+            console.log('User not logged in, redirecting to login page');
+            window.location.href = 'login.html';
+            return;
+        }
+        
         const user = JSON.parse(localStorage.getItem('currentUser'));
         if (user) {
-            document.getElementById('userName').textContent = user.name;
-            document.getElementById('profileName').textContent = user.name;
-            document.getElementById('profileEmail').textContent = user.email;
+            console.log('User data found in localStorage:', user.email);
+            document.getElementById('userName').textContent = user.name || 'User';
+            document.getElementById('profileName').textContent = user.name || 'Not provided';
+            document.getElementById('profileEmail').textContent = user.email || 'Not provided';
+            
             if (user.phone) {
                 document.getElementById('profilePhone').textContent = user.phone;
                 document.getElementById('addPhoneBtn').style.display = 'none';
@@ -443,9 +453,13 @@ button, select {
                 document.getElementById('profilePhone').textContent = 'Not provided';
                 document.getElementById('addPhoneBtn').style.display = 'inline-block';
             }
+            
+            // Load user's items
             loadListedItems();
             loadSoldItems();
         } else {
+            console.error('No user data found despite being logged in');
+            localStorage.removeItem('isLoggedIn');
             window.location.href = 'login.html';
         }
     });
@@ -505,13 +519,19 @@ button, select {
             }
             
             console.log('Fetching products for email:', currentUser.email);
+            document.getElementById('listedItemsList').innerHTML = '<p>Loading your items...</p>';
+            
             const response = await fetch(`${API_ENDPOINTS.GET_PRODUCTS}?sellerEmail=${encodeURIComponent(currentUser.email)}`);
             
             if (!response.ok) {
-                throw new Error('Failed to fetch listed items');
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Failed to fetch listed items:', response.status, errorData);
+                throw new Error(errorData.message || 'Failed to fetch listed items');
             }
             
             const products = await response.json();
+            console.log(`Found ${products.length} listed items`);
+            
             const listedItems = document.getElementById('listedItemsList');
             listedItems.innerHTML = '';
             
@@ -523,10 +543,10 @@ button, select {
             products.forEach(product => {
                 listedItems.innerHTML += `
                     <li class="listed-item">
-                        <img src="${product.images?.[0] || product.image}" class="item-image" alt="${product.title}">
+                        <img src="${product.images?.[0] || product.image || 'placeholder.jpg'}" class="item-image" alt="${product.title}">
                         <div class="item-details">
-                            <h3>${product.title}</h3>
-                            <p>₹${product.price}</p>
+                            <h3>${product.title || 'Untitled Item'}</h3>
+                            <p>₹${product.price || '0'}</p>
                         </div>
                         <div class="item-actions">
                             <button class="sold-btn" onclick="handleSold('${product._id}')">Mark Sold</button>
@@ -537,20 +557,33 @@ button, select {
             });
         } catch (error) {
             console.error('Error loading items:', error);
-            document.getElementById('listedItemsList').innerHTML = '<p>Failed to load your listed items.</p>';
+            document.getElementById('listedItemsList').innerHTML = `<p>Failed to load your listed items: ${error.message}</p>`;
         }
     }
 
     async function loadSoldItems() {
         try {
             const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (!currentUser || !currentUser.email) {
+                console.error('No user email found in localStorage');
+                document.getElementById('soldItemsList').innerHTML = '<p>Please log in to view your sold items.</p>';
+                return;
+            }
+            
+            console.log('Fetching sold items for email:', currentUser.email);
+            document.getElementById('soldItemsList').innerHTML = '<p>Loading your sold items...</p>';
+            
             const response = await fetch(`${API_ENDPOINTS.GET_SOLD_ITEMS}?sellerEmail=${encodeURIComponent(currentUser.email)}`);
             
             if (!response.ok) {
-                throw new Error('Failed to fetch sold items');
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Failed to fetch sold items:', response.status, errorData);
+                throw new Error(errorData.message || 'Failed to fetch sold items');
             }
             
             const soldItems = await response.json();
+            console.log(`Found ${soldItems.length} sold items`);
+            
             const soldItemsList = document.getElementById('soldItemsList');
             soldItemsList.innerHTML = '';
             
@@ -562,10 +595,10 @@ button, select {
             soldItems.forEach(item => {
                 soldItemsList.innerHTML += `
                     <li class="listed-item">
-                        <img src="${item.image}" class="item-image" alt="${item.title}">
+                        <img src="${item.image || 'placeholder.jpg'}" class="item-image" alt="${item.title}">
                         <div class="item-details">
-                            <h3>${item.title}</h3>
-                            <p>₹${item.price}</p>
+                            <h3>${item.title || 'Untitled Item'}</h3>
+                            <p>₹${item.price || '0'}</p>
                             <p>Sold on: ${new Date(item.soldDate).toLocaleDateString()}</p>
                         </div>
                     </li>
@@ -573,7 +606,7 @@ button, select {
             });
         } catch (error) {
             console.error('Error loading sold items:', error);
-            document.getElementById('soldItemsList').innerHTML = '<p>Failed to load your sold items.</p>';
+            document.getElementById('soldItemsList').innerHTML = `<p>Failed to load your sold items: ${error.message}</p>`;
         }
     }
 

@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" />
   <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- JWT Decode for parsing Google tokens -->
+  <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
   <script src="js/db-config.js"></script>
   
   <style>
@@ -394,6 +396,9 @@
     <div class="signup-link">
       New to StudXchange? Sign in with Google to create your account automatically!
     </div>
+    
+    <!-- Add a login status message div -->
+    <div id="loginStatus" style="display: none; text-align: center; margin-top: 15px; padding: 10px; border-radius: 5px;"></div>
   </div>
   
   <footer>
@@ -422,8 +427,7 @@
           callback: handleCredentialResponse,
           auto_select: false,
           cancel_on_tap_outside: true,
-          ux_mode: 'redirect',  
-          login_uri: window.location.origin + '/auth/google/callback',  
+          ux_mode: 'popup',
           context: 'signin'
         });
         

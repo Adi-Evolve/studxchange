@@ -664,67 +664,8 @@ app.post('/api/users/verify-otp', async (req, res) => {
 });
 
 // Google Authentication
-app.post('/api/auth/google', async (req, res) => {
-  try {
-    console.log('POST /api/auth/google - Processing Google authentication');
-    
-    // Validate request body
-    if (!req.body || !req.body.email) {
-      console.error('POST /api/auth/google - Missing required fields');
-      return res.status(400).json({ message: 'Email is required' });
-    }
-    
-    // Ensure database connection
-    await connectToDatabase();
-    initModels();
-    
-    const { name, email } = req.body;
-    console.log(`POST /api/auth/google - Processing authentication for email: ${email}`);
-    
-    // Check if user exists
-    let user = await User.findOne({ email });
-    
-    if (!user) {
-      // Create new user if not found
-      console.log(`POST /api/auth/google - Creating new user for email: ${email}`);
-      
-      user = new User({
-        name,
-        email,
-        provider: 'google'
-      });
-      
-      try {
-        await user.save();
-        console.log(`POST /api/auth/google - New user created for email: ${email}`);
-      } catch (saveError) {
-        console.error(`POST /api/auth/google - Error creating user: ${saveError.message}`);
-        throw saveError;
-      }
-    } else {
-      // Update existing user's name if it has changed
-      if (user.name !== name) {
-        user.name = name;
-        await user.save();
-        console.log(`POST /api/auth/google - Updated existing user's name: ${email}`);
-      }
-    }
-    
-    // Create user response without sensitive data
-    const userResponse = {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      provider: user.provider
-    };
-    
-    res.json(userResponse);
-  } catch (error) {
-    console.error('POST /api/auth/google - Error:', error.message);
-    res.status(500).json({ message: 'Authentication failed. Please try again.' });
-  }
-});
+// Using the auth controller for better organization
+app.post('/api/auth/google', require('./controllers/authController').googleAuth);
 
 // Add endpoint to get sold items
 app.get('/api/sold-items', async (req, res) => {
@@ -776,8 +717,6 @@ app.get('/api/sold-items', async (req, res) => {
     res.status(500).json({ message: error.message, stack: error.stack });
   }
 });
-
-app.post('/api/auth/google', require('./controllers/authController').googleAuth);
 
 // Add endpoint to mark a product as sold
 app.post('/api/products/mark-sold', async (req, res) => {
@@ -1087,38 +1026,23 @@ app.use((err, req, res, next) => {
     stack: process.env.NODE_ENV === 'production' ? null : err.stack
   });
 });
-app.get('/auth/google/callback', 
-  passport.authenticate('google', { failureRedirect: '/login' }),
-  (req, res) => {
-      res.redirect('/index.html'); // Redirect to home page on success
-  }
-);
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const passport = require('passport');
 
-passport.use(new GoogleStrategy({
-    clientID: "YOUR_CLIENT_ID",
-    clientSecret: "YOUR_CLIENT_SECRET",
-    callbackURL: "/auth/google/callback"
-}, async (accessToken, refreshToken, profile, done) => {
-    // Save user to MongoDB (modify as needed)
-    let user = await User.findOne({ googleId: profile.id });
-
-    if (!user) {
-        user = new User({
-            googleId: profile.id,
-            name: profile.displayName,
-            email: profile.emails[0].value
-        });
-
-        await user.save();
-    }
-
-    return done(null, user);
-}));
-
-app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-
-app.post('/api/auth/google', require('./controllers/authController').googleAuth);
 // Export the Express API for Vercel
 module.exports = app;
+
+// Additional Vercel serverless function optimizations
+if (process.env.VERCEL) {
+  console.log('Running on Vercel environment');
+  
+  // Set some Vercel-specific headers
+  app.use((req, res, next) => {
+    res.setHeader('x-powered-by', 'StudXchange on Vercel');
+    next();
+  });
+  
+  // Log when requests hit the Vercel serverless function
+  app.use((req, res, next) => {
+    console.log(`Vercel serverless function: ${req.method} ${req.url}`);
+    next();
+  });
+}
