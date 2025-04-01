@@ -977,6 +977,38 @@ app.get('/api/rooms/title/:title', async (req, res) => {
   }
 });
 
+// Add a route to get user by email - needed for product interface
+app.get('/api/users/email/:email', async (req, res) => {
+  try {
+    console.log(`GET /api/users/email/${req.params.email} - Fetching user by email`);
+    
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
+    // Find user by email
+    const user = await User.findOne({ email: req.params.email });
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Return limited user data for privacy
+    const userResponse = {
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      provider: user.provider
+    };
+    
+    console.log(`GET /api/users/email/${req.params.email} - User found:`, userResponse);
+    res.json(userResponse);
+  } catch (error) {
+    console.error(`GET /api/users/email/${req.params.email} - Error:`, error.message);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Catch-all route to serve index.html
 app.get('*', (req, res) => {
   try {

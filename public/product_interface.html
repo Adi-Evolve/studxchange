@@ -742,9 +742,53 @@
   display: flex;
   gap: 0.5rem;
 }
+
+  /* Loading animation */
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
   </style>
   <link href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" rel="stylesheet" />
   <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
+  /* Map loading animation */
+  .map-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    background: #f5f5f5;
+    border-radius: 8px;
+    color: var(--text-color);
+  }
+  
+  .map-loading .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: var(--accent-color);
+    animation: spin 1s linear infinite;
+    margin-bottom: 10px;
+  }
+  
+  /* Loading animation for initMap */
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* Map error message */
+  .map-error {
+    padding: 15px;
+    background-color: #ffebee;
+    color: #c62828;
+    border-radius: 8px;
+    text-align: center;
+    margin: 15px 0;
+    border: 1px solid #ef9a9a;
+  }
 </head>
 <body>
   <header>
@@ -775,7 +819,13 @@
     </div>
   </header>
   <main>
-    <div class="product-container" id="productContainer">
+    <!-- Loading indicator -->
+    <div id="loadingIndicator" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px;">
+      <div style="border: 5px solid #f3f3f3; border-top: 5px solid #2a3d56; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite;"></div>
+      <p style="margin-top: 20px; font-size: 18px; color: #2a3d56;">Loading product details...</p>
+    </div>
+    
+    <div class="product-container" id="productContainer" style="display: none;">
       <div class="room-layout">
         <div class="product-images room-images">
           <div class="main-image-container">
@@ -796,6 +846,12 @@
             <span class="original-price" id="productMRP"></span>
           </div>
           
+          <!-- Condition information (for products only) -->
+          <div id="conditionSection" style="margin-bottom: 1rem; display: none;">
+            <span style="font-weight: bold; margin-right: 0.5rem;">Condition:</span>
+            <span id="productCondition" style="padding: 0.25rem 0.75rem; border-radius: 15px; background-color: #f0f4f8; color: #2a3d56;"></span>
+          </div>
+          
           <!-- Room details section (will be shown only for rooms) -->
           <div id="roomDetailsSection" style="display: none;">
             <div class="room-details" id="roomDetails">
@@ -814,6 +870,17 @@
         <div class="product-description room-description">
           <h3>Description</h3>
           <p id="productDescription"></p>
+          
+          <!-- Seller address section -->
+          <div id="addressSection" style="margin-top: 1.5rem; display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <h3>Seller Location</h3>
+              <button id="showMapBtn" class="btn btn-secondary" style="background-color: #009688;" onclick="toggleMap()">
+                <i class="fas fa-map-marker-alt"></i> Show on Map
+              </button>
+            </div>
+            <p id="sellerAddress" style="padding: 0.75rem; background-color: #f8f9fa; border-radius: 8px;"></p>
+          </div>
         </div>
         
         <!-- Map section -->
@@ -1170,6 +1237,10 @@
     }
 
     async function loadProductDetails() {
+      // Show loading indicator
+      document.getElementById('loadingIndicator').style.display = 'flex';
+      document.getElementById('productContainer').style.display = 'none';
+      
       const urlParams = new URLSearchParams(window.location.search);
       const rawParam = urlParams.get('product');
       
@@ -1317,6 +1388,9 @@
           // Try direct debugging of the entire data object
           console.log("Full data object for debugging:", JSON.stringify(data));
           
+          // Hide loading indicator and show error
+          document.getElementById('loadingIndicator').style.display = 'none';
+          
           // Last resort: Create a temporary room object for testing
           if (confirm('Product not found in database. Would you like to view a temporary room for testing?')) {
             currentProduct = {
@@ -1357,6 +1431,37 @@
         const primaryImage = currentProduct.images?.[0] || currentProduct.image || 'placeholder.jpg';
         mainImage.src = primaryImage;
 
+        // Show condition for products
+        if (currentProduct.category !== 'Room' && currentProduct.condition) {
+          document.getElementById('conditionSection').style.display = 'block';
+          const conditionEl = document.getElementById('productCondition');
+          conditionEl.textContent = currentProduct.condition;
+          
+          // Add color based on condition
+          switch(currentProduct.condition.toLowerCase()) {
+            case 'new':
+              conditionEl.style.backgroundColor = '#e8f5e9';
+              conditionEl.style.color = '#2e7d32';
+              break;
+            case 'like new':
+              conditionEl.style.backgroundColor = '#e3f2fd';
+              conditionEl.style.color = '#1565c0';
+              break;
+            case 'good':
+              conditionEl.style.backgroundColor = '#fff3e0';
+              conditionEl.style.color = '#ef6c00';
+              break;
+            case 'used':
+              conditionEl.style.backgroundColor = '#ffebee';
+              conditionEl.style.color = '#c62828';
+              break;
+            default:
+              // Default styling already set in CSS
+          }
+        } else {
+          document.getElementById('conditionSection').style.display = 'none';
+        }
+
         // Create thumbnails
         const thumbnailsContainer = document.getElementById('thumbnails');
         thumbnailsContainer.innerHTML = '';
@@ -1381,7 +1486,7 @@
         if (currentProduct.category === 'Room') {
           // For room listings - only the Contact Owner button
           actionButtons.innerHTML = `
-            <button class="btn btn-primary" onclick="contactOwner()">
+            <button class="btn btn-primary" style="background-color: #4CAF50;" onclick="contactOwner()">
               <i class="fab fa-whatsapp"></i> Contact Owner
             </button>
           `;
@@ -1475,16 +1580,13 @@
         } else {
           // For regular products - keep all buttons
           actionButtons.innerHTML = `
-            <button class="btn btn-primary" onclick="openBuyModal()">
+            <button class="btn btn-primary" style="background-color: #4CAF50;" onclick="openBuyModal()">
               <i class="fas fa-shopping-cart"></i> Buy Now
             </button>
-            <button class="btn btn-secondary" onclick="openChatModal()">
-              <i class="fas fa-comments"></i> Chat with Seller
-            </button>
-            <button class="btn btn-secondary" onclick="showSellerInfo()">
+            <button class="btn btn-secondary" style="background-color: #2196F3;" onclick="showSellerInfo()">
               <i class="fas fa-user"></i> Seller Info
             </button>
-            <button class="btn btn-secondary" onclick="openCompareModal()">
+            <button class="btn btn-secondary" style="background-color: #F44336;" onclick="openCompareModal()">
               <i class="fas fa-exchange-alt"></i> Compare
             </button>
           `;
@@ -1504,6 +1606,13 @@
         alert('Error loading product details');
         window.location.href = 'index.html';
       }
+
+      // After all loading is complete, hide loading indicator and show product
+      document.getElementById('loadingIndicator').style.display = 'none';
+      document.getElementById('productContainer').style.display = 'grid';
+      
+      // Update product details
+      document.getElementById('productTitle').textContent = currentProduct.title;
     }
 
     async function showSellerInfo() {
@@ -1523,14 +1632,38 @@
         // Show the modal while loading data
         document.getElementById('sellerInfoModal').style.display = 'flex';
         
+        // Try to fetch user profile data
+        let sellerName = currentProduct.sellerName || 'Not available';
+        let sellerPhone = currentProduct.sellerPhone || currentProduct.contact1 || 'Not provided';
+        
+        try {
+          // Attempt to fetch user data from server based on email
+          const userDataResponse = await fetch(API_ENDPOINTS.GET_USER_BY_EMAIL(currentProduct.sellerEmail));
+          if (userDataResponse.ok) {
+            const userData = await userDataResponse.json();
+            if (userData && userData.name) {
+              console.log("Found user data:", userData);
+              sellerName = userData.name;
+              if (userData.phone) {
+                sellerPhone = userData.phone;
+              }
+            }
+          } else {
+            console.log("Couldn't fetch user profile. Status:", userDataResponse.status);
+          }
+        } catch (userError) {
+          console.error("Error fetching user data:", userError);
+          // Continue with default values
+        }
+        
         // For room listings - display hostel information
         if (currentProduct.category === 'Room') {
           sellerInfoContent.innerHTML = `
             <ul>
               <li><strong>Hostel Name:</strong> ${currentProduct.hostelName || 'Not available'}</li>
               <li><strong>College:</strong> ${currentProduct.college || 'Not specified'}</li>
-              <li><strong>Owner:</strong> ${currentProduct.ownerName || 'Not available'}</li>
-              <li><strong>Contact:</strong> ${currentProduct.sellerPhone || currentProduct.contact1 || 'Not provided'}</li>
+              <li><strong>Owner:</strong> ${sellerName}</li>
+              <li><strong>Contact:</strong> ${sellerPhone}</li>
               <li><strong>Email:</strong> ${currentProduct.sellerEmail || 'Not provided'}</li>
               ${currentProduct.amenities ? `<li><strong>Amenities:</strong> ${currentProduct.amenities.join(', ')}</li>` : ''}
               ${currentProduct.location ? `<li><strong>Location:</strong> ${currentProduct.location}</li>` : ''}
@@ -1556,9 +1689,9 @@
             
             sellerInfoContent.innerHTML = `
               <ul>
-                <li><strong>Name:</strong> ${currentProduct.sellerName || 'Not available'}</li>
+                <li><strong>Name:</strong> ${sellerName}</li>
                 <li><strong>Email:</strong> ${currentProduct.sellerEmail}</li>
-                <li><strong>Phone:</strong> ${currentProduct.sellerPhone || 'Not provided'}</li>
+                <li><strong>Phone:</strong> ${sellerPhone}</li>
                 <li><strong>College:</strong> ${currentProduct.college || 'Not specified'}</li>
                 <li><strong>Total Items Sold:</strong> ${soldItems.length}</li>
               </ul>
@@ -1582,9 +1715,9 @@
             console.error("Error fetching seller data:", error);
             sellerInfoContent.innerHTML = `
               <ul>
-                <li><strong>Name:</strong> ${currentProduct.sellerName || 'Not available'}</li>
+                <li><strong>Name:</strong> ${sellerName}</li>
                 <li><strong>Email:</strong> ${currentProduct.sellerEmail}</li>
-                <li><strong>Phone:</strong> ${currentProduct.sellerPhone || 'Not provided'}</li>
+                <li><strong>Phone:</strong> ${sellerPhone}</li>
                 <li><strong>Error:</strong> Could not load additional seller data</li>
               </ul>
             `;
@@ -1985,46 +2118,120 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // MapLibre implementation
 let map = null;
+let mapVisible = false;
+
+function toggleMap() {
+  const mapSection = document.getElementById('mapSection');
+  
+  if (mapVisible) {
+    mapSection.style.display = 'none';
+    document.getElementById('showMapBtn').innerHTML = '<i class="fas fa-map-marker-alt"></i> Show on Map';
+  } else {
+    mapSection.style.display = 'block';
+    document.getElementById('showMapBtn').innerHTML = '<i class="fas fa-times"></i> Hide Map';
+    
+    // Make sure the map section has the loading indicator
+    if (!mapSection.querySelector('.map-loading') && !document.getElementById('mapContainer')) {
+      mapSection.innerHTML = `
+        <div class="map-loading"><div class="loading-spinner"></div><p>Loading map...</p></div>
+        <div id="mapContainer" style="width: 100%; height: 400px; display: none;"></div>
+      `;
+    }
+    
+    // Initialize map if not already done
+    if (!map && currentProduct && (currentProduct.coordinates || currentProduct.location)) {
+      const coords = currentProduct.coordinates || {
+        lat: 18.5204, // Default Pune coordinates
+        lon: 73.8567
+      };
+      initMap(coords);
+    } else if (map) {
+      // If map is already initialized, just show it
+      const mapContainer = document.getElementById('mapContainer');
+      if (mapContainer) mapContainer.style.display = 'block';
+      
+      const loadingIndicator = mapSection.querySelector('.map-loading');
+      if (loadingIndicator) loadingIndicator.style.display = 'none';
+    }
+  }
+  
+  mapVisible = !mapVisible;
+}
 
 function initMap(coordinates) {
   if (!coordinates || !coordinates.lat || !coordinates.lon) {
     console.log("No valid coordinates provided for map");
+    document.getElementById('mapSection').innerHTML = 
+      '<div class="map-error">Unable to display map: No valid coordinates available</div>';
     return;
   }
   
   try {
     console.log("Initializing map with coordinates:", coordinates);
     
-    // Show the map section
-    document.getElementById('mapSection').style.display = 'block';
+    // Show the map container with loading state
+    const mapSection = document.getElementById('mapSection');
+    const mapContainer = document.getElementById('mapContainer');
+    
+    // Make sure map container exists
+    if (!mapContainer) {
+      mapSection.innerHTML = `
+        <div class="map-loading"><div class="loading-spinner"></div><p>Loading map...</p></div>
+        <div id="mapContainer" style="width: 100%; height: 400px; display: none;"></div>
+      `;
+    }
+    
+    // MapTiler API key - replace with your own for production
+    // Show the map container
     document.getElementById('mapContainer').style.display = 'block';
+    
+    // MapTiler API key - replace with your own for production
+    const mapTilerKey = "NORQCtupfJJ7qm57OFEU";
     
     // Create the map
     map = new maplibregl.Map({
       container: 'mapContainer',
-      style: 'https://api.maptiler.com/maps/streets/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL',
+      style: `https://api.maptiler.com/maps/streets/style.json?key=${mapTilerKey}`,
       center: [coordinates.lon, coordinates.lat],
-      zoom: 13
+      zoom: 14
     });
     
     // Add navigation controls
     map.addControl(new maplibregl.NavigationControl());
     
     // Add marker
-    new maplibregl.Marker()
+    new maplibregl.Marker({
+      color: "#F44336"
+    })
       .setLngLat([coordinates.lon, coordinates.lat])
       .addTo(map);
       
     // Add popup
-    new maplibregl.Popup({closeOnClick: false})
+    new maplibregl.Popup({
+      closeOnClick: false,
+      offset: 25
+    })
       .setLngLat([coordinates.lon, coordinates.lat])
-      .setHTML(`<strong>${currentProduct.title}</strong><br>${currentProduct.location || ''}`)
+      .setHTML(`
+        <strong>${currentProduct.title}</strong><br>
+        ${currentProduct.location || ''}
+      `)
       .addTo(map);
       
     console.log("Map initialized successfully");
+    
+    // Wait for map to load then notify
+    map.on('load', function() {
+      console.log("Map fully loaded");
+    });
   } catch (error) {
     console.error("Error initializing map:", error);
-    document.getElementById('mapSection').style.display = 'none';
+    document.getElementById('mapSection').innerHTML = `
+      <div class="map-header">
+        <h3>Location</h3>
+      </div>
+      <p>Error loading map: ${error.message}</p>
+    `;
   }
 }
 
@@ -2042,30 +2249,27 @@ function zoomOut() {
 
 // Call this function in loadProductDetails after setting currentProduct
 function setupMap() {
-  // If product has coordinates, init map
-  if (currentProduct && currentProduct.coordinates) {
-    initMap(currentProduct.coordinates);
-  } 
-  // If it has location but no coordinates, try to geocode the location
-  else if (currentProduct && currentProduct.location) {
-    console.log("Product has location but no coordinates:", currentProduct.location);
+  if (currentProduct && (currentProduct.coordinates || currentProduct.location)) {
+    // Show address section if we have location data
+    document.getElementById('sellerAddressSection').style.display = 'block';
     
-    // Set default coordinates for demonstration
-    const defaultCoordinates = {
-      lat: 18.5204, // Default Pune coordinates
-      lon: 73.8567
-    };
+    // Set seller address in the UI
+    const addressEl = document.getElementById('sellerAddress');
+    if (currentProduct.address) {
+      addressEl.textContent = currentProduct.address;
+    } else if (currentProduct.location) {
+      addressEl.textContent = currentProduct.location;
+    } else {
+      addressEl.textContent = "Address not provided";
+    }
     
-    document.getElementById('mapSection').style.display = 'block';
-    document.getElementById('mapSection').innerHTML = `
-      <div class="map-header">
-        <h3>Location</h3>
-      </div>
-      <p>${currentProduct.location}</p>
-      <p><i class="fas fa-info-circle"></i> Exact coordinates not available</p>
-    `;
+    // Add loading indicator for map
+    const mapSection = document.getElementById('mapSection');
+    mapSection.innerHTML = '<div class="map-loading"><div class="loading-spinner"></div><p>Loading map...</p></div>';
+    mapSection.style.display = 'none'; // Initially hidden until user clicks "Show on Map"
   } else {
-    // Hide map section
+    // Hide both address and map sections if no location
+    document.getElementById('sellerAddressSection').style.display = 'none';
     document.getElementById('mapSection').style.display = 'none';
   }
 }

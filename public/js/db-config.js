@@ -43,6 +43,7 @@ const API_ENDPOINTS = {
   VERIFY_OTP: getApiUrl(`${API_BASE_URL}/users/verify-otp`),
   SEND_OTP: getApiUrl(`${API_BASE_URL}/users/send-otp`),
   UPDATE_USER: getApiUrl(`${API_BASE_URL}/users/update`),
+  GET_USER_BY_EMAIL: (email) => getApiUrl(`${API_BASE_URL}/users/email/${email}`),
   
   // Google Auth
   GOOGLE_AUTH: getApiUrl(`${API_BASE_URL}/auth/google`),
