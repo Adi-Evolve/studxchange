@@ -158,17 +158,26 @@
     }
 
     .btn-primary {
-      background-color: var(--accent-color);
+      background-color: #28a745;
       color: var(--white-color);
+      transition: all 0.3s ease;
     }
 
     .btn-secondary {
-      background-color: var(--secondary-color);
+      background-color: #dc3545;
       color: var(--white-color);
+      transition: all 0.3s ease;
+    }
+
+    .btn-compare {
+      background-color: #007bff;
+      color: var(--white-color);
+      transition: all 0.3s ease;
     }
 
     .btn:hover {
-      transform: scale(1.02);
+      transform: scale(1.05);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
     }
 
     .product-description {
@@ -533,218 +542,93 @@
   padding: 5px;
   border-radius: 50%;
 }
-  </style>
-  <style>
-    .chat-box {
-      height: 300px;
-      overflow-y: auto;
-      border: 1px solid #ddd;
-      padding: 10px;
-      margin-bottom: 10px;
-      background: var(--bg-color);
-    }
-    .chat-message {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px;
-      background: var(--white-color);
-      border-radius: 8px;
-      margin-bottom: 5px;
-      position: relative;
-    }
-    .chat-delete {
-      display: none;
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      cursor: pointer;
-      color: red;
-      font-size: 0.9rem;
-    }
-    .chat-message:hover .chat-delete {
-      display: inline;
-    }
-    .chat-input {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
 
-.chat-input input {
-  flex: 1;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-}
-
-.chat-input button {
-  padding: 0.75rem 1.5rem;
-  background-color: var(--accent-color);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-/* Add to existing styles */
-.fa-heart.wishlist-toggle {
+/* Updated button styles */
+.btn-primary {
+  background-color: #28a745;
+  color: var(--white-color);
   transition: all 0.3s ease;
-  color: #ccc; /* Default gray */
 }
 
-.fa-heart.wishlist-toggle.fas {
-  color: #ff4757; /* Filled red */
+.btn-secondary {
+  background-color: #dc3545;
+  color: var(--white-color);
+  transition: all 0.3s ease;
 }
 
-.reviews-list {
-  margin-top: 1rem;
+.btn-compare {
+  background-color: #007bff;
+  color: var(--white-color);
+  transition: all 0.3s ease;
 }
 
-.review-item {
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
+.btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
-.review-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
-
-.review-rating {
-  color: #ffc107;
-}
-
-.review-content {
-  color: #333;
-}
-
-.average-rating {
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.star-rating {
-  color: #ffc107;
-}
-
-.rating-input {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.rating-input select {
-  padding: 0.5rem;
-  border-radius: 4px;
-  border: 1px solid #ddd;
-}
-
-.star-rating-selector {
-  display: flex;
-  gap: 0.5rem;
-  font-size: 1.5rem;
-}
-
-.star-rating-selector i {
-  cursor: pointer;
-  color: #ddd;
-  transition: color 0.2s;
-}
-
-.star-rating-selector i.active {
-  color: #ffc107;
-}
-
-.amenities-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 1rem 0;
-}
-
-.amenity-badge {
-  background: #f0f4f8;
-  color: #2a3d56;
+/* Product condition badge */
+.condition-badge {
+  display: inline-block;
   padding: 0.5rem 1rem;
   border-radius: 20px;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.amenity-badge i {
-  color: #1a75ff;
-}
-
-.room-details {
+  font-weight: bold;
   margin: 1rem 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.detail-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
   background: #f8f9fa;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
+  border: 2px solid;
 }
 
-.detail-item i {
-  color: #1a75ff;
+.condition-new {
+  border-color: #28a745;
+  color: #28a745;
 }
 
-.room-layout {
-  display: contents;
+.condition-used {
+  border-color: #ffc107;
+  color: #856404;
+}
+
+/* Loading animation */
+.loading-spinner {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255,255,255,0.8);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* Map styles */
-#mapContainer {
+#map {
   width: 100%;
   height: 300px;
-  margin: 2rem 0;
   border-radius: 12px;
-  overflow: hidden;
-  display: none;
-}
-
-.map-card {
-  margin: 2rem 0;
-  padding: 1rem;
-  background: var(--white-color);
-  border-radius: 12px;
+  margin: 1rem 0;
   box-shadow: var(--shadow);
-}
-
-.map-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.map-header h3 {
-  margin: 0;
-}
-
-.map-controls {
-  display: flex;
-  gap: 0.5rem;
 }
   </style>
   <link href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" rel="stylesheet" />
   <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 </head>
 <body>
   <header>
@@ -775,6 +659,9 @@
     </div>
   </header>
   <main>
+    <div class="loading-spinner" id="loadingSpinner">
+      <div class="spinner"></div>
+    </div>
     <div class="product-container" id="productContainer">
       <div class="room-layout">
         <div class="product-images room-images">
@@ -784,7 +671,7 @@
           <div class="thumbnails" id="thumbnails"></div>
         </div>
 
-        <div class="product-header room-info">
+        <div class="product-details room-info">
           <div style="display: flex; justify-content: space-between; align-items: center">
             <h1 class="product-title" id="productTitle"></h1>
             <i class="far fa-heart wishlist-toggle" 
@@ -796,6 +683,9 @@
             <span class="original-price" id="productMRP"></span>
           </div>
           
+          <!-- Product condition (for regular products) -->
+          <div id="productCondition" class="condition-badge" style="display: none;"></div>
+          
           <!-- Room details section (will be shown only for rooms) -->
           <div id="roomDetailsSection" style="display: none;">
             <div class="room-details" id="roomDetails">
@@ -805,6 +695,9 @@
               <!-- Amenities will be dynamically populated -->
             </div>
           </div>
+          
+          <!-- Map for regular products -->
+          <div id="map" style="display: none;"></div>
           
           <div class="action-buttons" id="actionButtons">
             <!-- Buttons will be dynamically populated based on product type -->
@@ -889,19 +782,6 @@
     </div>
     <button class="btn btn-primary" onclick="compareProducts()">Compare</button>
     <div id="comparisonTable" class="comparison-table" style="display:none;"></div>
-  </div>
-</div>
-
-<!-- Chat Modal -->
-<div id="chatModal" class="modal">
-  <div class="modal-content">
-    <span class="modal-close" onclick="closeChatModal()">&times;</span>
-    <h2>Chat with Seller</h2>
-    <div class="chat-box" id="chatBox"></div>
-    <div class="chat-input">
-      <input type="text" id="chatMessage" placeholder="Type your message..." />
-      <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
-    </div>
   </div>
 </div>
 
@@ -1170,6 +1050,9 @@
     }
 
     async function loadProductDetails() {
+      // Show loading spinner
+      document.getElementById('loadingSpinner').style.display = 'flex';
+      
       const urlParams = new URLSearchParams(window.location.search);
       const rawParam = urlParams.get('product');
       
@@ -1346,12 +1229,27 @@
         // Price display differs based on category
         if (currentProduct.category === 'Room') {
           document.getElementById('productMRP').textContent = 'per month';
+          document.getElementById('productCondition').style.display = 'none';
         } else {
           document.getElementById('productMRP').textContent = `MRP: ₹${(currentProduct.price * 1.2).toFixed(2)}`;
+          
+          // Show condition badge for regular products
+          const conditionBadge = document.getElementById('productCondition');
+          conditionBadge.style.display = 'inline-block';
+          
+          if (currentProduct.condition) {
+            conditionBadge.textContent = currentProduct.condition.toUpperCase();
+            if (currentProduct.condition.toLowerCase() === 'new') {
+              conditionBadge.classList.add('condition-new');
+            } else {
+              conditionBadge.classList.add('condition-used');
+            }
+          } else {
+            conditionBadge.textContent = 'USED'; // Default if not specified
+            conditionBadge.classList.add('condition-used');
+          }
         }
         
-        document.getElementById('productDescription').textContent = currentProduct.description;
-
         // Set main image
         const mainImage = document.getElementById('mainImage');
         const primaryImage = currentProduct.images?.[0] || currentProduct.image || 'placeholder.jpg';
@@ -1389,6 +1287,9 @@
           // Show room details
           const roomDetailsSection = document.getElementById('roomDetailsSection');
           roomDetailsSection.style.display = 'block';
+          
+          // Hide map for room listings
+          document.getElementById('map').style.display = 'none';
           
           // Populate room details
           const roomDetails = document.getElementById('roomDetails');
@@ -1473,18 +1374,15 @@
           // Update seller info modal title for rooms
           document.querySelector('#sellerInfoModal h2').textContent = 'Hostel Information';
         } else {
-          // For regular products - keep all buttons
+          // For regular products - remove chat button, update styling
           actionButtons.innerHTML = `
             <button class="btn btn-primary" onclick="openBuyModal()">
               <i class="fas fa-shopping-cart"></i> Buy Now
             </button>
-            <button class="btn btn-secondary" onclick="openChatModal()">
-              <i class="fas fa-comments"></i> Chat with Seller
-            </button>
             <button class="btn btn-secondary" onclick="showSellerInfo()">
               <i class="fas fa-user"></i> Seller Info
             </button>
-            <button class="btn btn-secondary" onclick="openCompareModal()">
+            <button class="btn btn-compare" onclick="openCompareModal()">
               <i class="fas fa-exchange-alt"></i> Compare
             </button>
           `;
@@ -1493,16 +1391,20 @@
           
           // Reset seller info modal title for regular products
           document.querySelector('#sellerInfoModal h2').textContent = 'Seller Information';
+          
+          // Initialize map for regular products
+          initializeMap();
         }
 
         updateWishlistIcon();
         
-        // Initialize map if coordinates are available
-        setupMap();
+        // Hide loading spinner
+        document.getElementById('loadingSpinner').style.display = 'none';
       } catch (error) {
         console.error('Error loading product:', error);
         alert('Error loading product details');
         window.location.href = 'index.html';
+        document.getElementById('loadingSpinner').style.display = 'none';
       }
     }
 
@@ -1983,92 +1885,158 @@ document.addEventListener('DOMContentLoaded', function() {
   // Other DOM initialization code...
 });
 
-// MapLibre implementation
-let map = null;
+// Use a different variable name to avoid potential conflicts
+let productMap = null;
 
-function initMap(coordinates) {
-  if (!coordinates || !coordinates.lat || !coordinates.lon) {
-    console.log("No valid coordinates provided for map");
+// Completely rewritten map initialization function
+function initializeMap() {
+  // Don't initialize map for room listings
+  if (!currentProduct || currentProduct.category === 'Room') {
     return;
   }
   
+  console.log("Initializing map for product:", currentProduct.title);
+  
   try {
-    console.log("Initializing map with coordinates:", coordinates);
+    // Get and configure the map container
+    const mapContainer = document.getElementById('map');
+    if (!mapContainer) {
+      console.error("Map container not found");
+      return;
+    }
     
-    // Show the map section
-    document.getElementById('mapSection').style.display = 'block';
-    document.getElementById('mapContainer').style.display = 'block';
+    // Make sure the container is visible and has height
+    mapContainer.style.display = 'block';
+    mapContainer.style.height = '300px';
     
-    // Create the map
-    map = new maplibregl.Map({
-      container: 'mapContainer',
-      style: 'https://api.maptiler.com/maps/streets/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL',
-      center: [coordinates.lon, coordinates.lat],
-      zoom: 13
-    });
+    // Default coordinates (Pune)
+    let lat = 18.5204;
+    let lng = 73.8567;
     
-    // Add navigation controls
-    map.addControl(new maplibregl.NavigationControl());
+    // Try to get coordinates from product data in different possible formats
+    if (currentProduct.coordinates) {
+      // If coordinates are stored directly
+      if (typeof currentProduct.coordinates.lat !== 'undefined' && 
+          typeof currentProduct.coordinates.lon !== 'undefined') {
+        lat = parseFloat(currentProduct.coordinates.lat);
+        lng = parseFloat(currentProduct.coordinates.lon);
+        console.log("Using stored coordinates:", lat, lng);
+      } else if (typeof currentProduct.coordinates.latitude !== 'undefined' && 
+                 typeof currentProduct.coordinates.longitude !== 'undefined') {
+        lat = parseFloat(currentProduct.coordinates.latitude);
+        lng = parseFloat(currentProduct.coordinates.longitude);
+        console.log("Using stored lat/long coordinates:", lat, lng);
+      }
+    } else if (currentProduct.location) {
+      console.log("Product has location but no coordinates:", currentProduct.location);
+      // For testing - check if location has latitude,longitude format
+      const locMatch = currentProduct.location.match(/(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
+      if (locMatch) {
+        lat = parseFloat(locMatch[1]);
+        lng = parseFloat(locMatch[2]);
+        console.log("Extracted coordinates from location string:", lat, lng);
+      }
+    }
     
-    // Add marker
-    new maplibregl.Marker()
-      .setLngLat([coordinates.lon, coordinates.lat])
-      .addTo(map);
-      
-    // Add popup
-    new maplibregl.Popup({closeOnClick: false})
-      .setLngLat([coordinates.lon, coordinates.lat])
-      .setHTML(`<strong>${currentProduct.title}</strong><br>${currentProduct.location || ''}`)
-      .addTo(map);
-      
-    console.log("Map initialized successfully");
+    // Verify coordinates are valid numbers
+    if (isNaN(lat) || isNaN(lng)) {
+      console.error("Invalid coordinates:", lat, lng);
+      lat = 18.5204; // Reset to default
+      lng = 73.8567;
+    }
+    
+    // Wait for the DOM to be fully rendered
+    setTimeout(() => {
+      try {
+        // Check if Leaflet is available
+        if (typeof L === 'undefined') {
+          console.error("Leaflet is not loaded");
+          showMapError(mapContainer, "Map library not available");
+          return;
+        }
+        
+        // Remove any existing map
+        if (productMap && productMap.remove) {
+          productMap.remove();
+          productMap = null;
+        }
+        
+        console.log("Creating map with coordinates:", lat, lng);
+        
+        // Create the map
+        productMap = L.map(mapContainer.id).setView([lat, lng], 13);
+        
+        // Add the tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '© OpenStreetMap contributors'
+        }).addTo(productMap);
+        
+        // Add a marker at the location
+        const marker = L.marker([lat, lng]).addTo(productMap);
+        
+        // Add a popup to the marker
+        marker.bindPopup(`
+          <strong>${currentProduct.title}</strong><br>
+          ${currentProduct.location || 'Location'}
+        `).openPopup();
+        
+        // Force map to update its size (solves rendering issues)
+        setTimeout(() => {
+          if (productMap) productMap.invalidateSize();
+        }, 300);
+        
+        console.log("Map initialized successfully");
+        
+        // Add zoom controls
+        const zoomIn = document.createElement('button');
+        zoomIn.innerHTML = '<i class="fas fa-plus"></i>';
+        zoomIn.className = 'map-control';
+        zoomIn.style = 'position: absolute; top: 10px; right: 10px; z-index: 1000; background: white; border: none; width: 30px; height: 30px; border-radius: 4px; box-shadow: 0 0 5px rgba(0,0,0,0.3);';
+        zoomIn.onclick = () => productMap.zoomIn();
+        mapContainer.appendChild(zoomIn);
+        
+        const zoomOut = document.createElement('button');
+        zoomOut.innerHTML = '<i class="fas fa-minus"></i>';
+        zoomOut.className = 'map-control';
+        zoomOut.style = 'position: absolute; top: 50px; right: 10px; z-index: 1000; background: white; border: none; width: 30px; height: 30px; border-radius: 4px; box-shadow: 0 0 5px rgba(0,0,0,0.3);';
+        zoomOut.onclick = () => productMap.zoomOut();
+        mapContainer.appendChild(zoomOut);
+        
+      } catch (mapError) {
+        console.error("Error creating map:", mapError);
+        showMapError(mapContainer, "Failed to initialize map");
+      }
+    }, 500); // Wait for 500ms to ensure DOM is ready
+    
   } catch (error) {
-    console.error("Error initializing map:", error);
-    document.getElementById('mapSection').style.display = 'none';
+    console.error("Failed to initialize map:", error);
+    const mapContainer = document.getElementById('map');
+    if (mapContainer) {
+      showMapError(mapContainer, "Error loading map");
+    }
   }
 }
 
-function zoomIn() {
-  if (map) {
-    map.zoomIn();
-  }
+// Show friendly error message when map fails to load
+function showMapError(container, message) {
+  if (!container) return;
+  
+  container.innerHTML = `
+    <div style="padding: 20px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #f8f9fa; border-radius: 12px;">
+      <p><i class="fas fa-map-marker-alt" style="font-size: 2rem; color: #dc3545; margin-bottom: 10px;"></i></p>
+      <p style="font-weight: bold; margin-bottom: 5px;">${message}</p>
+      <p style="color: #666;">${currentProduct?.location || 'Location information unavailable'}</p>
+    </div>
+  `;
 }
 
-function zoomOut() {
-  if (map) {
-    map.zoomOut();
+// Listen for window resize to recalculate map size
+window.addEventListener('resize', function() {
+  if (productMap) {
+    setTimeout(() => productMap.invalidateSize(), 100);
   }
-}
-
-// Call this function in loadProductDetails after setting currentProduct
-function setupMap() {
-  // If product has coordinates, init map
-  if (currentProduct && currentProduct.coordinates) {
-    initMap(currentProduct.coordinates);
-  } 
-  // If it has location but no coordinates, try to geocode the location
-  else if (currentProduct && currentProduct.location) {
-    console.log("Product has location but no coordinates:", currentProduct.location);
-    
-    // Set default coordinates for demonstration
-    const defaultCoordinates = {
-      lat: 18.5204, // Default Pune coordinates
-      lon: 73.8567
-    };
-    
-    document.getElementById('mapSection').style.display = 'block';
-    document.getElementById('mapSection').innerHTML = `
-      <div class="map-header">
-        <h3>Location</h3>
-      </div>
-      <p>${currentProduct.location}</p>
-      <p><i class="fas fa-info-circle"></i> Exact coordinates not available</p>
-    `;
-  } else {
-    // Hide map section
-    document.getElementById('mapSection').style.display = 'none';
-  }
-}
+});
   </script>
  
 
