@@ -139,6 +139,12 @@
       font-size: 1rem;
     }
 
+    .product-condition {
+      font-size: 1rem;
+      color: #666;
+      margin-top: 0.5rem;
+    }
+
     .action-buttons {
       display: flex;
       gap: 1rem;
@@ -219,6 +225,26 @@
       max-width: 500px;
       position: relative;
       box-shadow: var(--shadow);
+      border: 2px solid var(--accent-color);
+    }
+
+    .modal-header {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--accent-color);
+    }
+
+    .modal-body {
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid #eee;
     }
 
     .modal-close {
@@ -309,7 +335,7 @@
     max-width: 650px;
     position: relative;
     box-shadow: var(--shadow);
-    text-align: center;
+    border: 2px solid var(--accent-color);
   }
   
   .compare-search-bar {
@@ -318,7 +344,7 @@
     border: 2px solid var(--accent-color);
     border-radius: 10px;
     font-size: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     outline: none;
     transition: all 0.3s ease-in-out;
     background: var(--bg-color);
@@ -341,11 +367,12 @@
   .product-list {
     max-height: 300px;
     overflow-y: auto;
-    border: 1px solid #ddd;
+    border: 2px solid var(--accent-color);
     border-radius: 8px;
     padding: 1rem;
     background-color: var(--bg-color);
     box-shadow: var(--shadow);
+    margin-bottom: 1.5rem;
   }
   
   .product-list button {
@@ -354,31 +381,63 @@
     padding: 0.75rem;
     margin-bottom: 0.5rem;
     background-color: var(--white-color);
-    border: 1px solid var(--secondary-color);
+    border: 2px solid var(--accent-color);
     border-radius: 8px;
     cursor: pointer;
     text-align: left;
-    transition: background-color 0.3s, transform 0.2s;
+    transition: all 0.3s ease;
     font-weight: bold;
   }
   
   .product-list button:hover {
     background-color: var(--accent-color);
     color: var(--white-color);
-    transform: scale(1.05);
+    transform: scale(1.02);
   }
   
+  .selected-products {
+    margin-bottom: 1.5rem;
+  }
+
   .selected-product {
-    padding: 0.75rem;
+    padding: 1rem;
     background-color: var(--bg-color);
     border: 2px solid var(--primary-color);
     border-radius: 8px;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
     font-weight: bold;
     text-align: center;
     box-shadow: var(--shadow);
+    color: var(--primary-color);
   }
-   .navbar {
+  
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+    background: var(--white-color);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .comparison-table th,
+  .comparison-table td {
+    padding: 1rem;
+    border: 1px solid #ddd;
+    text-align: left;
+  }
+
+  .comparison-table th {
+    background-color: var(--primary-color);
+    color: var(--white-color);
+  }
+
+  .comparison-table tr:nth-child(even) {
+    background-color: var(--bg-color);
+  }
+
+  .navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -567,27 +626,6 @@
   box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
-/* Product condition badge */
-.condition-badge {
-  display: inline-block;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-weight: bold;
-  margin: 1rem 0;
-  background: #f8f9fa;
-  border: 2px solid;
-}
-
-.condition-new {
-  border-color: #28a745;
-  color: #28a745;
-}
-
-.condition-used {
-  border-color: #ffc107;
-  color: #856404;
-}
-
 /* Loading animation */
 .loading-spinner {
   display: none;
@@ -684,7 +722,7 @@
           </div>
           
           <!-- Product condition (for regular products) -->
-          <div id="productCondition" class="condition-badge" style="display: none;"></div>
+          <div id="productCondition" class="product-condition" style="display: none;"></div>
           
           <!-- Room details section (will be shown only for rooms) -->
           <div id="roomDetailsSection" style="display: none;">
@@ -1233,21 +1271,10 @@
         } else {
           document.getElementById('productMRP').textContent = `MRP: ₹${(currentProduct.price * 1.2).toFixed(2)}`;
           
-          // Show condition badge for regular products
-          const conditionBadge = document.getElementById('productCondition');
-          conditionBadge.style.display = 'inline-block';
-          
-          if (currentProduct.condition) {
-            conditionBadge.textContent = currentProduct.condition.toUpperCase();
-            if (currentProduct.condition.toLowerCase() === 'new') {
-              conditionBadge.classList.add('condition-new');
-            } else {
-              conditionBadge.classList.add('condition-used');
-            }
-          } else {
-            conditionBadge.textContent = 'USED'; // Default if not specified
-            conditionBadge.classList.add('condition-used');
-          }
+          // Show condition text for regular products
+          const conditionText = document.getElementById('productCondition');
+          conditionText.style.display = 'block';
+          conditionText.textContent = `Condition: ${currentProduct.condition || 'Used'}`;
         }
         
         // Set main image
@@ -1428,15 +1455,33 @@
         // For room listings - display hostel information
         if (currentProduct.category === 'Room') {
           sellerInfoContent.innerHTML = `
-            <ul>
-              <li><strong>Hostel Name:</strong> ${currentProduct.hostelName || 'Not available'}</li>
-              <li><strong>College:</strong> ${currentProduct.college || 'Not specified'}</li>
-              <li><strong>Owner:</strong> ${currentProduct.ownerName || 'Not available'}</li>
-              <li><strong>Contact:</strong> ${currentProduct.sellerPhone || currentProduct.contact1 || 'Not provided'}</li>
-              <li><strong>Email:</strong> ${currentProduct.sellerEmail || 'Not provided'}</li>
-              ${currentProduct.amenities ? `<li><strong>Amenities:</strong> ${currentProduct.amenities.join(', ')}</li>` : ''}
-              ${currentProduct.location ? `<li><strong>Location:</strong> ${currentProduct.location}</li>` : ''}
-            </ul>
+            <div class="modal-body">
+              <ul style="list-style: none; padding: 0;">
+                <li style="margin-bottom: 1rem; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                  <strong style="color: var(--primary-color);">Hostel Name:</strong> ${currentProduct.hostelName || 'Not available'}
+                </li>
+                <li style="margin-bottom: 1rem; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                  <strong style="color: var(--primary-color);">College:</strong> ${currentProduct.college || 'Not specified'}
+                </li>
+                <li style="margin-bottom: 1rem; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                  <strong style="color: var(--primary-color);">Owner:</strong> ${currentProduct.ownerName || 'Not available'}
+                </li>
+                <li style="margin-bottom: 1rem; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                  <strong style="color: var(--primary-color);">Contact:</strong> ${currentProduct.sellerPhone || currentProduct.contact1 || 'Not provided'}
+                </li>
+                <li style="margin-bottom: 1rem; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                  <strong style="color: var(--primary-color);">Email:</strong> ${currentProduct.sellerEmail || 'Not provided'}
+                </li>
+                ${currentProduct.amenities ? `
+                <li style="margin-bottom: 1rem; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                  <strong style="color: var(--primary-color);">Amenities:</strong> ${currentProduct.amenities.join(', ')}
+                </li>` : ''}
+                ${currentProduct.location ? `
+                <li style="margin-bottom: 1rem; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                  <strong style="color: var(--primary-color);">Location:</strong> ${currentProduct.location}
+                </li>` : ''}
+              </ul>
+            </div>
           `;
           
           // Hide sold products section for rooms
@@ -1457,13 +1502,25 @@
             }
             
             sellerInfoContent.innerHTML = `
-              <ul>
-                <li><strong>Name:</strong> ${currentProduct.sellerName || 'Not available'}</li>
-                <li><strong>Email:</strong> ${currentProduct.sellerEmail}</li>
-                <li><strong>Phone:</strong> ${currentProduct.sellerPhone || 'Not provided'}</li>
-                <li><strong>College:</strong> ${currentProduct.college || 'Not specified'}</li>
-                <li><strong>Total Items Sold:</strong> ${soldItems.length}</li>
-              </ul>
+              <div class="modal-body">
+                <ul style="list-style: none; padding: 0;">
+                  <li style="margin-bottom: 1rem; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                    <strong style="color: var(--primary-color);">Name:</strong> ${currentProduct.sellerName || 'Not available'}
+                  </li>
+                  <li style="margin-bottom: 1rem; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                    <strong style="color: var(--primary-color);">Email:</strong> ${currentProduct.sellerEmail}
+                  </li>
+                  <li style="margin-bottom: 1rem; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                    <strong style="color: var(--primary-color);">Phone:</strong> ${currentProduct.sellerPhone || 'Not provided'}
+                  </li>
+                  <li style="margin-bottom: 1rem; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                    <strong style="color: var(--primary-color);">College:</strong> ${currentProduct.college || 'Not specified'}
+                  </li>
+                  <li style="margin-bottom: 1rem; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                    <strong style="color: var(--primary-color);">Total Items Sold:</strong> ${soldItems.length}
+                  </li>
+                </ul>
+              </div>
             `;
             
             // Show sold products for regular products
@@ -1474,27 +1531,37 @@
             const soldProductsList = document.getElementById('soldProductsList');
             soldProductsList.innerHTML = soldItems.length > 0 
               ? soldItems.map(item => `
-                  <div style="padding: 0.5rem; background: #f8f9fa; margin: 0.5rem 0; border-radius: 8px;">
-                    <strong>${item.title}</strong> - ₹${item.price}
+                  <div style="padding: 1rem; background: #f8f9fa; margin: 0.75rem 0; border-radius: 8px; border: 1px solid #ddd;">
+                    <strong style="color: var(--primary-color);">${item.title}</strong> - ₹${item.price}
                     ${item.image ? `<img src="${item.image}" alt="${item.title}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; margin-left: 10px; float: right;">` : ''}
                   </div>
                 `).join('')
-              : '<p>No items sold yet</p>';
+              : '<p style="text-align: center; color: #666;">No items sold yet</p>';
           } catch (error) {
             console.error("Error fetching seller data:", error);
             sellerInfoContent.innerHTML = `
-              <ul>
-                <li><strong>Name:</strong> ${currentProduct.sellerName || 'Not available'}</li>
-                <li><strong>Email:</strong> ${currentProduct.sellerEmail}</li>
-                <li><strong>Phone:</strong> ${currentProduct.sellerPhone || 'Not provided'}</li>
-                <li><strong>Error:</strong> Could not load additional seller data</li>
-              </ul>
+              <div class="modal-body">
+                <ul style="list-style: none; padding: 0;">
+                  <li style="margin-bottom: 1rem; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                    <strong style="color: var(--primary-color);">Name:</strong> ${currentProduct.sellerName || 'Not available'}
+                  </li>
+                  <li style="margin-bottom: 1rem; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                    <strong style="color: var(--primary-color);">Email:</strong> ${currentProduct.sellerEmail}
+                  </li>
+                  <li style="margin-bottom: 1rem; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                    <strong style="color: var(--primary-color);">Phone:</strong> ${currentProduct.sellerPhone || 'Not provided'}
+                  </li>
+                  <li style="margin-bottom: 1rem; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
+                    <strong style="color: var(--primary-color);">Error:</strong> Could not load additional seller data
+                  </li>
+                </ul>
+              </div>
             `;
           }
         }
       } catch (error) {
         console.error('Error loading seller/hostel info:', error);
-        document.getElementById('sellerInfoContent').innerHTML = '<p>Failed to load seller information. Please try again.</p>';
+        document.getElementById('sellerInfoContent').innerHTML = '<p style="text-align: center; color: #dc3545;">Failed to load seller information. Please try again.</p>';
       }
     }
 
