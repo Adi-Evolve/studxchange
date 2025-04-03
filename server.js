@@ -156,35 +156,24 @@ async function connectToDatabase() {
       // Ensure MONGODB_URI is defined
       if (!process.env.MONGODB_URI) {
         console.error('MONGODB_URI environment variable is not defined');
-        // In production, use a fallback or dummy connection to prevent crashes
-        if (process.env.NODE_ENV === 'production') {
-          console.warn('Using fallback connection string for production');
-          // Return a mock connection object that won't crash the function
-          return {
-            connection: { readyState: 1 },
-            model: () => ({
-              find: async () => [],
-              findOne: async () => null,
-              save: async () => ({ _id: 'mock-id' })
-            })
-          };
-        }
         throw new Error('MongoDB connection string is not defined');
       }
       
       console.log(`Connection attempt ${retryCount + 1}/${MAX_RETRIES}`);
       console.log('Attempting to connect with URI:', process.env.MONGODB_URI.substring(0, 20) + '...');
       
-      // Connect to MongoDB with more detailed options
+      // Connect to MongoDB with optimized options for Vercel
       const conn = await mongoose.connect(process.env.MONGODB_URI, {
-        serverSelectionTimeoutMS: 5000, // Reduced timeout for serverless
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 10000, // Increased timeout for serverless
         bufferCommands: false, // Disable mongoose buffering
-        connectTimeoutMS: 5000, // Reduced connection timeout for serverless
-        socketTimeoutMS: 10000, // Reduced socket timeout for serverless
+        connectTimeoutMS: 10000, // Increased timeout for serverless
+        socketTimeoutMS: 20000, // Increased timeout for serverless
         family: 4, // Use IPv4, skip trying IPv6
-        maxPoolSize: 5, // Minimal pool size for serverless
-        minPoolSize: 1, // Maintain at least one connection
-        maxIdleTimeMS: 10000, // Close idle connections after 10 seconds
+        maxPoolSize: 10, // Increased pool size for better performance
+        minPoolSize: 5, // Maintain more connections for reliability
+        maxIdleTimeMS: 30000, // Keep connections alive longer
         serverApi: {
           version: '1',
           strict: false, // Less strict mode for better compatibility
@@ -446,9 +435,65 @@ app.get('/api/products', async (req, res) => {
   try {
     console.log('GET /api/products - Fetching products');
     
-    // Ensure database connection
-    await connectToDatabase();
-    initModels();
+    // Ensure database connection with more robust handling
+    try {
+      await connectToDatabase();
+      console.log('GET /api/products - Database connection successful');
+    } catch (connError) {
+      console.error('GET /api/products - Database connection error:', connError.message);
+      return res.status(503).json({ 
+        message: 'Database connection failed',
+        error: 'Unable to connect to the database. Please try again later.',
+        success: false
+      });
+    }
+    
+    // Initialize models with error handling
+    try {
+      initModels();
+      console.log('GET /api/products - Models initialized successfully');
+    } catch (modelError) {
+      console.error('GET /api/products - Model initialization error:', modelError.message);
+      return res.status(500).json({ 
+        message: 'Model initialization failed',
+        error: 'Server configuration error. Please try again later.',
+        success: false
+      });
+    }
+    
+    // Check if Product model exists
+    if (!Product) {
+      console.error('GET /api/products - Product model not initialized');
+      // Try to initialize it directly
+      try {
+        const productSchema = new mongoose.Schema({
+          title: String,
+          description: String,
+          price: Number,
+          college: String,
+          sellerEmail: String,
+          sellerName: String,
+          sellerPhone: String,
+          category: String,
+          condition: String,
+          images: [String],
+          createdAt: {
+            type: Date,
+            default: Date.now
+          }
+        });
+        
+        Product = mongoose.models.Product || mongoose.model('Product', productSchema);
+        console.log('GET /api/products - Product model initialized directly');
+      } catch (schemaError) {
+        console.error('GET /api/products - Failed to initialize Product model directly:', schemaError.message);
+        return res.status(500).json({ 
+          message: 'Product model initialization failed',
+          error: 'Server configuration error. Please try again later.',
+          success: false
+        });
+      }
+    }
     
     // Check if sellerEmail filter is provided
     const { sellerEmail } = req.query;
@@ -466,17 +511,32 @@ app.get('/api/products', async (req, res) => {
     
     while (retryCount < MAX_RETRIES) {
       try {
-        products = await Product.find(query).sort({ createdAt: -1 });
+        // Add timeout to the query to prevent hanging
+        products = await Promise.race([
+          Product.find(query).sort({ createdAt: -1 }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Query timeout')), 15000)
+          )
+        ]);
+        
+        console.log(`GET /api/products - Query successful, found ${products ? products.length : 0} products`);
         break; // If successful, exit the loop
       } catch (queryError) {
         retryCount++;
         console.error(`GET /api/products - Query error (attempt ${retryCount}/${MAX_RETRIES}):`, queryError.message);
         
-        if (queryError.name === 'MongoExpiredSessionError' && retryCount < MAX_RETRIES) {
-          console.log('GET /api/products - Session expired, reconnecting...');
+        if ((queryError.name === 'MongoExpiredSessionError' || 
+             queryError.message === 'Query timeout' ||
+             queryError.message.includes('topology')) && 
+            retryCount < MAX_RETRIES) {
+          console.log('GET /api/products - Connection issue, reconnecting...');
           // Force a new connection
           if (mongoose.connection.readyState !== 0) {
-            await mongoose.connection.close();
+            try {
+              await mongoose.connection.close();
+            } catch (closeError) {
+              console.error('GET /api/products - Error closing connection:', closeError.message);
+            }
           }
           await connectToDatabase();
           initModels();
@@ -490,11 +550,22 @@ app.get('/api/products', async (req, res) => {
       }
     }
     
-    console.log(`GET /api/products - Found ${products.length} products`);
+    // Handle case where products is undefined
+    if (!products) {
+      console.warn('GET /api/products - Products is undefined, returning empty array');
+      products = [];
+    }
+    
+    console.log(`GET /api/products - Returning ${products.length} products`);
     res.json(products);
   } catch (error) {
     console.error('GET /api/products - Error:', error.message);
-    res.status(500).json({ message: error.message, stack: error.stack });
+    // Don't expose stack trace in production
+    const errorResponse = process.env.NODE_ENV === 'production' 
+      ? { message: 'Failed to fetch products', error: 'An unexpected error occurred' }
+      : { message: error.message, stack: error.stack };
+    
+    res.status(500).json(errorResponse);
   }
 });
 
