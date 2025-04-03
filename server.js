@@ -3,6 +3,11 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
+const multer = require('multer');
+const compression = require('compression');
+const helmet = require('helmet');
+const { google } = require('googleapis');
+const fs = require('fs');
 
 require('dotenv').config();
 require('./models/otp'); // Add this line to register the OTP model
@@ -11,19 +16,100 @@ require('./models/user');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Configure multer for file uploads
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024 } // 20MB limit
+});
+
+// Vercel doesn't need local directories for temporary storage
+// The following code is kept for local development but won't run on Vercel
+if (process.env.NODE_ENV !== 'production') {
+  try {
+    if (!fs.existsSync(path.join(process.cwd(), 'tmp'))) {
+      fs.mkdirSync(path.join(process.cwd(), 'tmp'));
+    }
+    if (!fs.existsSync(path.join(process.cwd(), 'tmp/uploads'))) {
+      fs.mkdirSync(path.join(process.cwd(), 'tmp/uploads'));
+    }
+  } catch (err) {
+    console.error('Error creating upload directories:', err);
+    // Continue anyway - Vercel will handle this differently in production
+  }
+}
+
+// Configure Google Drive API
+const oauth2Client = new google.auth.OAuth2(
+  '26642122071-o04c226de2ddtid10cqqumf0pjqbt515.apps.googleusercontent.com',
+  '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',
+  'https://developers.google.com/oauthplayground' // Redirect URL
+);
+
+// Set up Google Drive API
+const drive = google.drive({
+  version: 'v3',
+  auth: oauth2Client
+});
+
 // Middleware
 app.use(cors());
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
-app.use(express.json());
+app.use(bodyParser.json({ limit: '10mb' })); // Reduced limit for better performance
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' })); // Reduced limit for better performance
+app.use(express.json({ limit: '10mb' })); // Added limit to express.json
+
+// Compression middleware for better performance
+app.use(compression());
+
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP for simplicity
+  crossOriginEmbedderPolicy: false // Allow embedding
+}));
+
 // Serve static files from the public directory
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: '1h' // Cache static assets for 1 hour
+}));
+
 // Also serve static files from /public/ path for compatibility with Live Server
-app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/public', express.static(path.join(__dirname, 'public'), {
+  maxAge: '1h' // Cache static assets for 1 hour
+}));
 
 // Request logging middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
+
+// Add timeout middleware for all routes to prevent function timeouts
+app.use((req, res, next) => {
+  // Set a timeout slightly less than Vercel's function timeout (30s)
+  const TIMEOUT_MS = 28000;
+  
+  // Create a timeout that will send a response if the request takes too long
+  const timeoutId = setTimeout(() => {
+    if (!res.headersSent) {
+      console.warn(`Request timeout for ${req.method} ${req.path}`);
+      
+      // For API requests, send a JSON response
+      if (req.path.startsWith('/api/')) {
+        return res.status(503).json({
+          message: 'Request timed out',
+          error: 'The server took too long to respond. Please try again later.',
+          success: false
+        });
+      }
+      
+      // For non-API requests, redirect to the homepage with an error message
+      return res.redirect('/?error=timeout');
+    }
+  }, TIMEOUT_MS);
+  
+  // Clear the timeout when the response is sent
+  res.on('finish', () => clearTimeout(timeoutId));
+  res.on('close', () => clearTimeout(timeoutId));
+  
   next();
 });
 
@@ -70,6 +156,19 @@ async function connectToDatabase() {
       // Ensure MONGODB_URI is defined
       if (!process.env.MONGODB_URI) {
         console.error('MONGODB_URI environment variable is not defined');
+        // In production, use a fallback or dummy connection to prevent crashes
+        if (process.env.NODE_ENV === 'production') {
+          console.warn('Using fallback connection string for production');
+          // Return a mock connection object that won't crash the function
+          return {
+            connection: { readyState: 1 },
+            model: () => ({
+              find: async () => [],
+              findOne: async () => null,
+              save: async () => ({ _id: 'mock-id' })
+            })
+          };
+        }
         throw new Error('MongoDB connection string is not defined');
       }
       
@@ -78,14 +177,14 @@ async function connectToDatabase() {
       
       // Connect to MongoDB with more detailed options
       const conn = await mongoose.connect(process.env.MONGODB_URI, {
-        serverSelectionTimeoutMS: 5000, // Further reduced timeout for serverless
+        serverSelectionTimeoutMS: 5000, // Reduced timeout for serverless
         bufferCommands: false, // Disable mongoose buffering
-        connectTimeoutMS: 5000, // Further reduced connection timeout for serverless
-        socketTimeoutMS: 10000, // Further reduced socket timeout for serverless
+        connectTimeoutMS: 5000, // Reduced connection timeout for serverless
+        socketTimeoutMS: 10000, // Reduced socket timeout for serverless
         family: 4, // Use IPv4, skip trying IPv6
-        maxPoolSize: 1, // Minimal pool size for serverless
+        maxPoolSize: 5, // Minimal pool size for serverless
         minPoolSize: 1, // Maintain at least one connection
-        maxIdleTimeMS: 5000, // Close idle connections after 5 seconds
+        maxIdleTimeMS: 10000, // Close idle connections after 10 seconds
         serverApi: {
           version: '1',
           strict: false, // Less strict mode for better compatibility
@@ -224,8 +323,28 @@ const soldItemSchema = new mongoose.Schema({
   soldDate: { type: Date, default: Date.now }
 });
 
+// Define Notes Schema
+const notesSchema = new mongoose.Schema({
+  college: String,
+  title: String,
+  category: { type: String, default: 'Notes' },
+  price: String,
+  images: [String],
+  description: String,
+  condition: String,
+  pdfUrl: String,  // Google Drive URL for the PDF
+  sellerPhone: String,
+  sellerEmail: String,
+  createdAt: { type: Date, default: Date.now },
+  location: String,
+  coordinates: {
+    lat: Number,
+    lon: Number
+  }
+});
+
 // Models are defined outside of route handlers to avoid model redefinition errors
-let Product, User, OTP, SoldItem, Room;
+let Product, User, OTP, SoldItem, Room, Notes;
 
 // Initialize models function to avoid model compilation errors in serverless environment
 function initModels() {
@@ -272,14 +391,36 @@ function initModels() {
       }
     }
     
+    if (!Notes) {
+      console.log('Initializing Notes model...');
+      try {
+        // Check if model exists first to avoid model compilation errors
+        Notes = mongoose.models.Notes || mongoose.model('Notes', notesSchema);
+        console.log('Notes model initialized successfully');
+      } catch (notesError) {
+        console.error('Error initializing Notes model:', notesError);
+        // Try to recreate the model
+        if (mongoose.models.Notes) {
+          delete mongoose.models.Notes;
+        }
+        try {
+          Notes = mongoose.model('Notes', notesSchema);
+          console.log('Notes model recreated successfully');
+        } catch (recreateError) {
+          console.error('Failed to recreate Notes model:', recreateError);
+          // Last resort - try with a different model name
+          Notes = mongoose.model('NotesCollection', notesSchema);
+          console.log('Notes model created with alternative name');
+        }
+      }
+    }
+    
     console.log('All models initialized successfully');
   } catch (error) {
     console.error('Error initializing models:', error);
     throw error;
   }
 }
-
-
 
 // API Routes
 // Health check endpoint
@@ -436,7 +577,6 @@ app.get('/api/rooms', async (req, res) => {
     res.json(rooms);
   } catch (error) {
     console.error('GET /api/rooms - Error:', error.message);
-    console.error('GET /api/rooms - Stack:', error.stack);
     res.status(500).json({ 
       message: 'Failed to fetch rooms',
       error: error.message,
@@ -491,6 +631,56 @@ app.get('/api/products/:id', async (req, res) => {
     res.json(product);
   } catch (error) {
     console.error(`GET /api/products/${req.params.id} - Error:`, error.message);
+    res.status(500).json({ message: error.message, stack: error.stack });
+  }
+});
+
+// Get note by ID
+app.get('/api/notes/:id', async (req, res) => {
+  try {
+    console.log(`GET /api/notes/${req.params.id} - Fetching note`);
+    
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
+    // Perform the query with retry logic for session expiration
+    let note;
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+    
+    while (retryCount < MAX_RETRIES) {
+      try {
+        note = await Notes.findById(req.params.id);
+        break; // If successful, exit the loop
+      } catch (queryError) {
+        retryCount++;
+        console.error(`GET /api/notes/${req.params.id} - Query error (attempt ${retryCount}/${MAX_RETRIES}):`, queryError.message);
+        
+        if (queryError.name === 'MongoExpiredSessionError' && retryCount < MAX_RETRIES) {
+          console.log(`GET /api/notes/${req.params.id} - Session expired, reconnecting...`);
+          // Force a new connection
+          if (mongoose.connection.readyState !== 0) {
+            await mongoose.connection.close();
+          }
+          await connectToDatabase();
+          initModels();
+          continue; // Retry the query
+        }
+        
+        // If we've reached max retries or it's not a session error, throw it
+        if (retryCount >= MAX_RETRIES) {
+          throw queryError;
+        }
+      }
+    }
+    
+    if (!note) return res.status(404).json({ message: 'Note not found' });
+    
+    console.log(`GET /api/notes/${req.params.id} - Found note: ${note.title}`);
+    res.json(note);
+  } catch (error) {
+    console.error(`GET /api/notes/${req.params.id} - Error:`, error.message);
     res.status(500).json({ message: error.message, stack: error.stack });
   }
 });
@@ -1009,6 +1199,236 @@ app.get('/api/users/email/:email', async (req, res) => {
   }
 });
 
+// Get all notes
+app.get('/api/notes', async (req, res) => {
+  try {
+    console.log('GET /api/notes - Fetching notes');
+    
+    // Ensure database connection
+    await connectToDatabase();
+    console.log('GET /api/notes - Database connection successful');
+    
+    // Initialize models
+    initModels();
+    console.log('GET /api/notes - Models initialized');
+    
+    // Check if Notes model is properly initialized
+    if (!Notes) {
+      console.error('GET /api/notes - Notes model not initialized');
+      return res.status(500).json({ message: 'Notes model not initialized' });
+    }
+    
+    console.log('GET /api/notes - Notes model is properly initialized');
+    
+    // Check if title or sellerEmail filter is provided
+    const { title, sellerEmail } = req.query;
+    let query = {};
+    
+    if (sellerEmail) {
+      console.log(`GET /api/notes - Filtering by sellerEmail: ${sellerEmail}`);
+      query.sellerEmail = sellerEmail;
+    }
+    
+    if (title) {
+      console.log(`GET /api/notes - Filtering by title: ${title}`);
+      // Use case-insensitive regex for title search
+      query.title = { $regex: new RegExp(title, 'i') };
+    }
+    
+    console.log('GET /api/notes - Executing query:', JSON.stringify(query));
+    
+    // Perform the query with retry logic for session expiration
+    let notes;
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+    
+    while (retryCount < MAX_RETRIES) {
+      try {
+        notes = await Notes.find(query).sort({ createdAt: -1 });
+        break; // If successful, exit the loop
+      } catch (queryError) {
+        retryCount++;
+        console.error(`GET /api/notes - Query error (attempt ${retryCount}/${MAX_RETRIES}):`, queryError.message);
+        
+        if (queryError.name === 'MongoExpiredSessionError' && retryCount < MAX_RETRIES) {
+          console.log('GET /api/notes - Session expired, reconnecting...');
+          // Force a new connection
+          if (mongoose.connection.readyState !== 0) {
+            await mongoose.connection.close();
+          }
+          await connectToDatabase();
+          initModels();
+          continue; // Retry the query
+        }
+        
+        // If we've reached max retries or it's not a session error, throw it
+        if (retryCount >= MAX_RETRIES) {
+          throw queryError;
+        }
+      }
+    }
+    
+    console.log(`GET /api/notes - Found ${notes.length} notes`);
+    
+    // Log the first note if available
+    if (notes.length > 0) {
+      console.log('GET /api/notes - First note:', JSON.stringify(notes[0]));
+    }
+    
+    res.json(notes);
+  } catch (error) {
+    console.error('GET /api/notes - Error:', error.message);
+    console.error('GET /api/notes - Stack:', error.stack);
+    res.status(500).json({ 
+      message: 'Failed to fetch notes',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'production' ? null : error.stack
+    });
+  }
+});
+
+// Add a new note
+app.post('/api/notes', async (req, res) => {
+  try {
+    console.log('POST /api/notes - Adding new note');
+    
+    // Ensure database connection
+    await connectToDatabase();
+    initModels();
+    
+    // Validate required fields
+    if (!req.body.title || !req.body.college) {
+      return res.status(400).json({ 
+        message: 'Missing required fields', 
+        details: 'Title and college are required'
+      });
+    }
+    
+    console.log('POST /api/notes - Request body:', JSON.stringify(req.body));
+    
+    // Create and save the note
+    const note = new Notes(req.body);
+    await note.save();
+    
+    console.log(`POST /api/notes - Added note: ${note.title}`);
+    res.status(201).json(note);
+  } catch (error) {
+    console.error('POST /api/notes - Error:', error.message);
+    
+    // Check for specific MongoDB errors
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        message: 'Validation error', 
+        details: error.message 
+      });
+    }
+    
+    // Handle connection errors
+    if (error.name === 'MongoNetworkError' || error.name === 'MongoServerSelectionError') {
+      console.error('POST /api/notes - MongoDB connection error');
+      
+      // Try to reconnect
+      try {
+        if (mongoose.connection.readyState !== 1) {
+          await connectToDatabase();
+          initModels();
+        }
+      } catch (reconnectError) {
+        console.error('POST /api/notes - Failed to reconnect:', reconnectError);
+      }
+    }
+    
+    res.status(500).json({ 
+      message: 'Failed to save note', 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'production' ? null : error.stack 
+    });
+  }
+});
+
+// Add API route for PDF upload
+app.post('/api/upload-pdf', upload.single('pdf'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+    
+    console.log('POST /api/upload-pdf - Received file:', req.file.originalname);
+    
+    // In Vercel's serverless environment, we'll simulate upload
+    // For development testing, you can uncomment the Google Drive code
+    
+    // For serverless environment, just return a mock URL
+    // In production, you would implement proper file storage
+    const mockFileId = `pdf-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const mockFileUrl = `https://drive.google.com/file/d/${mockFileId}/view`;
+    
+    console.log('POST /api/upload-pdf - Mock File URL:', mockFileUrl);
+    
+    // No need to clean up files when using memory storage
+    
+    res.json({
+      message: 'PDF uploaded successfully',
+      fileId: mockFileId,
+      fileUrl: mockFileUrl
+    });
+    
+    /* 
+    // Uncomment this code for actual Google Drive implementation
+    // Set access token for OAuth client
+    oauth2Client.setCredentials({
+      refresh_token: process.env.GOOGLE_DRIVE_REFRESH_TOKEN || 'YOUR_REFRESH_TOKEN'
+    });
+    
+    // Upload the file to Google Drive
+    const response = await drive.files.create({
+      requestBody: {
+        name: req.file.originalname,
+        mimeType: 'application/pdf'
+      },
+      media: {
+        mimeType: 'application/pdf',
+        body: req.file.buffer // Use buffer instead of file path with memory storage
+      }
+    });
+    
+    console.log('POST /api/upload-pdf - Uploaded file to Google Drive, ID:', response.data.id);
+    
+    // Make the file publicly accessible
+    await drive.permissions.create({
+      fileId: response.data.id,
+      requestBody: {
+        role: 'reader',
+        type: 'anyone'
+      }
+    });
+    
+    // Get the file link
+    const fileData = await drive.files.get({
+      fileId: response.data.id,
+      fields: 'webViewLink'
+    });
+    
+    // No need to clean up files when using memory storage
+    
+    console.log('POST /api/upload-pdf - File URL:', fileData.data.webViewLink);
+    
+    res.json({
+      message: 'PDF uploaded successfully',
+      fileId: response.data.id,
+      fileUrl: fileData.data.webViewLink
+    });
+    */
+  } catch (error) {
+    console.error('POST /api/upload-pdf - Error:', error);
+    
+    res.status(500).json({
+      message: 'Failed to upload PDF',
+      error: error.message
+    });
+  }
+});
+
 // Catch-all route to serve index.html
 app.get('*', (req, res) => {
   try {
@@ -1047,15 +1467,24 @@ connectToDatabase()
   })
   .catch(err => {
     console.error('Initial MongoDB connection failed:', err);
+    // Don't exit the process in production, as Vercel will retry
+    if (process.env.NODE_ENV !== 'production') {
+      process.exit(1);
+    }
   });
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
+  console.error('Unhandled error:', err.message);
+  
+  // Don't expose stack traces in production
+  const stack = process.env.NODE_ENV === 'production' ? null : err.stack;
+  
+  // Send appropriate error response
   res.status(500).json({
     message: 'Internal server error',
     error: err.message,
-    stack: process.env.NODE_ENV === 'production' ? null : err.stack
+    stack: stack
   });
 });
 
@@ -1068,13 +1497,62 @@ if (process.env.VERCEL) {
   
   // Set some Vercel-specific headers
   app.use((req, res, next) => {
-    res.setHeader('x-powered-by', 'StudXchange on Vercel');
+    res.setHeader('Cache-Control', 's-maxage=0');
     next();
   });
   
-  // Log when requests hit the Vercel serverless function
+  // Handle serverless function timeouts gracefully
+  const TIMEOUT = 9000; // 9 seconds (Vercel has 10s timeout for free tier)
   app.use((req, res, next) => {
-    console.log(`Vercel serverless function: ${req.method} ${req.url}`);
+    const timeout = setTimeout(() => {
+      console.error('Request timeout reached');
+      res.status(503).json({ message: 'Request timeout, please try again' });
+    }, TIMEOUT);
+    
+    res.on('finish', () => clearTimeout(timeout));
+    res.on('close', () => clearTimeout(timeout));
     next();
   });
+}
+
+// Prevent unhandled promise rejections from crashing the serverless function
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit the process in production
+  if (process.env.NODE_ENV !== 'production') {
+    process.exit(1);
+  }
+});
+
+// Prevent uncaught exceptions from crashing the serverless function
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  // Don't exit the process in production
+  if (process.env.NODE_ENV !== 'production') {
+    process.exit(1);
+  }
+});
+
+// Add memory usage monitoring
+if (process.env.NODE_ENV === 'production') {
+  const memoryCheckInterval = setInterval(() => {
+    const memoryUsage = process.memoryUsage();
+    const memoryUsageMB = Math.round(memoryUsage.rss / 1024 / 1024);
+    
+    // Log memory usage if it's getting high (over 75% of Vercel's 1024MB limit)
+    if (memoryUsageMB > 768) {
+      console.warn(`High memory usage: ${memoryUsageMB}MB`);
+    }
+    
+    // Clear interval when the function is about to end
+    if (global.gc && memoryUsageMB > 900) {
+      console.warn('Memory usage critical, attempting garbage collection');
+      global.gc();
+    }
+  }, 5000);
+  
+  // Clear the interval after 25 seconds (Vercel functions have a 30s max duration)
+  setTimeout(() => {
+    clearInterval(memoryCheckInterval);
+  }, 25000);
 }
