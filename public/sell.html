@@ -484,8 +484,7 @@
   <script>
     // Define Google configuration
     const GOOGLE_CONFIG = {
-      CLIENT_ID: '510030837178-tktmhv1bak3s6c162hfa7qpsh1qmdqmm.apps.googleusercontent.com',
-      API_KEY: 'YOUR_API_KEY', // Add your API key here
+      CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
       SCOPES: 'https://www.googleapis.com/auth/drive.file',
     };
   </script>
@@ -1750,5 +1749,6 @@
 
 </body>
 </html>
+
 
 
