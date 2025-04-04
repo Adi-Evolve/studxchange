@@ -37,6 +37,13 @@ const API_ENDPOINTS = {
   GET_ROOMS_BY_TITLE: getApiUrl(`${API_BASE_URL}/rooms?title=`),
   GET_ROOM_BY_TITLE: getApiUrl(`${API_BASE_URL}/rooms/title/`),
   
+  // Notes
+  GET_NOTES: getApiUrl(`${API_BASE_URL}/notes`),
+  ADD_NOTES: getApiUrl(`${API_BASE_URL}/notes`),
+  GET_NOTE_BY_ID: (id) => getApiUrl(`${API_BASE_URL}/notes/${id}`),
+  GET_NOTE: getApiUrl(`${API_BASE_URL}/notes`), // For direct PDF downloads
+  UPLOAD_PDF: getApiUrl(`${API_BASE_URL}/upload-pdf`),
+  
   // Users
   REGISTER_USER: getApiUrl(`${API_BASE_URL}/users/register`),
   LOGIN_USER: getApiUrl(`${API_BASE_URL}/users/login`),

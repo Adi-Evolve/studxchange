@@ -1010,17 +1010,28 @@
         const rooms = await roomsResponse.json();
         console.log("Rooms fetched successfully:", rooms.length);
         
+        // Fetch notes from MongoDB API
+        const notesResponse = await fetch(API_ENDPOINTS.GET_NOTES);
+        if (!notesResponse.ok) {
+          console.error("Failed to fetch notes:", notesResponse.status);
+          throw new Error(`Failed to fetch notes: ${notesResponse.status}`);
+        }
+        const notes = await notesResponse.json();
+        console.log("Notes fetched successfully:", notes.length);
+        
         // Create a composite object similar to the JSONBin structure
         const data = {
-          products: products,
+          products: [...products, ...notes], // Include notes as products for existing product listing
           rooms: rooms,
+          notes: notes, // Separate array for notes
           users: [], // Will be populated on demand
           soldItems: [] // Will be populated on demand
         };
         
         console.log("Combined data structure:", {
           productsCount: data.products.length,
-          roomsCount: data.rooms.length
+          roomsCount: data.rooms.length,
+          notesCount: data.notes.length
         });
         
         // Log sample data for debugging
@@ -1030,11 +1041,14 @@
         if (data.rooms.length > 0) {
           console.log("Sample room:", data.rooms[0]);
         }
+        if (data.notes.length > 0) {
+          console.log("Sample note:", data.notes[0]);
+        }
         
         return data;
       } catch (error) {
         console.error("Failed to load data from MongoDB:", error);
-        return { products: [], users: [], soldItems: [], rooms: [] };
+        return { products: [], users: [], soldItems: [], rooms: [], notes: [] };
       }
     }
 
@@ -1268,6 +1282,60 @@
         if (currentProduct.category === 'Room') {
           document.getElementById('productMRP').textContent = 'per month';
           document.getElementById('productCondition').style.display = 'none';
+        } else if (currentProduct.category === 'Notes') {
+          document.getElementById('productMRP').textContent = `Platform Fee: ₹5`;
+          document.getElementById('productCondition').style.display = 'none';
+          
+          // Hide the map section for notes
+          document.getElementById('mapSection').style.display = 'none';
+          
+          // Create a PDF viewer section if pdfUrl exists
+          if (currentProduct.pdfUrl) {
+            // Create PDF viewer container
+            const pdfSection = document.createElement('div');
+            pdfSection.className = 'product-section';
+            pdfSection.innerHTML = `
+              <h3>Preview PDF</h3>
+              <div class="pdf-container">
+                <p>Click below to view or download the PDF:</p>
+                <a href="${currentProduct.pdfUrl}" target="_blank" class="pdf-button">
+                  <i class="fas fa-file-pdf"></i> View PDF
+                </a>
+              </div>
+            `;
+            
+            // Insert PDF section before product details
+            const productInfoSection = document.querySelector('.product-info');
+            productInfoSection.parentNode.insertBefore(pdfSection, productInfoSection.nextSibling);
+            
+            // Add PDF styling
+            const style = document.createElement('style');
+            style.textContent = `
+              .pdf-container {
+                padding: 15px;
+                background: #f9f9f9;
+                border-radius: 8px;
+                margin-bottom: 20px;
+              }
+              .pdf-button {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                background: #2a3d56;
+                color: white;
+                padding: 10px 20px;
+                border-radius: 5px;
+                text-decoration: none;
+                font-weight: bold;
+                margin-top: 10px;
+                transition: background 0.3s;
+              }
+              .pdf-button:hover {
+                background: #1a75ff;
+              }
+            `;
+            document.head.appendChild(style);
+          }
         } else {
           document.getElementById('productMRP').textContent = `MRP: ₹${(currentProduct.price * 1.2).toFixed(2)}`;
           
@@ -1577,6 +1645,14 @@
         return;
       }
 
+      // Check if the product is a note and has a PDF URL
+      if (currentProduct && currentProduct.category === 'Notes' && currentProduct.pdfUrl) {
+        // For notes with PDF, redirect directly to download
+        window.location.href = `${API_ENDPOINTS.GET_NOTE}/${currentProduct._id}?download=true`;
+        return;
+      }
+
+      // For other products, show the buy modal
       document.getElementById('buyerName').value = user.name;
       document.getElementById('buyerEmail').value = user.email;
       document.getElementById('buyerPhone').value = user.phone || 'Not provided';

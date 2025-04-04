@@ -711,6 +711,9 @@ app.get('/api/notes/:id', async (req, res) => {
   try {
     console.log(`GET /api/notes/${req.params.id} - Fetching note`);
     
+    // Check if download parameter is present
+    const downloadPdf = req.query.download === 'true';
+    
     // Ensure database connection
     await connectToDatabase();
     initModels();
@@ -749,6 +752,14 @@ app.get('/api/notes/:id', async (req, res) => {
     if (!note) return res.status(404).json({ message: 'Note not found' });
     
     console.log(`GET /api/notes/${req.params.id} - Found note: ${note.title}`);
+    
+    // If download parameter is true, redirect to the PDF URL
+    if (downloadPdf && note.pdfUrl) {
+      console.log(`GET /api/notes/${req.params.id} - Redirecting to PDF download: ${note.pdfUrl}`);
+      return res.redirect(note.pdfUrl);
+    }
+    
+    // Otherwise, return the note data as JSON
     res.json(note);
   } catch (error) {
     console.error(`GET /api/notes/${req.params.id} - Error:`, error.message);
@@ -1377,7 +1388,7 @@ app.post('/api/notes', async (req, res) => {
     
     console.log('POST /api/notes - Request body:', JSON.stringify(req.body));
     
-    // Create and save the note
+    // Create and save the note (location is no longer required)
     const note = new Notes(req.body);
     await note.save();
     
