@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - StudXchange</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" />
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- JWT Decode for parsing Google tokens -->
+  <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
+  <script src="js/db-config.js"></script>
+  
+  <style>
+    /* Basic Reset and Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      color: #333;
+    }
+    header {
+      background-color: #124559;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .login-container {
+      max-width: 400px;
+      margin: 20px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .login-container h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #2a3d56;
+    }
+    .login-form label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: bold;
+      color: #2a3d56;
+    }
+    .login-form input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    .login-form button {
+      width: 100%;
+      padding: 10px;
+      background-color: #2a3d56;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .login-form button:hover {
+      background-color: #4d6a88;
+    }
+    .google-signin-container {
+      margin: 20px 0;
+      text-align: center;
+    }
+    .divider {
+      margin: 20px 0;
+      display: flex;
+      align-items: center;
+      text-align: center;
+      color: #666;
+    }
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid #ddd;
+    }
+    .divider-text {
+      padding: 0 10px;
+    }
+    .error {
+      color: red;
+      font-size: 0.9em;
+      margin-top: 10px;
+      display: none;
+    }
+    .signup-link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.9rem;
+    }
+    .signup-link a {
+      color: #1a75ff;
+      text-decoration: none;
+    }
+    .signup-link a:hover {
+      text-decoration: underline;
+    }
+    .loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    .loading::after {
+      content: "";
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1.2rem;
+      height: 1.2rem;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+  <style>
+    /* Basic Reset and Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f4f9;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background-color: #2a3d56;
+      color: white;
+      padding: 20px;
+    }
+    .login-container {
+      max-width: 500px;
+      margin: 40px auto;
+      padding: 40px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    .login-container h1 {
+      margin-bottom: 30px;
+      color: #2a3d56;
+      font-weight: 600;
+    }
+    .login-container p {
+      margin-bottom: 30px;
+      color: #666;
+      line-height: 1.6;
+    }
+    .google-signin-container {
+      margin: 30px 0;
+      display: flex;
+      justify-content: center;
+    }
+    .error {
+      color: #e53935;
+      font-size: 0.9em;
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 4px;
+      background-color: #ffebee;
+      display: none;
+    }
+    .signup-link {
+      margin-top: 30px;
+      font-size: 0.95rem;
+      color: #666;
+    }
+    .signup-link a {
+      color: #1a75ff;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .signup-link a:hover {
+      text-decoration: underline;
+    }
+    .logo-container {
+      margin-bottom: 30px;
+    }
+    .logo-container img {
+      height: 120px;
+      width: auto;
+    }
+    .benefits {
+      display: flex;
+      justify-content: space-around;
+      margin: 30px 0;
+      flex-wrap: wrap;
+    }
+    .benefit-item {
+      flex: 0 0 30%;
+      text-align: center;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .benefit-item i {
+      font-size: 2.5rem;
+      color: #1a75ff;
+      margin-bottom: 15px;
+    }
+    .benefit-item h3 {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+      color: #2a3d56;
+    }
+    .benefit-item p {
+      font-size: 0.9rem;
+      color: #666;
+    }
+    
+    /* Navbar Styles - Matching index.html */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #2a3d56;
+      padding: 15px 30px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .navlogo img {
+      height: 100px;
+      width: 250px;
+    }
+    .navbar .button-container {
+      display: flex;
+      gap: 20px;
+    }
+    .nav-button {
+      padding: 10px 25px;
+      border-radius: 25px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+      font-weight: 500;
+      display: inline-block;
+      color: white;
+    }
+    .search-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      margin: 0 20px;
+    }
+    .searchbar {
+      display: flex;
+      align-items: center;
+      background: white;
+      border-radius: 30px;
+      padding: 2px;
+      width: 100%;
+      max-width: 600px;
+    }
+    .searchbar select, .searchbar input, .searchbar button {
+      border: none;
+      padding: 10px;
+    }
+    .searchbar select {
+      background: #2a3d56;
+      color: white;
+      border-radius: 30px 0 0 30px;
+    }
+    .searchbar input {
+      width: 100%;
+    }
+    .searchbar button {
+      background: #2a3d56;
+      color: white;
+      border-radius: 0 30px 30px 0;
+    }
+    
+    /* Responsive Navbar */
+    @media (max-width: 768px) {
+      .navbar {
+        flex-direction: column;
+        padding: 15px;
+      }
+      .navlogo img {
+        height: 80px;
+        width: 200px;
+        margin-bottom: 15px;
+      }
+      .search-container {
+        width: 100%;
+        margin: 10px 0;
+      }
+      .navbar .button-container {
+        width: 100%;
+        justify-content: center;
+        margin-top: 10px;
+      }
+      .searchbar select, .searchbar input {
+        font-size: 14px;
+        padding: 8px;
+      }
+      .login-container {
+        margin: 20px 15px;
+        padding: 25px;
+      }
+      .benefit-item {
+        flex: 0 0 100%;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .navbar {
+        padding: 10px;
+      }
+      .navlogo img {
+        height: 60px;
+        width: 150px;
+      }
+      .navbar .button-container {
+        flex-wrap: wrap;
+      }
+      .nav-button {
+        padding: 8px 15px;
+        font-size: 14px;
+        margin: 5px;
+      }
+      .login-container {
+        padding: 20px;
+      }
+      .logo-container img {
+        height: 80px;
+      }
+    }
+    
+    footer {
+      background-color: #2a3d56;
+      color: white;
+      text-align: center;
+      padding: 20px;
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>StudXchange</h1>
+  </header>
+
+  <div class="login-container">
+    <div class="logo-container">
+      <img src="Logo1.png" alt="StudXchange">
+    </div>
+    
+    <h1>Welcome to StudXchange</h1>
+    
+    <p>The ultimate college marketplace for students to buy, sell, and find accommodations. Join our community with a simple Google login.</p>
+    
+    <div class="google-signin-container">
+      <div id="googleSignInButton"></div>
+    </div>
+    
+    <div id="formError" class="error"></div>
+    
+    <div class="benefits">
+      <div class="benefit-item">
+        <i class="fas fa-shopping-cart"></i>
+        <h3>Buy & Sell</h3>
+        <p>Trade textbooks, electronics, and more with fellow students</p>
+      </div>
+      <div class="benefit-item">
+        <i class="fas fa-home"></i>
+        <h3>Find Housing</h3>
+        <p>Discover perfect accommodations near your campus</p>
+      </div>
+      <div class="benefit-item">
+        <i class="fas fa-shield-alt"></i>
+        <h3>Secure & Simple</h3>
+        <p>One-click Google login for a seamless experience</p>
+      </div>
+    </div>
+    
+    <div class="signup-link">
+      New to StudXchange? Sign in with Google to create your account automatically!
+    </div>
+    
+    <!-- Add a login status message div -->
+    <div id="loginStatus" style="display: none; text-align: center; margin-top: 15px; padding: 10px; border-radius: 5px;"></div>
+  </div>
+  
+  <footer>
+    <p> 2025 StudXchange - The College Marketplace</p>
+    <p>For any help, contact us at: Studxchange05@gmail.com | Phone: 8857053541</p>
+  </footer>
+  
+  
+
+   
+
+  <script>
+    // Google Sign-In Initialization
+    function initGoogleSignIn() {
+      console.log("Initializing Google Sign-In...");
+      
+      if (typeof google === 'undefined' || !google.accounts) {
+        console.error("Google Identity Services not loaded yet. Will retry in 1 second.");
+        setTimeout(initGoogleSignIn, 1000);
+        return;
+      }
+      
+      try {
+        google.accounts.id.initialize({
+          client_id: '26642122071-ekdopa6ljd6orkti9j8jadaf30bqmnv2.apps.googleusercontent.com',
+          callback: handleCredentialResponse,
+          auto_select: false,
+          cancel_on_tap_outside: true,
+          ux_mode: 'popup',
+          context: 'signin'
+        });
+        
+        const buttonElement = document.getElementById('googleSignInButton');
+        if (buttonElement) {
+          google.accounts.id.renderButton(
+            buttonElement, 
+            { 
+              type: 'standard',
+              theme: 'outline', 
+              size: 'large',
+              text: 'signin_with',
+              shape: 'rectangular',
+              logo_alignment: 'left',
+              width: 250
+            }
+          );
+          console.log("Google Sign-In button rendered successfully");
+        } else {
+          console.error("Google Sign-In button element not found");
+        }
+      } catch (error) {
+        console.error("Error initializing Google Sign-In:", error);
+      }
+    }
+
+    // Handle Google Sign-In Response
+    function handleCredentialResponse(response) {
+      console.log("Google Sign-In response received:", response);
+      
+      try {
+        // Decode the JWT token to get user information
+        const responsePayload = jwt_decode(response.credential);
+        console.log("Decoded JWT payload:", responsePayload);
+        
+        // Extract user details from the response
+        const userData = {
+          name: responsePayload.name,
+          email: responsePayload.email,
+          googleId: responsePayload.sub, // Important: This is the Google ID
+          picture: responsePayload.picture
+        };
+        
+        // Call your server API to login or register the user
+        loginWithGoogle(userData);
+      } catch (error) {
+        console.error("Error processing Google Sign-In response:", error);
+        showMessage("Error processing Google Sign-In. Please try again.", "error");
+      }
+    }
+    
+    // Function to handle Google login
+    function loginWithGoogle(userData) {
+      console.log("Sending user data to server:", userData);
+      
+      // Show loading indicator
+      showMessage('Signing in with Google...', 'info');
+      
+      // Send the user data to your server
+      fetch('/api/auth/google', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(userData)
+      })
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(errorData => {
+            throw new Error(errorData.message || 'Google authentication failed');
+          });
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log("Server response:", data);
+        
+        // Store user data in localStorage
+        const userToStore = {
+          name: userData.name,
+          email: userData.email,
+          googleId: userData.googleId,
+          picture: userData.picture,
+          phone: data.phone || '',
+          token: data.token
+        };
+        
+        localStorage.setItem('currentUser', JSON.stringify(userToStore));
+        localStorage.setItem('isLoggedIn', 'true');
+        
+        // Update status and redirect
+        showMessage('Sign-in successful! Redirecting...', 'success');
+        
+        // Redirect to home page
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 1000);
+      })
+      .catch(error => {
+        console.error('Google authentication error:', error);
+        showMessage(`Authentication failed: ${error.message}`, 'error');
+      });
+    }
+    
+    // Helper function to show messages
+    function showMessage(message, type) {
+      const statusElement = document.getElementById('loginStatus');
+      statusElement.textContent = message;
+      statusElement.style.display = 'block';
+      
+      // Set color based on message type
+      if (type === 'error') {
+        statusElement.style.color = 'red';
+      } else if (type === 'success') {
+        statusElement.style.color = 'green';
+      } else {
+        statusElement.style.color = 'black';
+      }
+    }
+    
+    // Initialize Google Sign-In when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log("DOM content loaded, initializing Google Sign-In...");
+      // Try to initialize immediately
+      initGoogleSignIn();
+      
+      // Also set a backup timer in case the Google API is slow to load
+      setTimeout(function() {
+        const buttonElement = document.getElementById('googleSignInButton');
+        if (buttonElement && buttonElement.childElementCount === 0) {
+          console.log("Google Sign-In button not rendered after 1 second, retrying...");
+          initGoogleSignIn();
+        }
+      }, 1000);
+    });
+  </script>
+</body>
+</html> 
