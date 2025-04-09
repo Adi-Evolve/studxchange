@@ -6,6 +6,8 @@
   <title>Sell Your Products - StudXchange</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://apis.google.com/js/platform.js"></script>
   <!-- Replace Leaflet with Google Maps -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -823,6 +825,10 @@
     document.getElementById('roomForm').style.display = 'none';
     document.getElementById('notesForm').style.display = 'none';
     
+    // Make sure the regularForm and regularFormCont are visible initially
+    document.getElementById('regularForm').style.display = 'block';
+    document.getElementById('regularFormCont').style.display = 'block';
+    
     // Show only the appropriate form based on the URL parameter
     const urlParams = new URLSearchParams(window.location.search);
     const formType = urlParams.get('type');
@@ -831,14 +837,18 @@
       // Set the category dropdown based on the URL parameter
       if (formType === 'notes') {
         document.getElementById('category').value = 'Notes';
+        // Hide regular forms and show notes form
+        document.getElementById('regularForm').style.display = 'none';
+        document.getElementById('regularFormCont').style.display = 'none';
+        document.getElementById('notesForm').style.display = 'block';
       } else if (formType === 'room') {
         document.getElementById('category').value = 'Room';
+        // Hide regular forms and show room form
+        document.getElementById('regularForm').style.display = 'none';
+        document.getElementById('regularFormCont').style.display = 'none';
+        document.getElementById('roomForm').style.display = 'block';
       }
     }
-    
-    // Trigger category change event to set the initial form state
-    const event = new Event('change');
-    document.getElementById('category').dispatchEvent(event);
   });
 
   function initForm() {
@@ -1522,29 +1532,122 @@
     async function uploadPdfToGoogleDrive(file) {
       try {
         document.getElementById('notesPdfUploadStatus').style.display = 'flex';
-        document.getElementById('pdfUploadProgress').textContent = 'Uploading PDF...';
+        document.getElementById('pdfUploadProgress').textContent = 'Preparing to upload PDF...';
         
-        // Create form data for the file
-        const formData = new FormData();
-        formData.append('pdf', file);
-        
-        // Setup for Google Drive API integration
-        const clientId = '26642122071-o04c226de2ddtid10cqqumf0pjqbt515.apps.googleusercontent.com';
-        const clientSecret = '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';
-        
-        // First upload to server which will handle Google Drive upload
-        const response = await fetch(API_ENDPOINTS.UPLOAD_PDF, {
-          method: 'POST',
-          body: formData
+        // Initialize Google API Client
+        return new Promise((resolve, reject) => {
+          gapi.load('client:auth2', async () => {
+            try {
+              document.getElementById('pdfUploadProgress').textContent = 'Initializing Google Drive...';
+              
+              // Fetch API credentials from the server instead of hardcoding
+              let googleApiCredentials;
+              try {
+                const credentialsResponse = await fetch('/api/google-credentials');
+                googleApiCredentials = await credentialsResponse.json();
+              } catch (credError) {
+                console.error('Failed to fetch Google API credentials:', credError);
+                // Use fallback method as credentials might not be available in development
+                googleApiCredentials = {
+                  apiKey: 'GOOGLE_API_KEY_PLACEHOLDER', // This will be replaced by server
+                  clientId: 'GOOGLE_CLIENT_ID_PLACEHOLDER' // This will be replaced by server
+                };
+              }
+              
+              await gapi.client.init({
+                apiKey: googleApiCredentials.apiKey,
+                clientId: googleApiCredentials.clientId,
+                discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
+                scope: 'https://www.googleapis.com/auth/drive.file'
+              });
+              
+              document.getElementById('pdfUploadProgress').textContent = 'Authenticating...';
+              
+              // Sign in the user
+              try {
+                const authResponse = await gapi.auth2.getAuthInstance().signIn();
+                const accessToken = authResponse.getAuthResponse().access_token;
+                
+                document.getElementById('pdfUploadProgress').textContent = 'Uploading PDF to Google Drive...';
+                
+                // Create metadata for the file
+                const metadata = {
+                  name: file.name,
+                  mimeType: file.type,
+                };
+                
+                // Create a new FormData instance
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
+                form.append('file', file);
+                
+                // Upload the file to Google Drive
+                const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                  method: 'POST',
+                  headers: new Headers({
+                    'Authorization': `Bearer ${accessToken}`
+                  }),
+                  body: form
+                });
+                
+                if (!response.ok) {
+                  throw new Error(`Failed to upload PDF: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // Make the file publicly accessible
+                const shareResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${data.id}/permissions`, {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    role: 'reader',
+                    type: 'anyone'
+                  })
+                });
+                
+                if (!shareResponse.ok) {
+                  console.warn('Failed to make file public, it may require authentication to access');
+                }
+                
+                document.getElementById('pdfUploadProgress').textContent = 'PDF uploaded successfully!';
+                
+                // Create a viewable link
+                const fileUrl = `https://drive.google.com/file/d/${data.id}/view`;
+                resolve(fileUrl);
+              } catch (authError) {
+                console.error('Authentication error:', authError);
+                
+                // If the direct Drive upload fails, fall back to server upload
+                document.getElementById('pdfUploadProgress').textContent = 'Falling back to server upload...';
+                
+                // Create form data for the file
+                const formData = new FormData();
+                formData.append('pdf', file);
+                
+                // Upload to server which will handle Google Drive upload
+                const response = await fetch(API_ENDPOINTS.UPLOAD_PDF, {
+                  method: 'POST',
+                  body: formData
+                });
+                
+                if (!response.ok) {
+                  throw new Error('Failed to upload PDF to server');
+                }
+                
+                const data = await response.json();
+                document.getElementById('pdfUploadProgress').textContent = 'PDF uploaded successfully!';
+                resolve(data.fileUrl);
+              }
+            } catch (error) {
+              console.error('Google API initialization error:', error);
+              reject(error);
+            }
+          });
         });
-        
-        if (!response.ok) {
-          throw new Error('Failed to upload PDF');
-        }
-        
-        const data = await response.json();
-        document.getElementById('pdfUploadProgress').textContent = 'PDF uploaded successfully!';
-        return data.fileUrl; // Return the Google Drive URL
       } catch (error) {
         console.error('PDF upload error:', error);
         document.getElementById('pdfUploadProgress').textContent = 'Failed to upload PDF';

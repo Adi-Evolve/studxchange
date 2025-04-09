@@ -5,7 +5,8 @@
       "src": "server.js",
       "use": "@vercel/node",
       "config": {
-        "maxDuration": 30
+        "maxDuration": 30,
+        "memory": 1024
       }
     },
     {
@@ -17,20 +18,30 @@
     {
       "src": "/api/notes",
       "methods": ["GET", "POST"],
-      "dest": "/server.js"
+      "dest": "/server.js",
+      "check": true
+    },
+    {
+      "src": "/api/google-credentials",
+      "methods": ["GET"],
+      "dest": "/server.js",
+      "check": true
     },
     {
       "src": "/api/upload-pdf",
       "methods": ["POST"],
-      "dest": "/server.js"
+      "dest": "/server.js",
+      "check": true
     },
     {
       "src": "/api/(.*)",
-      "dest": "/server.js"
+      "dest": "/server.js",
+      "check": true
     },
     {
       "src": "/auth/(.*)",
-      "dest": "/server.js"
+      "dest": "/server.js",
+      "check": true
     },
     {
       "src": "/(.*\\.(js|css|jpg|jpeg|png|webp|svg|ico|gif|html|pdf))",
@@ -42,6 +53,13 @@
     }
   ],
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "MONGODB_URI": "@mongodb_uri",
+    "IMGBB_API_KEY": "@imgbb_api_key",
+    "GOOGLE_API_KEY": "@google_api_key",
+    "GOOGLE_CLIENT_ID": "@google_client_id",
+    "GOOGLE_CLIENT_SECRET": "@google_client_secret",
+    "EMAIL_USER": "@email_user",
+    "EMAIL_PASSWORD": "@email_password"
   }
 }

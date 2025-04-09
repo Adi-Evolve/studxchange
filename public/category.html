@@ -607,6 +607,19 @@ async function getLocation() {
       }
     }
 
+    async function fetchNotes() {
+      try {
+        const response = await fetch(API_ENDPOINTS.GET_NOTES);
+        if (!response.ok) {
+          throw new Error('Failed to fetch notes');
+        }
+        return await response.json();
+      } catch (error) {
+        console.error("Failed to load notes:", error);
+        return [];
+      }
+    }
+
     function isInWishlist(product) {
       const wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
       return wishlist.some(item => item.title === product.title);
@@ -620,18 +633,26 @@ async function getLocation() {
         `Products by Category - ${categoryParam.charAt(0).toUpperCase() + categoryParam.slice(1)}`;
 
       try {
-        // Fetch both products and rooms
-        const [products, rooms] = await Promise.all([
+        // Fetch products, rooms, and notes
+        const [products, rooms, notes] = await Promise.all([
           fetchProducts(),
-          fetchRooms()
+          fetchRooms(),
+          fetchNotes()
         ]);
         
-        // Combine products and rooms
+        console.log("Fetched notes:", notes.length);
+        
+        // Combine products, rooms and notes
         let allItems = [...products];
         
         // Only add rooms if we're showing all categories or specifically the room category
         if (categoryParam === 'all' || categoryParam === 'room') {
           allItems = [...allItems, ...rooms];
+        }
+        
+        // Only add notes if we're showing all categories or specifically the notes category
+        if (categoryParam === 'all' || categoryParam === 'notes') {
+          allItems = [...allItems, ...notes];
         }
         
         // Filter by category if needed
@@ -719,6 +740,49 @@ async function getLocation() {
             `;
             
             productList.appendChild(roomProduct);
+          } else if (product.category?.toLowerCase() === 'notes') {
+            // Notes product card
+            const productImage = product.images?.[0] || 'placeholder.jpg';
+            
+            // Create a container div
+            const productContainer = document.createElement('div');
+            productContainer.className = 'product';
+            
+            // Add click event to the container (except for the heart icon)
+            productContainer.addEventListener('click', function(e) {
+              // Don't navigate if clicking on the heart icon or its parent
+              if (e.target.classList.contains('fa-heart') || e.target.closest('.wishlist-icon')) {
+                return; // Do nothing, let the onclick handler of the icon handle it
+              }
+              window.location.href = `product_interface.html?product=${encodeURIComponent(product.title)}`;
+            });
+            
+            productContainer.style.cursor = 'pointer';
+            
+            // Generate heart icon with proper initial state
+            const wishlistStatus = isInWishlist(product) ? 'fas' : 'far';
+            
+            productContainer.innerHTML = `
+              <div class="product-img-container" style="position: relative;">
+                <div class="product-img" style="background-image: url('${productImage}')"></div>
+                <div class="wishlist-container" style="position: absolute; top: 10px; right: 10px; z-index: 20;">
+                  <i class="${wishlistStatus} fa-heart wishlist-icon" 
+                     onclick="toggleWishlist(event, ${JSON.stringify(product).replace(/"/g, '&quot;')})"></i>
+                </div>
+                <div style="position: absolute; top: 10px; left: 10px; background-color: #f0ad4e; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">
+                  NOTES
+                </div>
+              </div>
+              <h2>${product.title || 'Untitled Notes'}</h2>
+              <p><strong>College:</strong> ${product.college || 'N/A'}</p>
+              <p class="price"><strong>Price:</strong> ₹${product.price || '0'}</p>
+              <button class="buy-now" 
+                      onclick="event.stopPropagation(); window.location.href='product_interface.html?product=${encodeURIComponent(product.title)}'">
+                View Notes
+              </button>
+            `;
+            
+            productList.appendChild(productContainer);
           } else {
             // Regular product card (existing code)
             const productImage = product.images?.[0] || product.image || 'placeholder.jpg';

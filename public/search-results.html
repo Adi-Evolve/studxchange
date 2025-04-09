@@ -622,28 +622,41 @@ async function getLocation() {
     async function loadResults() {
       const urlParams = new URLSearchParams(window.location.search);
       const searchQuery = urlParams.get('query')?.toLowerCase() || '';
-      const selectedCollege = urlParams.get('category')?.toLowerCase() || 'all';
+      const selectedCategory = urlParams.get('category')?.toLowerCase() || 'all';
 
       try {
         // Show loading animation
         document.getElementById('loadingContainer').style.display = 'flex';
         document.getElementById('searchResults').style.display = 'none';
         
-        // Fetch both products and rooms
-        const [products, rooms] = await Promise.all([
+        // Fetch all data
+        const [products, rooms, notes] = await Promise.all([
           fetchProducts(),
-          fetchRooms()
+          fetchRooms(),
+          fetch(API_ENDPOINTS.GET_NOTES).then(res => res.json())
         ]);
         
-        // Combine products and rooms
-        const allItems = [...products, ...rooms];
+        // Combine all items
+        const allItems = [
+          ...products.map(p => ({ ...p, type: 'product' })),
+          ...rooms.map(r => ({ ...r, type: 'room' })),
+          ...notes.map(n => ({ ...n, type: 'note' }))
+        ];
         
+        // Filter items based on search query and category
         const filteredItems = allItems.filter(item => {
           const matchesQuery = searchQuery === '' || 
-            item.title?.toLowerCase().includes(searchQuery);
-          const matchesCollege = selectedCollege === 'all' || 
-            item.college?.toLowerCase() === selectedCollege;
-          return matchesQuery && matchesCollege;
+            item.title?.toLowerCase().includes(searchQuery) ||
+            item.description?.toLowerCase().includes(searchQuery);
+          
+          const matchesCategory = selectedCategory === 'all' || 
+            (selectedCategory === 'notes' && item.type === 'note') ||
+            (selectedCategory === 'rooms' && item.type === 'room') ||
+            (selectedCategory === 'electronics' && item.type === 'product' && item.category === 'Electronics') ||
+            (selectedCategory === 'laptops' && item.type === 'product' && item.category === 'Laptop') ||
+            (selectedCategory === item.college?.toLowerCase());
+          
+          return matchesQuery && matchesCategory;
         });
 
         // Add distance calculation if user location is available
@@ -670,53 +683,80 @@ async function getLocation() {
         searchResultsDiv.innerHTML = '';
 
         if (itemsWithDistance.length > 0) {
-          itemsWithDistance.forEach(product => {
-            // Check if it's a room listing
-            if (product.category?.toLowerCase() === 'room') {
+          itemsWithDistance.forEach(item => {
+            if (item.type === 'note') {
+              // Create note card
+              const noteCard = document.createElement('div');
+              noteCard.className = 'product';
+              noteCard.onclick = () => window.location.href = `product_interface.html?product=${encodeURIComponent(item.title)}`;
+              
+              const isInWishlist = wishlist.some(w => w.title === item.title);
+              const noteImage = item.images?.[0] || 'placeholder.jpg';
+              
+              noteCard.innerHTML = `
+                <div class="product-img" style="background-image: url('${noteImage}'); position: relative;">
+                  <div class="wishlist-container" style="position: absolute; top: 10px; right: 10px; z-index: 20;">
+                    <i class="${isInWishlist ? 'fas' : 'far'} fa-heart wishlist-icon" 
+                       onclick="toggleWishlist(event, ${JSON.stringify(item).replace(/"/g, '&quot;')})"></i>
+                  </div>
+                </div>
+                <h4>${item.title}</h4>
+                <p class="price">₹${item.price}</p>
+                <p class="condition">Notes</p>
+                <button class="buy-now" 
+                        onclick="event.stopPropagation(); 
+                                 this.innerHTML = '<i class=\'fas fa-spinner fa-spin\'></i> Loading...'; 
+                                 this.disabled = true;
+                                 window.location.href='product_interface.html?product=${encodeURIComponent(item.title)}'">
+                  Download Notes
+                </button>
+              `;
+              searchResultsDiv.appendChild(noteCard);
+            } else if (item.type === 'room') {
               // Create room product card
               const roomProduct = document.createElement('div');
               roomProduct.className = 'room-product';
-              roomProduct.onclick = () => window.location.href = `product_interface.html?product=${encodeURIComponent(product.title)}`;
+              roomProduct.onclick = () => window.location.href = `product_interface.html?product=${encodeURIComponent(item.title)}`;
               
               // Get up to 3 images for thumbnails
-              const mainImage = product.images?.[0] || 'placeholder.jpg';
-              const thumbnails = product.images?.slice(1, 4) || [];
+              const mainImage = item.images?.[0] || 'placeholder.jpg';
+              const thumbnails = item.images?.slice(1, 4) || [];
               
               // Create HTML for room card
               roomProduct.innerHTML = `
                 <div class="room-image-container">
-                  <img src="${mainImage}" class="room-main-image" alt="${product.title}">
+                  <img src="${mainImage}" class="room-main-image" alt="${item.title}">
                   <div class="room-thumbnails">
                     ${thumbnails.map(img => `<img src="${img}" class="room-thumbnail" alt="Room thumbnail">`).join('')}
                   </div>
                 </div>
                 <div class="room-details">
                   <div>
-                    <h3 class="room-title">${product.hostelName || product.title}</h3>
+                    <h3 class="room-title">${item.hostelName || item.title}</h3>
                     <div class="room-info">
-                      ${product.occupancy ? `<div class="room-info-item"><i class="fas fa-users"></i> ${product.occupancy} Person</div>` : ''}
-                      ${product.hasMess ? 
+                      ${item.occupancy ? `<div class="room-info-item"><i class="fas fa-users"></i> ${item.occupancy} Person</div>` : ''}
+                      ${item.hasMess ? 
                         `<div class="room-info-item"><i class="fas fa-utensils"></i> Mess Included</div>` : 
                         `<div class="room-info-item negative"><i class="fas fa-utensils"></i> No Mess</div>`
                       }
-                      ${product.hasAC ? 
+                      ${item.hasAC ? 
                         `<div class="room-info-item"><i class="fas fa-snowflake"></i> AC</div>` : 
                         `<div class="room-info-item negative"><i class="fas fa-snowflake"></i> Non-AC</div>`
                       }
-                      ${product.hasWifi ? 
+                      ${item.hasWifi ? 
                         `<div class="room-info-item"><i class="fas fa-wifi"></i> WiFi</div>` : 
                         `<div class="room-info-item negative"><i class="fas fa-wifi"></i> No WiFi</div>`
                       }
                     </div>
-                    ${product.collegeDistance ? 
-                      `<div class="room-distance"><i class="fas fa-university"></i> ${product.collegeDistance} km from college</div>` : ''
+                    ${item.collegeDistance ? 
+                      `<div class="room-distance"><i class="fas fa-university"></i> ${item.collegeDistance} km from college</div>` : ''
                     }
                   </div>
                   <div class="room-price">
-                    ₹${product.price} ${product.priceType === 'monthly' ? '/month' : '/year'}
+                    ₹${item.price} ${item.priceType === 'monthly' ? '/month' : '/year'}
                   </div>
-                  ${product.distance ? 
-                    `<div class="room-distance"><i class="fas fa-map-marker-alt"></i> ~${product.distance.toFixed(1)} km away</div>` : ''
+                  ${item.distance ? 
+                    `<div class="room-distance"><i class="fas fa-map-marker-alt"></i> ~${item.distance.toFixed(1)} km away</div>` : ''
                   }
                 </div>
               `;
@@ -724,8 +764,8 @@ async function getLocation() {
               searchResultsDiv.appendChild(roomProduct);
             } else {
               // Regular product card
-              const isInWishlist = wishlist.some(item => item.title === product.title);
-              const productImage = product.images?.[0] || product.image || 'placeholder.jpg';
+              const isInWishlist = wishlist.some(item => item.title === item.title);
+              const productImage = item.images?.[0] || item.image || 'placeholder.jpg';
               
               // Create a container div instead of an anchor to prevent default link behavior
               const productContainer = document.createElement('div');
@@ -737,7 +777,7 @@ async function getLocation() {
                 if (e.target.classList.contains('fa-heart') || e.target.closest('.wishlist-icon')) {
                   return; // Do nothing, let the onclick handler of the icon handle it
                 }
-                window.location.href = `product_interface.html?product=${encodeURIComponent(product.title)}`;
+                window.location.href = `product_interface.html?product=${encodeURIComponent(item.title)}`;
               });
               
               productContainer.style.cursor = 'pointer';
@@ -745,20 +785,20 @@ async function getLocation() {
                 <div class="product-img" style="background-image: url('${productImage}'); position: relative;">
                   <div class="wishlist-container" style="position: absolute; top: 10px; right: 10px; z-index: 20;">
                     <i class="${isInWishlist ? 'fas' : 'far'} fa-heart wishlist-icon" 
-                       onclick="toggleWishlist(event, ${JSON.stringify(product).replace(/"/g, '&quot;')})"></i>
+                       onclick="toggleWishlist(event, ${JSON.stringify(item).replace(/"/g, '&quot;')})"></i>
                   </div>
                 </div>
-                <h4>${product.title || 'Untitled Product'}</h4>
-                <p class="price">${product.price || '0'} ₹</p>
-                <p class="condition">Condition: ${product.condition || 'Not specified'}</p>
+                <h4>${item.title || 'Untitled Product'}</h4>
+                <p class="price">${item.price || '0'} ₹</p>
+                <p class="condition">Condition: ${item.condition || 'Not specified'}</p>
                 <p class="distance">
-                  ${product.distance ? `<i class="fas fa-map-marker-alt"></i> ~${product.distance.toFixed(1)} km away` : ''}
+                  ${item.distance ? `<i class="fas fa-map-marker-alt"></i> ~${item.distance.toFixed(1)} km away` : ''}
                 </p>
                 <button class="buy-now" 
                         onclick="event.stopPropagation(); 
                                  this.innerHTML = '<i class=\'fas fa-spinner fa-spin\'></i> Loading...'; 
                                  this.disabled = true;
-                                 window.location.href='product_interface.html?product=${encodeURIComponent(product.title)}'">
+                                 window.location.href='product_interface.html?product=${encodeURIComponent(item.title)}'">
                   Buy Now
                 </button>
               `;
@@ -766,7 +806,7 @@ async function getLocation() {
             }
           });
         } else {
-          searchResultsDiv.innerHTML = "<p>No products found.</p>";
+          searchResultsDiv.innerHTML = "<p>No items found matching your search criteria.</p>";
         }
         
         // Hide loading animation and show results
@@ -774,7 +814,7 @@ async function getLocation() {
         document.getElementById('searchResults').style.display = 'flex';
       } catch (error) {
         console.error('Error loading results:', error);
-        searchResultsDiv.innerHTML = '<p>Error loading products. Please try again.</p>';
+        searchResultsDiv.innerHTML = '<p>Error loading items. Please try again.</p>';
         
         // Hide loading animation and show error message
         document.getElementById('loadingContainer').style.display = 'none';

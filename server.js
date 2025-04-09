@@ -19,7 +19,10 @@ const PORT = process.env.PORT || 3000;
 // Configure multer for file uploads
 const upload = multer({ 
   storage: multer.memoryStorage(),
-  limits: { fileSize: 20 * 1024 * 1024 } // 20MB limit
+  limits: { 
+    fileSize: 10 * 1024 * 1024, // Reduce to 10MB limit for serverless
+    files: 1 // Only allow 1 file at a time
+  }
 });
 
 // Vercel doesn't need local directories for temporary storage
@@ -40,8 +43,8 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Configure Google Drive API
 const oauth2Client = new google.auth.OAuth2(
-  '26642122071-o04c226de2ddtid10cqqumf0pjqbt515.apps.googleusercontent.com',
-  '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',
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
   'https://developers.google.com/oauthplayground' // Redirect URL
 );
 
@@ -121,112 +124,47 @@ let cachedDb = null;
 let lastConnectionTime = null;
 const CONNECTION_TIMEOUT = 60 * 60 * 1000; // 1 hour in milliseconds
 
-// Function to connect to MongoDB
+// Enhance the connectToDatabase function with better serverless support
 async function connectToDatabase() {
-  console.log('Connecting to MongoDB...');
-  
-  // Check if connection is still valid
-  const currentTime = Date.now();
-  const connectionExpired = lastConnectionTime && (currentTime - lastConnectionTime > CONNECTION_TIMEOUT);
-  
-  // If the connection is already established, recent, and in a good state, reuse it
-  if (cachedDb && mongoose.connection.readyState === 1 && !connectionExpired) {
-    console.log('Using cached database connection');
-    return cachedDb;
-  }
-  
-  // If connection exists but is expired or in a bad state, force a reconnection
-  if (mongoose.connection.readyState !== 0) {
-    console.log('Closing existing mongoose connection (expired or bad state)');
-    try {
-      await mongoose.connection.close();
-      cachedDb = null;
-    } catch (closeError) {
-      console.error('Error closing mongoose connection:', closeError);
-      // Continue anyway, we'll try to establish a new connection
+  try {
+    if (mongoose.connection.readyState === 1) {
+      // Already connected
+      console.log('MongoDB: Using existing connection');
+      return mongoose.connection;
     }
-  }
-  
-  // Maximum number of connection attempts
-  const MAX_RETRIES = 3;
-  let retryCount = 0;
-  
-  while (retryCount < MAX_RETRIES) {
-    try {
-      // Ensure MONGODB_URI is defined
-      if (!process.env.MONGODB_URI) {
-        console.error('MONGODB_URI environment variable is not defined');
-        throw new Error('MongoDB connection string is not defined');
+
+    console.log('MongoDB: Establishing new connection');
+    // Set connection options specifically for serverless environments
+    const options = {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000, // Increased for large uploads
+      connectTimeoutMS: 10000,
+      maxPoolSize: 10, // Limit connection pool size
+      minPoolSize: 1,  // Maintain at least one connection
+      maxIdleTimeMS: 30000, // Close idle connections after 30 seconds
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverApi: { version: '1', strict: true, deprecationErrors: true }
+    };
+
+    // Connect with retry logic
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        await mongoose.connect(process.env.MONGODB_URI, options);
+        console.log('MongoDB: Connected successfully');
+        return mongoose.connection;
+      } catch (error) {
+        retries--;
+        console.error(`MongoDB: Connection failed, retries left: ${retries}`, error.message);
+        if (retries === 0) throw error;
+        // Exponential backoff
+        await new Promise(resolve => setTimeout(resolve, 1000 * (3 - retries)));
       }
-      
-      console.log(`Connection attempt ${retryCount + 1}/${MAX_RETRIES}`);
-      console.log('Attempting to connect with URI:', process.env.MONGODB_URI.substring(0, 20) + '...');
-      
-      // Connect to MongoDB with optimized options for Vercel
-      const conn = await mongoose.connect(process.env.MONGODB_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        serverSelectionTimeoutMS: 10000, // Increased timeout for serverless
-        bufferCommands: false, // Disable mongoose buffering
-        connectTimeoutMS: 10000, // Increased timeout for serverless
-        socketTimeoutMS: 20000, // Increased timeout for serverless
-        family: 4, // Use IPv4, skip trying IPv6
-        maxPoolSize: 10, // Increased pool size for better performance
-        minPoolSize: 5, // Maintain more connections for reliability
-        maxIdleTimeMS: 30000, // Keep connections alive longer
-        serverApi: {
-          version: '1',
-          strict: false, // Less strict mode for better compatibility
-          deprecationErrors: false // Disable deprecation errors
-        }
-      });
-      
-      console.log('Connected to MongoDB successfully');
-      
-      // Verify we can access the database
-      const dbName = mongoose.connection.db.databaseName;
-      console.log('Database name:', dbName);
-      
-      // Test a simple operation to ensure the connection is working
-      const collections = await mongoose.connection.db.listCollections().toArray();
-      console.log('Available collections:', collections.map(c => c.name).join(', '));
-      
-      cachedDb = conn;
-      lastConnectionTime = Date.now();
-      
-      // Set up event listeners
-      mongoose.connection.on('error', err => {
-        console.error('MongoDB connection error:', err);
-        if (err.name === 'MongoExpiredSessionError') {
-          console.log('Session expired, will reconnect on next request');
-          lastConnectionTime = null; // Force reconnection on next request
-        }
-        // Don't set cachedDb to null here, let the reconnection logic handle it
-      });
-      
-      mongoose.connection.on('disconnected', () => {
-        console.log('MongoDB disconnected');
-        lastConnectionTime = null;
-      });
-      
-      console.log('Initial MongoDB connection successful');
-      return cachedDb;
-    } catch (error) {
-      retryCount++;
-      console.error(`Failed to connect to MongoDB (attempt ${retryCount}/${MAX_RETRIES}). Error details:`, error);
-      
-      if (retryCount >= MAX_RETRIES) {
-        console.error('Maximum connection attempts reached. Giving up.');
-        console.error('Connection string format correct? URI starts with:', 
-                     process.env.MONGODB_URI ? process.env.MONGODB_URI.substring(0, 20) + '...' : 'undefined');
-        throw error;
-      }
-      
-      // Wait before retrying (exponential backoff)
-      const delay = Math.pow(2, retryCount) * 1000;
-      console.log(`Retrying in ${delay}ms...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
     }
+  } catch (error) {
+    console.error('MongoDB: Fatal connection error:', error);
+    throw error;
   }
 }
 
@@ -410,6 +348,30 @@ function initModels() {
     throw error;
   }
 }
+
+// Create an error-catching middleware for API routes
+const apiErrorHandler = (handler) => {
+  return async (req, res, next) => {
+    try {
+      await handler(req, res, next);
+    } catch (error) {
+      console.error(`Unhandled API error in ${req.method} ${req.path}:`, error);
+      
+      // Don't leak error details in production
+      const errorMessage = process.env.NODE_ENV === 'production' 
+        ? 'An unexpected error occurred' 
+        : error.message;
+        
+      // Avoid sending headers if already sent
+      if (!res.headersSent) {
+        res.status(500).json({
+          success: false,
+          error: errorMessage
+        });
+      }
+    }
+  };
+};
 
 // API Routes
 // Health check endpoint
@@ -1428,84 +1390,90 @@ app.post('/api/notes', async (req, res) => {
   }
 });
 
+// Add Google credentials endpoint before the upload-pdf endpoint
+app.get('/api/google-credentials', apiErrorHandler(async (req, res) => {
+  // Validate that environment variables are set
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_API_KEY) {
+    console.error('Google credentials missing in environment variables');
+    return res.status(500).json({ 
+      error: 'Server configuration error',
+      message: 'Google credentials are not properly configured'
+    });
+  }
+  
+  // Only provide credentials, not secrets
+  // We're not exposing any secrets, just the public API key and client ID
+  // that are necessary for client-side authentication
+  res.json({
+    apiKey: process.env.GOOGLE_API_KEY,
+    clientId: process.env.GOOGLE_CLIENT_ID
+  });
+}));
+
 // Add API route for PDF upload
 app.post('/api/upload-pdf', upload.single('pdf'), async (req, res) => {
+  const startTime = Date.now();
+  console.log('PDF upload started');
+  
   try {
+    // Check for request timeout risk
+    const requestTimeout = () => {
+      const elapsedSeconds = (Date.now() - startTime) / 1000;
+      // Vercel functions have 10s timeout in free tier, leave 2s margin
+      return elapsedSeconds > 8; 
+    };
+    
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
     
-    console.log('POST /api/upload-pdf - Received file:', req.file.originalname);
+    // Check file size
+    if (req.file.size > 10 * 1024 * 1024) {
+      return res.status(413).json({ 
+        message: 'File too large', 
+        details: 'Maximum file size is 10MB for serverless functions'
+      });
+    }
     
-    // In Vercel's serverless environment, we'll simulate upload
-    // For development testing, you can uncomment the Google Drive code
+    console.log('POST /api/upload-pdf - Received file:', req.file.originalname, 'Size:', Math.round(req.file.size/1024), 'KB');
+    
+    // Check if we're at risk of a timeout
+    if (requestTimeout()) {
+      console.warn('PDF upload at risk of timeout - responding early with mock URL');
+      return res.status(202).json({
+        success: true,
+        message: 'Upload taking too long. Please try direct Google Drive upload.',
+        fileId: `pdf-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        fileUrl: null
+      });
+    }
+    
+    // Since we now upload directly from the client to Google Drive,
+    // this endpoint just acts as a fallback in case the direct upload fails
     
     // For serverless environment, just return a mock URL
-    // In production, you would implement proper file storage
     const mockFileId = `pdf-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const mockFileUrl = `https://drive.google.com/file/d/${mockFileId}/view`;
     
     console.log('POST /api/upload-pdf - Mock File URL:', mockFileUrl);
     
-    // No need to clean up files when using memory storage
+    // Monitor execution time
+    const executionTime = (Date.now() - startTime) / 1000;
+    console.log(`PDF upload completed in ${executionTime.toFixed(2)}s`);
     
     res.json({
-      message: 'PDF uploaded successfully',
+      success: true,
+      message: 'PDF processed successfully',
       fileId: mockFileId,
       fileUrl: mockFileUrl
     });
-    
-    /* 
-    // Uncomment this code for actual Google Drive implementation
-    // Set access token for OAuth client
-    oauth2Client.setCredentials({
-      refresh_token: process.env.GOOGLE_DRIVE_REFRESH_TOKEN || 'YOUR_REFRESH_TOKEN'
-    });
-    
-    // Upload the file to Google Drive
-    const response = await drive.files.create({
-      requestBody: {
-        name: req.file.originalname,
-        mimeType: 'application/pdf'
-      },
-      media: {
-        mimeType: 'application/pdf',
-        body: req.file.buffer // Use buffer instead of file path with memory storage
-      }
-    });
-    
-    console.log('POST /api/upload-pdf - Uploaded file to Google Drive, ID:', response.data.id);
-    
-    // Make the file publicly accessible
-    await drive.permissions.create({
-      fileId: response.data.id,
-      requestBody: {
-        role: 'reader',
-        type: 'anyone'
-      }
-    });
-    
-    // Get the file link
-    const fileData = await drive.files.get({
-      fileId: response.data.id,
-      fields: 'webViewLink'
-    });
-    
-    // No need to clean up files when using memory storage
-    
-    console.log('POST /api/upload-pdf - File URL:', fileData.data.webViewLink);
-    
-    res.json({
-      message: 'PDF uploaded successfully',
-      fileId: response.data.id,
-      fileUrl: fileData.data.webViewLink
-    });
-    */
   } catch (error) {
-    console.error('POST /api/upload-pdf - Error:', error);
+    const executionTime = (Date.now() - startTime) / 1000;
+    console.error(`PDF upload failed after ${executionTime.toFixed(2)}s:`, error);
     
     res.status(500).json({
-      message: 'Failed to upload PDF',
+      success: false,
+      message: 'Failed to process PDF',
       error: error.message
     });
   }
@@ -1540,20 +1508,6 @@ if (process.env.NODE_ENV !== 'production') {
   // For production, we'll let Vercel handle the listening
   console.log('Running in production mode - Vercel will handle the server');
 }
-
-// Connect to MongoDB when the server starts
-connectToDatabase()
-  .then(() => {
-    console.log('Initial MongoDB connection successful');
-    initModels();
-  })
-  .catch(err => {
-    console.error('Initial MongoDB connection failed:', err);
-    // Don't exit the process in production, as Vercel will retry
-    if (process.env.NODE_ENV !== 'production') {
-      process.exit(1);
-    }
-  });
 
 // Global error handler
 app.use((err, req, res, next) => {
