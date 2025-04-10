@@ -1451,26 +1451,49 @@
               downloadButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Downloading...';
               downloadButton.disabled = true;
               
-              // Extract Google Drive file ID from URL
+              // Get the Google Drive URL from MongoDB
               const driveUrl = item.pdfUrl;
-              const fileId = driveUrl.match(/[-\w]{25,}/);
+              console.log("Drive URL:", driveUrl);
               
-              if (!fileId) {
-                throw new Error('Invalid Drive URL');
+              if (!driveUrl) {
+                throw new Error('PDF URL not found');
               }
               
+              // Extract file ID from Google Drive URL
+              // Handle both formats:
+              // 1. https://drive.google.com/file/d/FILE_ID/view
+              // 2. https://drive.google.com/uc?export=download&id=FILE_ID
+              let fileId;
+              const fileIdMatch = driveUrl.match(/\/d\/([^/]+)/);
+              if (fileIdMatch) {
+                fileId = fileIdMatch[1];
+              } else {
+                const idParamMatch = driveUrl.match(/[?&]id=([^&]+)/);
+                if (idParamMatch) {
+                  fileId = idParamMatch[1];
+                }
+              }
+              
+              if (!fileId) {
+                throw new Error('Could not extract file ID from Drive URL');
+              }
+              
+              console.log("Extracted file ID:", fileId);
+              
               // Construct direct download URL
-              const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId[0]}`;
+              const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
               
-              // Create an iframe to handle the download
-              const iframe = document.createElement('iframe');
-              iframe.style.display = 'none';
-              iframe.src = downloadUrl;
-              document.body.appendChild(iframe);
+              // Create a hidden link and trigger download
+              const a = document.createElement('a');
+              a.style.display = 'none';
+              a.href = downloadUrl;
+              a.download = `${item.title}.pdf`;
+              document.body.appendChild(a);
+              a.click();
               
-              // Remove iframe after download starts
+              // Cleanup
               setTimeout(() => {
-                document.body.removeChild(iframe);
+                document.body.removeChild(a);
                 downloadButton.innerHTML = '<i class="fas fa-download"></i> Download Notes';
                 downloadButton.disabled = false;
               }, 2000);
