@@ -538,9 +538,9 @@
                   <span id="notesUploadProgress">Uploading images...</span>
                 </div>
                 
-                <label for="notesPdfUpload">Upload PDF File</label>
-                <input type="file" id="notesPdfUpload" accept=".pdf" required>
-                <small>Maximum file size: 20MB</small>
+                <label for="pdfFileInput">Upload PDF (max 50MB):</label>
+    <input type="file" id="pdfFileInput" name="pdfFileInput" accept="application/pdf" />
+
                 <div id="notesPdfUploadStatus" aria-live="polite" style="display: none;">
                   <i class="fas fa-spinner fa-spin"></i>
                   <span id="pdfUploadProgress">Uploading PDF...</span>
@@ -1004,6 +1004,8 @@
     // Open map modal for room listings
     document.getElementById('mapLocationBtn').addEventListener('click', openMapModal);
     
+
+    
     // ---------------
     // Image Uploads
     // ---------------
@@ -1090,6 +1092,8 @@
       });
     });
     
+
+    
     // Preview for room images
     document.getElementById('roomImageUpload').addEventListener('change', function(e) {
       const previewContainer = document.getElementById('roomImagePreviews');
@@ -1164,6 +1168,54 @@
     document.getElementById('sellForm').addEventListener('submit', async function(event) {
       event.preventDefault();
       console.log("Form submission started");
+
+      // Get the PDF file from your existing input
+const pdfInput = document.getElementById('pdfFileInput');
+const pdfFile = pdfInput && pdfInput.files.length > 0 ? pdfInput.files[0] : null;
+
+let pdfUrl = '';
+if (pdfFile) {
+    // Only allow PDF up to 50MB
+    if (pdfFile.size > 50 * 1024 * 1024) {
+        alert('PDF must be less than 50MB');
+        return;
+    }
+    // Upload PDF to Cloudinary
+    const formData = new FormData();
+    formData.append('file', pdfFile);
+    formData.append('upload_preset', 'unsigned_pdfs'); // <-- your unsigned preset
+
+    try {
+        const response = await fetch('https://api.cloudinary.com/v1_1/djouqnug2/auto/upload', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        if (data.secure_url) {
+            pdfUrl = data.secure_url;
+        } else {
+            alert('PDF upload failed');
+            return;
+        }
+    } catch (err) {
+        alert('PDF upload failed: ' + err.message);
+        return;
+    }
+}
+
+// Add pdfUrl as a hidden input so it gets submitted with the form
+if (pdfUrl) {
+    let hidden = document.getElementById('pdfUrlHidden');
+    const form = document.querySelector('form'); // Explicitly get the form
+    if (!hidden) {
+        hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'pdfUrl';
+        hidden.id = 'pdfUrlHidden';
+        form.appendChild(hidden); // Add to form instead of using 'this'
+    }
+    hidden.value = pdfUrl;
+}
 
       try {
         // Verify API endpoints exist
