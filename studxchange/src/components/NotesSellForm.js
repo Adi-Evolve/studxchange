@@ -18,7 +18,10 @@ const NotesSellForm = () => {
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!file) return;
+    if (!file) {
+      setError("Please select a PDF file.");
+      return;
+    }
     if (file.size > 100 * 1024 * 1024) {
       setError("File too large! Max 100MB.");
       return;
@@ -35,7 +38,7 @@ const NotesSellForm = () => {
       );
       setUrl(res.data.secure_url);
     } catch (err) {
-      setError("Upload failed. Please try again.");
+      setError("Upload failed. Please check your Cloudinary preset and try again.");
     }
     setUploading(false);
   };
