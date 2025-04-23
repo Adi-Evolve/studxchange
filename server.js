@@ -15,9 +15,7 @@ require('./models/user');
 require('./models/paymentRequest'); // Add this line to register the payment request model
 require('./models/order'); // Add this line to register the order model
 require('./models/review');
-const Review = mongoose.models.Review || require('./models/review');
 require('./models/viewEvent');
-const ViewEvent = mongoose.models.ViewEvent || require('./models/viewEvent');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -387,7 +385,7 @@ const viewEventSchema = new mongoose.Schema({
 });
 
 // Models are defined outside of route handlers to avoid model redefinition errors
-let Product, User, OTP, SoldItem, Room, Notes, PaymentRequest, Order;
+let Product, User, OTP, SoldItem, Room, Notes, PaymentRequest, Order, Review, ViewEvent;
 
 // Initialize models function to avoid model compilation errors in serverless environment
 function initModels() {
