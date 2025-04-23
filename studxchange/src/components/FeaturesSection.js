@@ -24,15 +24,15 @@ const features = [
 ];
 
 const FeaturesSection = () => (
-  <section className="py-12 bg-white">
+  <section className="py-14 bg-gradient-to-br from-pink-100 via-blue-100 to-purple-200 theme-fade-in">
     <div className="max-w-5xl mx-auto px-6">
-      <h2 className="text-3xl font-bold text-center mb-8 text-blue-700">Features</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <h2 className="text-4xl font-extrabold text-center mb-10 theme-gradient-text drop-shadow-xl">Features</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
         {features.map((f, i) => (
-          <div key={i} className="bg-blue-50 rounded-xl p-6 shadow hover:shadow-lg transition">
-            <div className="text-4xl mb-4">{f.icon}</div>
-            <h3 className="text-xl font-semibold mb-2">{f.title}</h3>
-            <p className="text-gray-700">{f.description}</p>
+          <div key={i} className="theme-card flex flex-col items-center py-8 px-5 text-center">
+            <div className="text-5xl mb-4 animate-bounce" style={{filter:'drop-shadow(0 0 8px #8b5cf6)'}}>{f.icon}</div>
+            <h3 className="text-2xl font-bold mb-2 theme-gradient-text">{f.title}</h3>
+            <p className="text-gray-700 text-lg">{f.description}</p>
           </div>
         ))}
       </div>

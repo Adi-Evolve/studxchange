@@ -1,11 +1,11 @@
 import React from "react";
 
 const HeroSection = () => (
-  <section className="py-16 bg-gradient-to-br from-blue-600 to-purple-600 text-white text-center">
+  <section className="py-20 bg-gradient-to-br from-fuchsia-500 via-blue-500 to-purple-600 text-white text-center theme-fade-in theme-glow">
     <div className="max-w-3xl mx-auto">
-      <h1 className="text-5xl font-extrabold mb-4 drop-shadow-lg">Welcome to StudXchange</h1>
-      <p className="text-xl mb-8 font-light">Buy, sell, and exchange notes, projects, and study material with students all over the world.</p>
-      <a href="#notes-upload" className="inline-block px-8 py-3 bg-white text-blue-700 font-bold rounded-full shadow-lg hover:bg-blue-50 transition">Upload Notes</a>
+      <h1 className="text-6xl font-extrabold mb-6 theme-gradient-text drop-shadow-xl animate-pulse">StudXchange</h1>
+      <p className="text-2xl mb-10 font-light">Buy, sell, and exchange notes, projects, and study material with students all over the world.</p>
+      <a href="#notes-upload" className="theme-btn text-lg shadow-xl">Upload Notes</a>
     </div>
   </section>
 );

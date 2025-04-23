@@ -40,31 +40,32 @@ const NotesUpload = () => {
   };
 
   return (
-    <section id="notes-upload" className="bg-white rounded-xl shadow-lg p-8">
-      <h2 className="text-2xl font-bold text-blue-700 mb-4">Upload Your Notes (PDF, up to 100MB)</h2>
-      <div className="flex flex-col md:flex-row items-center gap-4">
+    <section id="notes-upload" className="theme-card shadow-2xl p-10 max-w-2xl mx-auto mt-12 theme-fade-in">
+      <h2 className="text-3xl font-extrabold theme-gradient-text mb-6 text-center drop-shadow">Upload Your Notes (PDF, up to 100MB)</h2>
+      <div className="flex flex-col md:flex-row items-center gap-6 justify-center">
         <input
           type="file"
           accept="application/pdf"
           onChange={handleFileChange}
-          className="border border-blue-300 rounded px-4 py-2"
+          className="border border-fuchsia-400 rounded px-4 py-3 bg-white shadow focus:outline-fuchsia-400 focus:ring-2 focus:ring-fuchsia-200"
         />
         <button
           onClick={handleUpload}
           disabled={uploading || !file}
-          className="bg-blue-600 text-white px-6 py-2 rounded shadow hover:bg-blue-700 transition"
+          className="theme-btn text-lg shadow-xl"
         >
           {uploading ? "Uploading..." : "Upload PDF"}
         </button>
       </div>
-      {error && <p className="text-red-600 mt-2">{error}</p>}
+      {error && <p className="text-red-600 mt-4 text-center animate-pulse">{error}</p>}
       {url && (
-        <div className="mt-4">
+        <div className="mt-6 text-center animate-fade-in">
           <a
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 underline font-semibold"
+            className="theme-btn inline-block text-base mt-2"
+            style={{background: 'linear-gradient(90deg,#06b6d4,#6366f1)'}}
           >
             View Uploaded PDF
           </a>
