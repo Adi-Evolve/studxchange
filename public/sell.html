@@ -538,13 +538,12 @@
                   <span id="notesUploadProgress">Uploading images...</span>
                 </div>
                 
-                <label for="pdfFileInput">Upload PDF (max 50MB):</label>
+                <label for="pdfFileInput">Upload PDF (max 100MB):</label>
     <input type="file" id="pdfFileInput" name="pdfFileInput" accept="application/pdf" />
-
-                <div id="notesPdfUploadStatus" aria-live="polite" style="display: none;">
-                  <i class="fas fa-spinner fa-spin"></i>
-                  <span id="pdfUploadProgress">Uploading PDF...</span>
-                </div>
+    <div id="notesPdfUploadStatus" aria-live="polite" style="display: none;">
+      <i class="fas fa-spinner fa-spin"></i>
+      <span id="pdfUploadProgress">Uploading PDF...</span>
+    </div>
                 
                 <label for="notesDescription">Description</label>
                 <textarea id="notesDescription" name="notesDescription" rows="5" placeholder="Write a detailed description of your notes" required></textarea>
@@ -1170,52 +1169,58 @@
       console.log("Form submission started");
 
       // Get the PDF file from your existing input
-const pdfInput = document.getElementById('pdfFileInput');
-const pdfFile = pdfInput && pdfInput.files.length > 0 ? pdfInput.files[0] : null;
-
-let pdfUrl = '';
-if (pdfFile) {
-    // Only allow PDF up to 50MB
-    if (pdfFile.size > 50 * 1024 * 1024) {
-        alert('PDF must be less than 50MB');
-        return;
-    }
-    // Upload PDF to Cloudinary
-    const formData = new FormData();
-    formData.append('file', pdfFile);
-    formData.append('upload_preset', 'unsigned_pdfs'); // <-- your unsigned preset
-
-    try {
-        const response = await fetch('https://api.cloudinary.com/v1_1/djouqnug2/auto/upload', {
+      const pdfInput = document.getElementById('pdfFileInput');
+      const pdfFile = pdfInput && pdfInput.files.length > 0 ? pdfInput.files[0] : null;
+      let pdfUrl = '';
+      if (pdfFile) {
+        // Only allow PDF up to 100MB
+        if (pdfFile.size > 100 * 1024 * 1024) {
+          alert('PDF must be less than 100MB');
+          return;
+        }
+        // Upload PDF to Cloudinary
+        document.getElementById('notesPdfUploadStatus').style.display = 'flex';
+        document.getElementById('pdfUploadProgress').textContent = 'Uploading PDF...';
+        const formData = new FormData();
+        formData.append('file', pdfFile);
+        formData.append('upload_preset', 'studx_pdf_upload'); // <-- use your unsigned preset
+        try {
+          const response = await fetch('https://api.cloudinary.com/v1_1/djouqnug2/auto/upload', {
             method: 'POST',
             body: formData
-        });
-        const data = await response.json();
-        if (data.secure_url) {
+          });
+          const data = await response.json();
+          if (data.secure_url) {
             pdfUrl = data.secure_url;
-        } else {
+            document.getElementById('pdfUploadProgress').textContent = 'PDF uploaded successfully!';
+          } else {
             alert('PDF upload failed');
+            document.getElementById('pdfUploadProgress').textContent = 'PDF upload failed';
             return;
+          }
+        } catch (err) {
+          alert('PDF upload failed: ' + err.message);
+          document.getElementById('pdfUploadProgress').textContent = 'PDF upload failed';
+          return;
+        } finally {
+          setTimeout(() => {
+            document.getElementById('notesPdfUploadStatus').style.display = 'none';
+          }, 3000);
         }
-    } catch (err) {
-        alert('PDF upload failed: ' + err.message);
-        return;
-    }
-}
-
-// Add pdfUrl as a hidden input so it gets submitted with the form
-if (pdfUrl) {
-    let hidden = document.getElementById('pdfUrlHidden');
-    const form = document.querySelector('form'); // Explicitly get the form
-    if (!hidden) {
-        hidden = document.createElement('input');
-        hidden.type = 'hidden';
-        hidden.name = 'pdfUrl';
-        hidden.id = 'pdfUrlHidden';
-        form.appendChild(hidden); // Add to form instead of using 'this'
-    }
-    hidden.value = pdfUrl;
-}
+      }
+      // Add pdfUrl as a hidden input so it gets submitted with the form
+      if (pdfUrl) {
+        let hidden = document.getElementById('pdfUrlHidden');
+        const form = document.querySelector('form');
+        if (!hidden) {
+          hidden = document.createElement('input');
+          hidden.type = 'hidden';
+          hidden.name = 'pdfUrl';
+          hidden.id = 'pdfUrlHidden';
+          form.appendChild(hidden);
+        }
+        hidden.value = pdfUrl;
+      }
 
       try {
         // Verify API endpoints exist
@@ -1365,9 +1370,14 @@ if (pdfUrl) {
           }
           
           // Validate PDF file
-          const notesPdf = document.getElementById('notesPdfUpload').files;
-          if (notesPdf.length === 0) {
+          const pdfInput = document.getElementById('pdfFileInput');
+          const pdfFile = pdfInput && pdfInput.files.length > 0 ? pdfInput.files[0] : null;
+          if (!pdfFile) {
             alert("Please upload your notes in PDF format");
+            return;
+          }
+          if (pdfFile.size > 100 * 1024 * 1024) {
+            alert('PDF must be less than 100MB');
             return;
           }
           
@@ -1379,10 +1389,10 @@ if (pdfUrl) {
           const notesImageUrls = await uploadNotesImages();
           console.log("Notes images uploaded:", notesImageUrls);
           
-          // Upload PDF to Google Drive
-          console.log("Uploading PDF to Google Drive...");
-          const pdfUrl = await uploadPdfToGoogleDrive(notesPdf[0]);
-          console.log("PDF uploaded to Google Drive:", pdfUrl);
+          // Upload PDF to Cloudinary
+          console.log("Uploading PDF to Cloudinary...");
+          const pdfUrl = await uploadPdfToCloudinary(pdfFile);
+          console.log("PDF uploaded to Cloudinary:", pdfUrl);
           
           // Create notes object (without location)
           const notes = {
@@ -1393,7 +1403,7 @@ if (pdfUrl) {
             images: notesImageUrls,
             description: notesDescription,
             condition: 'new', // Default for notes
-            pdfUrl, // Google Drive URL
+            pdfUrl, // Cloudinary URL
             sellerPhone: currentUser.phone,
             sellerEmail: currentUser.email,
             createdAt: new Date().toISOString()
@@ -1570,22 +1580,19 @@ if (pdfUrl) {
     // Add handler for notes location
     document.getElementById('getLocationBtn').addEventListener('click', getLocation);
     
-    // Add Google Drive integration for PDF uploads
-    async function uploadPdfToGoogleDrive(file) {
+    // Add Cloudinary integration for PDF uploads
+    async function uploadPdfToCloudinary(file) {
       try {
         document.getElementById('notesPdfUploadStatus').style.display = 'flex';
         document.getElementById('pdfUploadProgress').textContent = 'Uploading PDF...';
         
         // Create form data for the file
         const formData = new FormData();
-        formData.append('pdf', file);
+        formData.append('file', file);
+        formData.append('upload_preset', 'studx_pdf_upload'); // <-- use your unsigned preset
         
-        // Setup for Google Drive API integration
-        const clientId = '26642122071-o04c226de2ddtid10cqqumf0pjqbt515.apps.googleusercontent.com';
-        const clientSecret = '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';
-        
-        // First upload to server which will handle Google Drive upload
-        const response = await fetch(API_ENDPOINTS.UPLOAD_PDF, {
+        // Upload to Cloudinary
+        const response = await fetch('https://api.cloudinary.com/v1_1/djouqnug2/auto/upload', {
           method: 'POST',
           body: formData
         });
@@ -1596,7 +1603,7 @@ if (pdfUrl) {
         
         const data = await response.json();
         document.getElementById('pdfUploadProgress').textContent = 'PDF uploaded successfully!';
-        return data.fileUrl; // Return the Google Drive URL
+        return data.secure_url; // Return the Cloudinary URL
       } catch (error) {
         console.error('PDF upload error:', error);
         document.getElementById('pdfUploadProgress').textContent = 'Failed to upload PDF';
