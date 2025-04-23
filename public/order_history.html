@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order History - StudXchange</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6f9; }
+    .container { max-width: 500px; margin: 60px auto; background: #fff; border-radius: 10px; padding: 2rem; box-shadow: 0 4px 18px rgba(0,0,0,0.09); }
+    h2 { text-align: center; margin-bottom: 1.5rem; }
+    .input-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: 0.5rem; }
+    input[type="email"] { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; }
+    button { width: 100%; padding: 0.75rem; background: #2a3d56; color: #fff; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; margin-top: 1rem; }
+    button:hover { background: #1a75ff; }
+    .order-list { margin-top: 2rem; }
+    .order-item { background: #f9f9f9; border-radius: 6px; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+    .order-title { font-weight: bold; }
+    .order-date { font-size: 0.9em; color: #888; }
+    .order-link { display: block; margin-top: 0.5rem; }
+    .expired { color: #c00; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Your Order History</h2>
+    <div class="input-group">
+      <label for="orderEmail">Enter your email to view your orders</label>
+      <input type="email" id="orderEmail" placeholder="Your Email">
+      <button onclick="fetchOrders()">Show Orders</button>
+    </div>
+    <div id="orderList" class="order-list"></div>
+  </div>
+  <script>
+    async function fetchOrders() {
+      const email = document.getElementById('orderEmail').value.trim();
+      if (!email) return alert('Please enter your email.');
+      const res = await fetch(`/api/orders?email=${encodeURIComponent(email)}`);
+      const data = await res.json();
+      const list = document.getElementById('orderList');
+      list.innerHTML = '';
+      if (!data.success || !data.orders.length) {
+        list.innerHTML = '<p>No orders found.</p>';
+        return;
+      }
+      data.orders.forEach(order => {
+        const div = document.createElement('div');
+        div.className = 'order-item';
+        const expired = order.expiresAt && new Date(order.expiresAt) < new Date();
+        div.innerHTML = `
+          <div class="order-title">${order.noteTitle}</div>
+          <div class="order-date">Purchased: ${new Date(order.createdAt).toLocaleString()}</div>
+          ${expired ? `<span class='expired'>Download link expired</span>` : `<a href='${order.pdfUrl}' target='_blank' class='order-link'>Download PDF</a>`}
+        `;
+        list.appendChild(div);
+      });
+    }
+  </script>
+</body>
+</html>

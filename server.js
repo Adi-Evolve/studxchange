@@ -12,6 +12,12 @@ const fs = require('fs');
 require('dotenv').config();
 require('./models/otp'); // Add this line to register the OTP model
 require('./models/user');
+require('./models/paymentRequest'); // Add this line to register the payment request model
+require('./models/order'); // Add this line to register the order model
+require('./models/review');
+const Review = mongoose.models.Review || require('./models/review');
+require('./models/viewEvent');
+const ViewEvent = mongoose.models.ViewEvent || require('./models/viewEvent');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -50,6 +56,16 @@ const drive = google.drive({
   version: 'v3',
   auth: oauth2Client
 });
+
+// Cloudinary setup for signed URLs
+const cloudinary = require('cloudinary').v2;
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+const nodemailer = require('nodemailer');
 
 // Middleware
 app.use(cors());
@@ -332,8 +348,46 @@ const notesSchema = new mongoose.Schema({
   }
 });
 
+// Define Payment Request Schema
+const paymentRequestSchema = new mongoose.Schema({
+  email: String,
+  noteTitle: String,
+  pdfUrl: String,
+  transactionId: String,
+  status: { type: String, default: 'pending' },
+  createdAt: { type: Date, default: Date.now }
+});
+
+// Define Order Schema
+const orderSchema = new mongoose.Schema({
+  buyerEmail: String,
+  noteTitle: String,
+  pdfUrl: String,
+  transactionId: String,
+  status: String,
+  createdAt: { type: Date, default: Date.now },
+  expiresAt: Date
+});
+
+// Define Review Schema
+const reviewSchema = new mongoose.Schema({
+  noteId: String,
+  userEmail: String,
+  rating: Number,
+  comment: String,
+  createdAt: { type: Date, default: Date.now }
+});
+
+// Define ViewEvent Schema
+const viewEventSchema = new mongoose.Schema({
+  noteId: String,
+  userEmail: String,
+  eventType: String,
+  createdAt: { type: Date, default: Date.now }
+});
+
 // Models are defined outside of route handlers to avoid model redefinition errors
-let Product, User, OTP, SoldItem, Room, Notes;
+let Product, User, OTP, SoldItem, Room, Notes, PaymentRequest, Order;
 
 // Initialize models function to avoid model compilation errors in serverless environment
 function initModels() {
@@ -402,6 +456,30 @@ function initModels() {
           console.log('Notes model created with alternative name');
         }
       }
+    }
+    
+    if (!PaymentRequest) {
+      console.log('Initializing PaymentRequest model...');
+      PaymentRequest = mongoose.models.PaymentRequest || mongoose.model('PaymentRequest', paymentRequestSchema);
+      console.log('PaymentRequest model initialized successfully');
+    }
+    
+    if (!Order) {
+      console.log('Initializing Order model...');
+      Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
+      console.log('Order model initialized successfully');
+    }
+    
+    if (!Review) {
+      console.log('Initializing Review model...');
+      Review = mongoose.models.Review || mongoose.model('Review', reviewSchema);
+      console.log('Review model initialized successfully');
+    }
+    
+    if (!ViewEvent) {
+      console.log('Initializing ViewEvent model...');
+      ViewEvent = mongoose.models.ViewEvent || mongoose.model('ViewEvent', viewEventSchema);
+      console.log('ViewEvent model initialized successfully');
     }
     
     console.log('All models initialized successfully');
@@ -1428,86 +1506,189 @@ app.post('/api/notes', async (req, res) => {
   }
 });
 
-// Add API route for PDF upload
-app.post('/api/upload-pdf', upload.single('pdf'), async (req, res) => {
+// API: Submit payment request
+app.post('/api/payment-request', async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
+    await connectToDatabase();
+    const { email, noteTitle, pdfUrl, transactionId } = req.body;
+    const request = new PaymentRequest({ email, noteTitle, pdfUrl, transactionId });
+    await request.save();
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// API: Get all pending requests (for admin)
+app.get('/api/payment-requests', async (req, res) => {
+  try {
+    await connectToDatabase();
+    const requests = await PaymentRequest.find({ status: 'pending' }).sort({ createdAt: -1 });
+    res.json(requests);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// API: Reject payment request
+app.post('/api/reject-payment', async (req, res) => {
+  try {
+    await connectToDatabase();
+    const { id } = req.body;
+    await PaymentRequest.findByIdAndUpdate(id, { status: 'rejected' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// API: Approve payment request (send expiring link via email)
+app.post('/api/approve-payment', async (req, res) => {
+  try {
+    await connectToDatabase();
+    const { id, email, pdfUrl } = req.body;
+    // Generate expiring Cloudinary link (1 hour)
+    const publicId = pdfUrl.split('/').pop().split('.')[0];
+    const expiresAt = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
+    const signedUrl = cloudinary.url(publicId + '.pdf', {
+      type: 'upload',
+      resource_type: 'raw',
+      sign_url: true,
+      expires_at: expiresAt
+    });
+    // Send email
+    let transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD
+      }
+    });
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Your Notes Purchase - Download Link',
+      html: `<p>Thank you for your purchase!<br>Click <a href="${signedUrl}">here</a> to download your notes. This link will expire in 1 hour.</p>`
+    });
+    await PaymentRequest.findByIdAndUpdate(id, { status: 'approved' });
+    // Create order (for order history)
+    await Order.create({
+      buyerEmail: email,
+      noteTitle: publicId,
+      pdfUrl,
+      transactionId: '',
+      status: 'delivered',
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 3600 * 1000)
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// API: Get order history for a user
+app.get('/api/orders', async (req, res) => {
+  try {
+    await connectToDatabase();
+    const { email } = req.query;
+    if (!email) return res.status(400).json({ success: false, error: 'Email required' });
+    const orders = await Order.find({ buyerEmail: email }).sort({ createdAt: -1 });
+    res.json({ success: true, orders });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// --- Review & Rating APIs ---
+// Submit a review (only if order exists for this note and user)
+app.post('/api/review', async (req, res) => {
+  try {
+    await connectToDatabase();
+    const { noteId, userEmail, rating, comment } = req.body;
+    // Only allow review if order exists
+    const order = await Order.findOne({ buyerEmail: userEmail, noteTitle: noteId });
+    if (!order) return res.status(403).json({ success: false, error: 'You must purchase before reviewing.' });
+    // Prevent duplicate reviews
+    const existing = await Review.findOne({ noteId, userEmail });
+    if (existing) return res.status(409).json({ success: false, error: 'You already reviewed this note.' });
+    await Review.create({ noteId, userEmail, rating, comment });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+// Get reviews for a note
+app.get('/api/reviews', async (req, res) => {
+  try {
+    await connectToDatabase();
+    const { noteId } = req.query;
+    const reviews = await Review.find({ noteId }).sort({ createdAt: -1 });
+    res.json({ success: true, reviews });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// --- Analytics APIs ---
+// Record a view/download event
+app.post('/api/note-event', async (req, res) => {
+  try {
+    await connectToDatabase();
+    const { noteId, userEmail, eventType } = req.body;
+    await ViewEvent.create({ noteId, userEmail, eventType });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+// Get analytics for seller
+app.get('/api/seller-analytics', async (req, res) => {
+  try {
+    await connectToDatabase();
+    const { email } = req.query;
+    // Find notes by this seller
+    const notes = await Notes.find({ uploadedBy: email });
+    const noteIds = notes.map(n => n._id);
+    // Count views/downloads for each note
+    const analytics = await Promise.all(noteIds.map(async id => {
+      const views = await ViewEvent.countDocuments({ noteId: id, eventType: 'view' });
+      const downloads = await ViewEvent.countDocuments({ noteId: id, eventType: 'download' });
+      return { noteId: id, title: notes.find(n => n._id.equals(id)).title, views, downloads };
+    }));
+    res.json({ success: true, analytics });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// --- Bulk Uploads ---
+// (Assume front-end will send multiple files and metadata)
+app.post('/api/bulk-upload-notes', upload.array('pdfs', 10), async (req, res) => {
+  try {
+    await connectToDatabase();
+    const { titles, descriptions, uploadedBy } = req.body;
+    const files = req.files;
+    if (!files || !Array.isArray(files) || files.length === 0) {
+      return res.status(400).json({ success: false, error: 'No files uploaded.' });
     }
-    
-    console.log('POST /api/upload-pdf - Received file:', req.file.originalname);
-    
-    // In Vercel's serverless environment, we'll simulate upload
-    // For development testing, you can uncomment the Google Drive code
-    
-    // For serverless environment, just return a mock URL
-    // In production, you would implement proper file storage
-    const mockFileId = `pdf-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    const mockFileUrl = `https://drive.google.com/file/d/${mockFileId}/view`;
-    
-    console.log('POST /api/upload-pdf - Mock File URL:', mockFileUrl);
-    
-    // No need to clean up files when using memory storage
-    
-    res.json({
-      message: 'PDF uploaded successfully',
-      fileId: mockFileId,
-      fileUrl: mockFileUrl
-    });
-    
-    /* 
-    // Uncomment this code for actual Google Drive implementation
-    // Set access token for OAuth client
-    oauth2Client.setCredentials({
-      refresh_token: process.env.GOOGLE_DRIVE_REFRESH_TOKEN || 'YOUR_REFRESH_TOKEN'
-    });
-    
-    // Upload the file to Google Drive
-    const response = await drive.files.create({
-      requestBody: {
-        name: req.file.originalname,
-        mimeType: 'application/pdf'
-      },
-      media: {
-        mimeType: 'application/pdf',
-        body: req.file.buffer // Use buffer instead of file path with memory storage
-      }
-    });
-    
-    console.log('POST /api/upload-pdf - Uploaded file to Google Drive, ID:', response.data.id);
-    
-    // Make the file publicly accessible
-    await drive.permissions.create({
-      fileId: response.data.id,
-      requestBody: {
-        role: 'reader',
-        type: 'anyone'
-      }
-    });
-    
-    // Get the file link
-    const fileData = await drive.files.get({
-      fileId: response.data.id,
-      fields: 'webViewLink'
-    });
-    
-    // No need to clean up files when using memory storage
-    
-    console.log('POST /api/upload-pdf - File URL:', fileData.data.webViewLink);
-    
-    res.json({
-      message: 'PDF uploaded successfully',
-      fileId: response.data.id,
-      fileUrl: fileData.data.webViewLink
-    });
-    */
-  } catch (error) {
-    console.error('POST /api/upload-pdf - Error:', error);
-    
-    res.status(500).json({
-      message: 'Failed to upload PDF',
-      error: error.message
-    });
+    // Save each note
+    let results = [];
+    for (let i = 0; i < files.length; i++) {
+      // Here you would upload to Cloudinary, get URLs, and save
+      // For demo: just save metadata
+      const note = await Notes.create({
+        title: titles[i],
+        description: descriptions[i],
+        pdfUrl: 'cloudinary-url-placeholder',
+        uploadedBy,
+        createdAt: new Date()
+      });
+      results.push(note);
+    }
+    res.json({ success: true, notes: results });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

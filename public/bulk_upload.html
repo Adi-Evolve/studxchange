@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bulk Upload Notes - StudXchange</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6f9; }
+    .container { max-width: 500px; margin: 60px auto; background: #fff; border-radius: 10px; padding: 2rem; box-shadow: 0 4px 18px rgba(0,0,0,0.09); }
+    h2 { text-align: center; margin-bottom: 1.5rem; }
+    .input-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: 0.5rem; }
+    input[type="text"], input[type="file"], textarea, input[type="email"] { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 0.5rem; }
+    button { width: 100%; padding: 0.75rem; background: #2a3d56; color: #fff; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; margin-top: 1rem; }
+    button:hover { background: #1a75ff; }
+    .note-entry { border: 1px solid #eee; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; background: #fafafa; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Bulk Upload Notes</h2>
+    <form id="bulkUploadForm">
+      <div class="input-group">
+        <label for="uploaderEmail">Your Email (for analytics)</label>
+        <input type="email" id="uploaderEmail" required />
+      </div>
+      <div id="notesInputs"></div>
+      <button type="button" onclick="addNoteEntry()">Add Another Note</button>
+      <button type="submit">Upload All</button>
+      <div id="uploadStatus" style="margin-top:1rem;color:green;"></div>
+    </form>
+  </div>
+  <script>
+    let noteCount = 0;
+    function addNoteEntry() {
+      noteCount++;
+      const notesInputs = document.getElementById('notesInputs');
+      const div = document.createElement('div');
+      div.className = 'note-entry';
+      div.innerHTML = `
+        <label>Title</label>
+        <input type="text" name="title${noteCount}" required />
+        <label>Description</label>
+        <textarea name="desc${noteCount}" required></textarea>
+        <label>PDF File</label>
+        <input type="file" name="pdf${noteCount}" accept="application/pdf" required />
+      `;
+      notesInputs.appendChild(div);
+    }
+    addNoteEntry(); // Add first note entry by default
+    document.getElementById('bulkUploadForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData();
+      const uploaderEmail = document.getElementById('uploaderEmail').value;
+      formData.append('uploadedBy', uploaderEmail);
+      const noteDivs = document.querySelectorAll('.note-entry');
+      let titles = [], descriptions = [];
+      noteDivs.forEach((div, idx) => {
+        titles.push(div.querySelector('input[type="text"]').value);
+        descriptions.push(div.querySelector('textarea').value);
+        formData.append('pdfs', div.querySelector('input[type="file"]').files[0]);
+      });
+      formData.append('titles', titles);
+      formData.append('descriptions', descriptions);
+      const res = await fetch('/api/bulk-upload-notes', { method: 'POST', body: formData });
+      const data = await res.json();
+      document.getElementById('uploadStatus').textContent = data.success ? 'Uploaded successfully!' : (data.error || 'Error uploading');
+    }
+  </script>
+</body>
+</html>

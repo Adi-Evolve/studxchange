@@ -1291,50 +1291,73 @@
           
           // Create a PDF viewer section if pdfUrl exists
           if (currentProduct.pdfUrl) {
-            // Create PDF viewer container
             const pdfSection = document.createElement('div');
             pdfSection.className = 'product-section';
             pdfSection.innerHTML = `
-              <h3>Preview PDF</h3>
+              <h3>Buy & Download PDF</h3>
               <div class="pdf-container">
-                <p>Click below to view or download the PDF:</p>
-                <a href="${currentProduct.pdfUrl}" target="_blank" class="pdf-button">
-                  <i class="fas fa-file-pdf"></i> View PDF
-                </a>
+                <p>Scan the QR code or use UPI ID to pay ₹5 for this note:</p>
+                <img src="/public/upi-qr-placeholder.png" alt="UPI QR Code" style="width:160px;height:160px;display:block;margin:0 auto 10px;" />
+                <p style="text-align:center;font-size:14px;">UPI ID: <b>your-upi-id@okhdfcbank</b></p>
+                <button id="showTxnInputBtn" class="pdf-button">I have paid</button>
+                <div id="txnInputSection" style="display:none;margin-top:10px;">
+                  <input type="text" id="txnIdInput" placeholder="Enter UPI Transaction ID" style="padding:8px;width:80%;border-radius:5px;border:1px solid #ccc;" />
+                  <input type="email" id="buyerEmailInput" placeholder="Your Email" style="padding:8px;width:80%;margin-top:5px;border-radius:5px;border:1px solid #ccc;" />
+                  <button id="submitTxnBtn" class="pdf-button" style="margin-top:8px;">Submit</button>
+                  <div id="txnStatus" style="margin-top:10px;color:green;display:none;"></div>
+                </div>
               </div>
             `;
-            
-            // Insert PDF section before product details
             const productInfoSection = document.querySelector('.product-info');
             productInfoSection.parentNode.insertBefore(pdfSection, productInfoSection.nextSibling);
             
-            // Add PDF styling
             const style = document.createElement('style');
             style.textContent = `
-              .pdf-container {
-                padding: 15px;
-                background: #f9f9f9;
-                border-radius: 8px;
-                margin-bottom: 20px;
-              }
-              .pdf-button {
-                display: inline-flex;
-                align-items: center;
-                gap: 8px;
-                background: #2a3d56;
-                color: white;
-                padding: 10px 20px;
-                border-radius: 5px;
-                text-decoration: none;
-                font-weight: bold;
-                margin-top: 10px;
-                transition: background 0.3s;
-              }
-              .pdf-button:hover {
-                background: #1a75ff;
-              }
+              .pdf-container { padding: 15px; background: #f9f9f9; border-radius: 8px; margin-bottom: 20px; }
+              .pdf-button { display: inline-flex; align-items: center; gap: 8px; background: #2a3d56; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; margin-top: 10px; transition: background 0.3s; border: none; cursor: pointer; }
+              .pdf-button:hover { background: #1a75ff; }
             `;
             document.head.appendChild(style);
+            
+            setTimeout(() => {
+              const showTxnInputBtn = document.getElementById('showTxnInputBtn');
+              const txnInputSection = document.getElementById('txnInputSection');
+              const submitTxnBtn = document.getElementById('submitTxnBtn');
+              const txnStatus = document.getElementById('txnStatus');
+              if (showTxnInputBtn) {
+                showTxnInputBtn.onclick = function() {
+                  txnInputSection.style.display = 'block';
+                };
+              }
+              if (submitTxnBtn) {
+                submitTxnBtn.onclick = async function() {
+                  const txnId = document.getElementById('txnIdInput').value.trim();
+                  const email = document.getElementById('buyerEmailInput').value.trim();
+                  if (!txnId || !email) {
+                    alert('Please enter both Transaction ID and your Email.');
+                    return;
+                  }
+                  txnStatus.style.display = 'block';
+                  txnStatus.textContent = 'Submitting your payment request...';
+                  const res = await fetch('/api/payment-request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      email,
+                      noteTitle: currentProduct.title,
+                      pdfUrl: currentProduct.pdfUrl,
+                      transactionId: txnId
+                    })
+                  });
+                  const data = await res.json();
+                  if (data.success) {
+                    txnStatus.textContent = 'Payment request submitted! You will receive the download link by email after admin approval.';
+                  } else {
+                    txnStatus.textContent = 'There was an error submitting your request.';
+                  }
+                };
+              }
+            }, 500);
           }
         } else {
           document.getElementById('productMRP').textContent = `MRP: ₹${(currentProduct.price * 1.2).toFixed(2)}`;
@@ -2180,6 +2203,29 @@ window.addEventListener('resize', function() {
     setTimeout(() => productMap.invalidateSize(), 100);
   }
 });
+
+// Preview Before Buy for Notes
+if (currentProduct.category === 'Notes') {
+  document.getElementById('productMRP').textContent = `Platform Fee: ₹5`;
+  document.getElementById('productCondition').style.display = 'none';
+  document.getElementById('mapSection').style.display = 'none';
+  if (currentProduct.previewUrl) {
+    const previewSection = document.createElement('div');
+    previewSection.className = 'product-section';
+    previewSection.innerHTML = `
+      <h3>Preview (First Page)</h3>
+      <div class="pdf-preview-container">
+        <iframe src="${currentProduct.previewUrl}" width="100%" height="400" style="border:1px solid #ccc;border-radius:6px;background:#fff;"></iframe>
+        <div style="margin-top:8px;color:#888;font-size:13px;">Preview is watermarked and only shows the first page.</div>
+      </div>
+    `;
+    const productInfoSection = document.querySelector('.product-info');
+    productInfoSection.parentNode.insertBefore(previewSection, productInfoSection);
+    const style = document.createElement('style');
+    style.textContent = `.pdf-preview-container { margin-bottom: 18px; }`;
+    document.head.appendChild(style);
+  }
+}
   </script>
  
 
