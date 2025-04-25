@@ -1715,9 +1715,6 @@ if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
-} else {
-  // For production, we'll let Vercel handle the listening
-  console.log('Running in production mode - Vercel will handle the server');
 }
 
 // Connect to MongoDB when the server starts
@@ -1751,69 +1748,3 @@ app.use((err, req, res, next) => {
 
 // Export the Express API for Vercel
 module.exports = app;
-
-// Additional Vercel serverless function optimizations
-if (process.env.VERCEL) {
-  console.log('Running on Vercel environment');
-  
-  // Set some Vercel-specific headers
-  app.use((req, res, next) => {
-    res.setHeader('Cache-Control', 's-maxage=0');
-    next();
-  });
-  
-  // Handle serverless function timeouts gracefully
-  const TIMEOUT = 9000; // 9 seconds (Vercel has 10s timeout for free tier)
-  app.use((req, res, next) => {
-    const timeout = setTimeout(() => {
-      console.error('Request timeout reached');
-      res.status(503).json({ message: 'Request timeout, please try again' });
-    }, TIMEOUT);
-    
-    res.on('finish', () => clearTimeout(timeout));
-    res.on('close', () => clearTimeout(timeout));
-    next();
-  });
-}
-
-// Prevent unhandled promise rejections from crashing the serverless function
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  // Don't exit the process in production
-  if (process.env.NODE_ENV !== 'production') {
-    process.exit(1);
-  }
-});
-
-// Prevent uncaught exceptions from crashing the serverless function
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
-  // Don't exit the process in production
-  if (process.env.NODE_ENV !== 'production') {
-    process.exit(1);
-  }
-});
-
-// Add memory usage monitoring
-if (process.env.NODE_ENV === 'production') {
-  const memoryCheckInterval = setInterval(() => {
-    const memoryUsage = process.memoryUsage();
-    const memoryUsageMB = Math.round(memoryUsage.rss / 1024 / 1024);
-    
-    // Log memory usage if it's getting high (over 75% of Vercel's 1024MB limit)
-    if (memoryUsageMB > 768) {
-      console.warn(`High memory usage: ${memoryUsageMB}MB`);
-    }
-    
-    // Clear interval when the function is about to end
-    if (global.gc && memoryUsageMB > 900) {
-      console.warn('Memory usage critical, attempting garbage collection');
-      global.gc();
-    }
-  }, 5000);
-  
-  // Clear the interval after 25 seconds (Vercel functions have a 30s max duration)
-  setTimeout(() => {
-    clearInterval(memoryCheckInterval);
-  }, 25000);
-}
