@@ -2,43 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "server.js",
-      "use": "@vercel/node",
-      "config": {
-        "maxDuration": 30
-      }
-    },
-    {
       "src": "public/**",
       "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/api/notes",
-      "methods": ["GET", "POST"],
-      "dest": "/server.js"
-    },
-    {
-      "src": "/api/upload-pdf",
-      "methods": ["POST"],
-      "dest": "/server.js"
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "/server.js"
-    },
-    {
-      "src": "/auth/(.*)",
-      "dest": "/server.js"
-    },
-    {
       "src": "/(.*\\.(js|css|jpg|jpeg|png|webp|svg|ico|gif|html|pdf))",
       "dest": "/public/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/server.js"
     }
   ],
   "env": {
