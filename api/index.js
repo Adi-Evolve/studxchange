@@ -2,7 +2,11 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+<<<<<<< HEAD
 const app = require('../server-app.js');
+=======
+const app = require('../server');
+>>>>>>> 15472af (Debug: log index.html path for Vercel)
 
 // Export the Express API for Vercel serverless functions
 // This helps mitigate cold start issues and MongoDB connection problems
