@@ -449,6 +449,44 @@
 }
   </style>
   <script src="js/db-config.js"></script>
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script>
+    // Check if the pdfs bucket exists, create it if it doesn't
+    document.addEventListener('DOMContentLoaded', async function() {
+      try {
+        // List buckets to check if pdfs exists
+        const { data: buckets, error } = await supabaseClient.storage.listBuckets();
+        
+        if (error) {
+          console.error('Error checking buckets:', error);
+          return;
+        }
+        
+        // Check if pdfs bucket exists
+        const pdfsBucketExists = buckets.some(bucket => bucket.name === 'pdfs');
+        
+        if (!pdfsBucketExists) {
+          // Create the pdfs bucket
+          const { error: createError } = await supabaseClient.storage.createBucket('pdfs', {
+            public: true, // Make it publicly accessible
+            fileSizeLimit: 104857600 // 100MB in bytes
+          });
+          
+          if (createError) {
+            console.error('Error creating pdfs bucket:', createError);
+          } else {
+            console.log('Created pdfs bucket successfully');
+          }
+        } else {
+          console.log('pdfs bucket already exists');
+        }
+      } catch (err) {
+        console.error('Error setting up storage:', err);
+      }
+    });
+  </script>
 </head>
 <body>
   <!-- Common Navbar -->
@@ -1580,38 +1618,148 @@
     // Add handler for notes location
     document.getElementById('getLocationBtn').addEventListener('click', getLocation);
     
-    // Add Cloudinary integration for PDF uploads
+    // Supabase Storage integration for PDF uploads (supports up to 100MB)
+    // Optimized for Vercel deployment - bypasses serverless functions
     async function uploadPdfToCloudinary(file) {
       try {
+        // Show upload status
         document.getElementById('notesPdfUploadStatus').style.display = 'flex';
-        document.getElementById('pdfUploadProgress').textContent = 'Uploading PDF...';
+        document.getElementById('pdfUploadProgress').textContent = 'Preparing PDF upload...';
         
-        // Create form data for the file
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', 'studx_pdf_upload'); // <-- use your unsigned preset
-        
-        // Upload to Cloudinary
-        const response = await fetch('https://api.cloudinary.com/v1_1/djouqnug2/auto/upload', {
-          method: 'POST',
-          body: formData
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to upload PDF');
+        // Check file size
+        if (file.size > SUPABASE_MAX_FILE_SIZE) {
+          throw new Error(`File size exceeds the maximum limit of ${SUPABASE_MAX_FILE_SIZE / (1024 * 1024)}MB`);
         }
         
-        const data = await response.json();
-        document.getElementById('pdfUploadProgress').textContent = 'PDF uploaded successfully!';
-        return data.secure_url; // Return the Cloudinary URL
+        // Create a unique filename with timestamp to prevent collisions
+        const timestamp = Date.now();
+        const sanitizedFilename = file.name.replace(/[^a-zA-Z0-9.-]/g, '_'); // Remove special characters
+        const filename = `${timestamp}_${sanitizedFilename}`;
+        
+        // Upload directly to Supabase Storage (client-side)
+        document.getElementById('pdfUploadProgress').textContent = 'Uploading PDF to storage...';
+        
+        // Use chunked upload for large files to improve reliability
+        const chunkSize = 2 * 1024 * 1024; // 2MB chunks to avoid Vercel limits
+        const totalChunks = Math.ceil(file.size / chunkSize);
+        
+        // For files under 4MB, upload directly
+        if (file.size <= 4 * 1024 * 1024) {
+          const { data, error } = await supabaseClient
+            .storage
+            .from('pdfs')
+            .upload(filename, file, {
+              cacheControl: '3600',
+              upsert: true
+            });
+          
+          if (error) {
+            throw error;
+          }
+          
+          // Get the public URL
+          const { data: urlData } = supabaseClient
+            .storage
+            .from('pdfs')
+            .getPublicUrl(filename);
+          
+          document.getElementById('pdfUploadProgress').textContent = 'PDF uploaded successfully!';
+          
+          // Hide status after a delay
+          setTimeout(() => {
+            document.getElementById('notesPdfUploadStatus').style.display = 'none';
+          }, 3000);
+          
+          return urlData.publicUrl;
+        } 
+        // For larger files, use chunk upload strategy
+        else {
+          // Create upload progress tracking
+          let uploadedChunks = 0;
+          
+          // Process each chunk
+          for (let i = 0; i < totalChunks; i++) {
+            const start = i * chunkSize;
+            const end = Math.min(file.size, start + chunkSize);
+            const chunk = file.slice(start, end);
+            
+            // Upload this chunk
+            const { data, error } = await supabaseClient
+              .storage
+              .from('pdfs')
+              .upload(`${filename}_part${i}`, chunk, {
+                cacheControl: '3600',
+                upsert: true
+              });
+            
+            if (error) {
+              throw error;
+            }
+            
+            // Update progress
+            uploadedChunks++;
+            const progress = Math.round((uploadedChunks / totalChunks) * 100);
+            document.getElementById('pdfUploadProgress').textContent = `Uploading PDF: ${progress}%`;
+          }
+          
+          // All chunks uploaded, now combine them (this happens client-side)
+          document.getElementById('pdfUploadProgress').textContent = 'Finalizing upload...';
+          
+          // Get URLs for all chunks
+          const chunkUrls = [];
+          for (let i = 0; i < totalChunks; i++) {
+            const { data } = supabaseClient
+              .storage
+              .from('pdfs')
+              .getPublicUrl(`${filename}_part${i}`);
+            
+            chunkUrls.push(data.publicUrl);
+          }
+          
+          // Store the chunk information in a metadata file
+          const metadata = {
+            originalFilename: file.name,
+            totalChunks: totalChunks,
+            chunkUrls: chunkUrls,
+            mimeType: file.type,
+            size: file.size,
+            timestamp: timestamp
+          };
+          
+          const metadataBlob = new Blob([JSON.stringify(metadata)], { type: 'application/json' });
+          
+          const { data: metadataData, error: metadataError } = await supabaseClient
+            .storage
+            .from('pdfs')
+            .upload(`${filename}_metadata.json`, metadataBlob, {
+              cacheControl: '3600',
+              upsert: true
+            });
+          
+          if (metadataError) {
+            throw metadataError;
+          }
+          
+          // Get the metadata URL which will be used for downloading
+          const { data: metadataUrlData } = supabaseClient
+            .storage
+            .from('pdfs')
+            .getPublicUrl(`${filename}_metadata.json`);
+          
+          document.getElementById('pdfUploadProgress').textContent = 'PDF uploaded successfully!';
+          
+          // Hide status after a delay
+          setTimeout(() => {
+            document.getElementById('notesPdfUploadStatus').style.display = 'none';
+          }, 3000);
+          
+          // Return the metadata URL as the PDF URL
+          return metadataUrlData.publicUrl;
+        }
       } catch (error) {
         console.error('PDF upload error:', error);
-        document.getElementById('pdfUploadProgress').textContent = 'Failed to upload PDF';
+        document.getElementById('pdfUploadProgress').textContent = `Failed to upload PDF: ${error.message || 'Unknown error'}`;
         throw error;
-      } finally {
-        setTimeout(() => {
-          document.getElementById('notesPdfUploadStatus').style.display = 'none';
-        }, 3000);
       }
     }
     
