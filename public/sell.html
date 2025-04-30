@@ -497,11 +497,11 @@
     <section class="sell-page">
       <h1>Sell Your Products</h1>
       
-      <!-- Form Type Selection Tabs -->
-      <div class="form-tabs">
-        <button type="button" class="tab-button active" data-form="regularForm">Regular Products</button>
-        <button type="button" class="tab-button" data-form="notesForm">Notes</button>
-        <button type="button" class="tab-button" data-form="roomForm">Room/Hostel</button>
+      <!-- Category Selection as Tabs -->
+      <div class="category-tabs" style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <button type="button" class="category-tab active" data-category="regular">Regular Products</button>
+        <button type="button" class="category-tab" data-category="notes">Notes</button>
+        <button type="button" class="category-tab" data-category="room">Room/Hostel</button>
       </div>
       
       <!-- Common Fields For All Forms -->
@@ -923,42 +923,41 @@
   // -----------------------------
   // Tabbed Interface Handling
   // -----------------------------
-  function setupTabButtons() {
-    const tabButtons = document.querySelectorAll('.tab-button');
-    const forms = {
-      'regularForm': document.getElementById('regularProductForm'),
-      'notesForm': document.getElementById('notesForm'),
-      'roomForm': document.getElementById('roomForm')
-    };
-    
-    // Function to switch active tab and form
-    function switchTab(activeFormId) {
-      // Hide all forms
-      Object.values(forms).forEach(form => {
-        if (form) form.style.display = 'none';
-      });
-      
-      // Remove active class from all tabs
-      tabButtons.forEach(btn => btn.classList.remove('active'));
-      
-      // Show the selected form and activate its tab
-      if (forms[activeFormId]) {
-        forms[activeFormId].style.display = 'block';
-        document.querySelector(`.tab-button[data-form="${activeFormId}"]`).classList.add('active');
-      }
+  document.addEventListener('DOMContentLoaded', function() {
+    // CATEGORY TABS HANDLER
+    const regTab = document.querySelector('.category-tab[data-category="regular"]');
+    const notesTab = document.querySelector('.category-tab[data-category="notes"]');
+    const roomTab = document.querySelector('.category-tab[data-category="room"]');
+    const regForm = document.getElementById('regularProductForm');
+    const notesForm = document.getElementById('notesForm');
+    const roomForm = document.getElementById('roomForm');
+    function showForm(formType) {
+      regForm.style.display = formType === 'regular' ? 'block' : 'none';
+      notesForm.style.display = formType === 'notes' ? 'block' : 'none';
+      roomForm.style.display = formType === 'room' ? 'block' : 'none';
     }
-    
-    // Add click event listeners to all tab buttons
-    tabButtons.forEach(button => {
-      button.addEventListener('click', function() {
-        const formId = this.getAttribute('data-form');
-        switchTab(formId);
-      });
+    regTab.addEventListener('click', function() {
+      showForm('regular');
+      regTab.classList.add('active');
+      notesTab.classList.remove('active');
+      roomTab.classList.remove('active');
     });
-    
-    return switchTab; // Return the function for external use
-  }
-  
+    notesTab.addEventListener('click', function() {
+      showForm('notes');
+      regTab.classList.remove('active');
+      notesTab.classList.add('active');
+      roomTab.classList.remove('active');
+    });
+    roomTab.addEventListener('click', function() {
+      showForm('room');
+      regTab.classList.remove('active');
+      notesTab.classList.remove('active');
+      roomTab.classList.add('active');
+    });
+    // Show regular form by default
+    showForm('regular');
+  });
+
   // -----------------------------
   // Form and Image Upload Handling
   // -----------------------------
@@ -973,27 +972,6 @@
     
     // Initialize the form and state
     initForm();
-    
-    // Setup tab switching functionality
-    const switchTab = setupTabButtons();
-    
-    // Show only the appropriate form based on the URL parameter
-    const urlParams = new URLSearchParams(window.location.search);
-    const formType = urlParams.get('type');
-    
-    if (formType) {
-      // Switch to the appropriate form based on URL parameter
-      if (formType === 'notes') {
-        switchTab('notesForm');
-      } else if (formType === 'room' || formType === 'hostel') {
-        switchTab('roomForm');
-      } else {
-        switchTab('regularForm');
-      }
-    } else {
-      // Default to regular product form
-      switchTab('regularForm');
-    }
     
     // Set up checkbox behavior for mess section
     const messCheckbox = document.getElementById('mess');
@@ -1283,7 +1261,6 @@ if (roomForm) roomForm.style.display = isRoom ? 'block' : 'none';
       
       if (this.files.length > 10) {
         alert('Maximum 10 images allowed');
-        this.value = '';
         return;
       }
       
