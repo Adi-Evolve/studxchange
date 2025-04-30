@@ -1028,11 +1028,13 @@
       const isRoom = selectedCategory === 'Room';
       const isNotes = selectedCategory === 'Notes';
       
-      // Toggle display of form sections
-      document.getElementById('regularForm').style.display = (isRoom || isNotes) ? 'none' : 'block';
-      document.getElementById('regularFormCont').style.display = (isRoom || isNotes) ? 'none' : 'block';
-      document.getElementById('roomForm').style.display = isRoom ? 'block' : 'none';
-      document.getElementById('notesForm').style.display = isNotes ? 'block' : 'none';
+      // Use correct form IDs and add existence checks
+const regForm = document.getElementById('regularProductForm');
+const notesForm = document.getElementById('notesForm');
+const roomForm = document.getElementById('roomForm');
+if (regForm) regForm.style.display = (isRoom || isNotes) ? 'none' : 'block';
+if (notesForm) notesForm.style.display = isNotes ? 'block' : 'none';
+if (roomForm) roomForm.style.display = isRoom ? 'block' : 'none';
       
       // Reset form fields when switching
       if (isRoom) {
@@ -1863,23 +1865,24 @@
           
           const metadataBlob = new Blob([JSON.stringify(metadata)], { type: 'application/json' });
           
-          const { data: metadataData, error: metadataError } = await supabaseClient
-            .storage
-            .from('pdfs')
-            .upload(`${filename}_metadata.json`, metadataBlob, {
-              cacheControl: '3600',
-              upsert: true
-            });
-          
-          if (metadataError) {
-            throw metadataError;
-          }
+          const { data, error } = await supabaseClient
+      .storage
+      .from('pdfs')
+      .upload(`pdfs/${file.name}`, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+      if (error) {
+      console.error('Supabase PDF upload error:', error);
+      document.getElementById('pdfUploadProgress').textContent = `Failed to upload PDF: ${error.message || 'Unknown error'}`;
+      throw error;
+    }
           
           // Get the metadata URL which will be used for downloading
-          const { data: metadataUrlData } = supabaseClient
+          const { data: urlData } = supabaseClient
             .storage
             .from('pdfs')
-            .getPublicUrl(`${filename}_metadata.json`);
+            .getPublicUrl(`pdfs/${file.name}`);
           
           document.getElementById('pdfUploadProgress').textContent = 'PDF uploaded successfully!';
           
@@ -1888,8 +1891,8 @@
             document.getElementById('notesPdfUploadStatus').style.display = 'none';
           }, 3000);
           
-          // Return the metadata URL as the PDF URL
-          return metadataUrlData.publicUrl;
+          // Return the   metadata URL as the PDF URL
+          return urlData.publicUrl;
         }
       } catch (error) {
         console.error('PDF upload error:', error);
