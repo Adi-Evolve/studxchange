@@ -449,6 +449,44 @@
 }
   </style>
   <script src="js/db-config.js"></script>
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script>
+    // Check if the pdfs bucket exists, create it if it doesn't
+    document.addEventListener('DOMContentLoaded', async function() {
+      try {
+        // List buckets to check if pdfs exists
+        const { data: buckets, error } = await supabaseClient.storage.listBuckets();
+        
+        if (error) {
+          console.error('Error checking buckets:', error);
+          return;
+        }
+        
+        // Check if pdfs bucket exists
+        const pdfsBucketExists = buckets.some(bucket => bucket.name === 'pdfs');
+        
+        if (!pdfsBucketExists) {
+          // Create the pdfs bucket
+          const { error: createError } = await supabaseClient.storage.createBucket('pdfs', {
+            public: true, // Make it publicly accessible
+            fileSizeLimit: 104857600 // 100MB in bytes
+          });
+          
+          if (createError) {
+            console.error('Error creating pdfs bucket:', createError);
+          } else {
+            console.log('Created pdfs bucket successfully');
+          }
+        } else {
+          console.log('pdfs bucket already exists');
+        }
+      } catch (err) {
+        console.error('Error setting up storage:', err);
+      }
+    });
+  </script>
 </head>
 <body>
   <!-- Common Navbar -->
@@ -458,148 +496,203 @@
     <div class="sell-container">
     <section class="sell-page">
       <h1>Sell Your Products</h1>
-      <form class="sell-form" id="sellForm">
-          <div class="form-column">
-        <label for="category">Category</label>
-        <select id="category" name="category" required>
-          <option value="Laptop">Laptop</option>
-          <option value="Books">Books</option>
-          <option value="Notes">Notes</option>
-          <option value="project equipments">Project Equipments</option>
-          <option value="electronics">Electronics</option>
-          <option value="Room">Room</option>
-          <option value="Hostel Equipments">Hostel Equipments</option>
-          <option value="stationery">Stationery</option>
-          <option value="Vehicle">Cycle/Bike</option>
-          <option value="others">Others</option>
+      
+      <!-- Form Type Selection Tabs -->
+      <div class="form-tabs">
+        <button type="button" class="tab-button active" data-form="regularForm">Regular Products</button>
+        <button type="button" class="tab-button" data-form="notesForm">Notes</button>
+        <button type="button" class="tab-button" data-form="roomForm">Room/Hostel</button>
+      </div>
+      
+      <!-- Common Fields For All Forms -->
+      <div class="common-fields">
+        <label for="college">Select College</label>
+        <select id="college" name="college" required>
+          <option value="all">All</option>
+          <option value="VIT">Vishwakarma Institute of Technology</option>
+          <option value="COEP">College Of Engineering</option>
+          <option value="PICT">PICT, Balaji Nagar</option>
+          <option value="DYP">D.Y.Patil Engineering College</option>
+          <option value="PCCOE">Pimpri Chinchwad College of Engineering</option>
         </select>
-            
-            <label for="college">Select College</label>
-            <select id="college" name="college" required>
-              <option value="all">All</option>
-              <option value="VIT">Vishwakarma Institute of Technology</option>
-              <option value="COEP">College Of Engineering</option>
-              <option value="PICT">PICT, Balaji Nagar</option>
-              <option value="DYP">D.Y.Patil Engineering College</option>
-              <option value="PCCOE">Pimpri Chinchwad College of Engineering</option>
+      </div>
+      
+      <!-- Regular Products Form -->
+      <form class="sell-form" id="regularProductForm">
+        <h2><i class="fas fa-shopping-bag"></i> Sell Regular Products</h2>
+        <div class="form-columns">
+          <div class="form-column">
+            <label for="category">Category</label>
+            <select id="category" name="category" required>
+              <option value="Laptop">Laptop</option>
+              <option value="Books">Books</option>
+              <option value="project equipments">Project Equipments</option>
+              <option value="electronics">Electronics</option>
+              <option value="Hostel Equipments">Hostel Equipments</option>
+              <option value="stationery">Stationery</option>
+              <option value="Vehicle">Cycle/Bike</option>
+              <option value="others">Others</option>
             </select>
             
-            <!-- Regular product form fields -->
-            <div id="regularForm">
-              <label for="title">Product Title</label>
-              <input type="text" id="title" name="title" placeholder="e.g., Books, Scientific Calculator, Laptop" required>
-              
-        <label for="price">Set Price (₹)</label>
-        <input type="number" id="price" name="price" placeholder="Enter price" required>
-        
-              <label for="condition">Condition</label>
-              <select id="condition" name="condition" required>
-                <option value="new">New</option>
-                <option value="used">Used</option>
-                <option value="refurbished">Refurbished</option>
-              </select>
+            <label for="title">Product Title</label>
+            <input type="text" id="title" name="title" placeholder="e.g., Books, Scientific Calculator, Laptop" required>
+            
+            <label for="price">Set Price (₹)</label>
+            <input type="number" id="price" name="price" placeholder="Enter price" required>
+            
+            <label for="condition">Condition</label>
+            <select id="condition" name="condition" required>
+              <option value="new">New</option>
+              <option value="used">Used</option>
+              <option value="refurbished">Refurbished</option>
+            </select>
+          </div>
+          
+          <div class="form-column">
+            <label for="imageUpload">Upload Product Images (1-5)</label>
+            <div class="image-preview-container" id="imagePreviews"></div>
+            <input type="file" id="imageUpload" accept="image/*" multiple required>
+            <div id="imageUploadStatus" aria-live="polite" style="display: none;">
+              <i class="fas fa-spinner fa-spin"></i>
+              <span id="uploadProgress">Uploading images...</span>
+            </div>
+            
+            <label for="description">Description</label>
+            <textarea id="description" name="description" rows="5" placeholder="Write a detailed description of your product" required></textarea>
+            
+            <div id="locationSection">
+              <button type="button" id="getLocationBtn" class="location-button">
+                <i class="fas fa-map-marker-alt"></i> Use Current Location
+              </button>
+              <small id="locationStatus">Location not yet obtained</small>
+            </div>
+            
+            <button type="submit" class="submit-button" id="regularSubmitBtn">
+              <i class="fas fa-check-circle"></i> List Product
+            </button>
+          </div>
+        </div>
+      </form>
+      
+      <!-- Notes Form -->
+      <form class="sell-form" id="notesForm" style="display: none;">
+        <h2><i class="fas fa-file-alt"></i> Sell Notes</h2>
+        <div class="form-columns">
+          <div class="form-column">
+            <label for="notesTitle">Title of Notes</label>
+            <input type="text" id="notesTitle" name="notesTitle" placeholder="Enter title of notes" required>
+            
+            <label for="notesSubject">Subject</label>
+            <input type="text" id="notesSubject" name="notesSubject" placeholder="e.g., Physics, Mathematics, Computer Science" required>
+            
+            <label for="notesSemester">Semester/Year</label>
+            <select id="notesSemester" name="notesSemester" required>
+              <option value="">Select Semester/Year</option>
+              <option value="1st Semester">1st Semester</option>
+              <option value="2nd Semester">2nd Semester</option>
+              <option value="3rd Semester">3rd Semester</option>
+              <option value="4th Semester">4th Semester</option>
+              <option value="5th Semester">5th Semester</option>
+              <option value="6th Semester">6th Semester</option>
+              <option value="7th Semester">7th Semester</option>
+              <option value="8th Semester">8th Semester</option>
+              <option value="1st Year">1st Year</option>
+              <option value="2nd Year">2nd Year</option>
+              <option value="3rd Year">3rd Year</option>
+              <option value="4th Year">4th Year</option>
+            </select>
+            
+            <label for="notesPrice">Price (₹)</label>
+            <div class="price-container">
+              <input type="number" id="notesPrice" name="notesPrice" placeholder="Enter price" required>
+              <small style="display: block; color: #666; margin-top: 5px;">Note: ₹5 will be deducted as platform fees</small>
             </div>
           </div>
           
           <div class="form-column">
-            <!-- Regular product form fields continued -->
-            <div id="regularFormCont">
-              <label for="imageUpload">Upload Product Images (1-5)</label>
-        <div class="image-preview-container" id="imagePreviews"></div>
-        <input type="file" id="imageUpload" accept="image/*" multiple required>
-<div id="imageUploadStatus" aria-live="polite">
-  <i class="fas fa-spinner fa-spin"></i>
-  <span id="uploadProgress">Uploading images...</span>
-</div>
-              
-        <label for="description">Description</label>
-        <textarea id="description" name="description" rows="5" placeholder="Write a detailed description of your product" required></textarea>
-              
-              <div id="locationSection">
-                <button type="button" id="getLocationBtn" class="location-button">
-                  <i class="fas fa-map-marker-alt"></i> Use Current Location
-                </button>
-                <small id="locationStatus">Location not yet obtained</small>
-              </div>
+            <label for="notesImageUpload">Upload Preview Images (1-5)</label>
+            <div class="image-preview-container" id="notesImagePreviews"></div>
+            <input type="file" id="notesImageUpload" accept="image/*" multiple required>
+            <small>Upload preview images of your notes</small>
+            <div id="notesImageUploadStatus" aria-live="polite" style="display: none;">
+              <i class="fas fa-spinner fa-spin"></i>
+              <span id="notesUploadProgress">Uploading images...</span>
             </div>
             
-            <!-- Notes specific form fields -->
-            <div id="notesForm" class="notes-form" style="display: none;">
-              <div class="notes-form-left">
-                <label for="notesTitle">Title of Notes</label>
-                <input type="text" id="notesTitle" name="notesTitle" placeholder="Enter title of notes" required>
-                
-                <label for="notesImageUpload">Upload Images of Notes (1-5)</label>
-                <div class="image-preview-container" id="notesImagePreviews"></div>
-                <input type="file" id="notesImageUpload" accept="image/*" multiple required>
-                <small>Upload preview images of your notes</small>
-                <div id="notesImageUploadStatus" aria-live="polite" style="display: none;">
-                  <i class="fas fa-spinner fa-spin"></i>
-                  <span id="notesUploadProgress">Uploading images...</span>
-                </div>
-                
-                <label for="pdfFileInput">Upload PDF (max 100MB):</label>
-    <input type="file" id="pdfFileInput" name="pdfFileInput" accept="application/pdf" />
-    <div id="notesPdfUploadStatus" aria-live="polite" style="display: none;">
-      <i class="fas fa-spinner fa-spin"></i>
-      <span id="pdfUploadProgress">Uploading PDF...</span>
-    </div>
-                
-                <label for="notesDescription">Description</label>
-                <textarea id="notesDescription" name="notesDescription" rows="5" placeholder="Write a detailed description of your notes" required></textarea>
-                
-                <label for="notesPrice">Price (₹)</label>
-                <div class="price-container">
-                  <input type="number" id="notesPrice" name="notesPrice" placeholder="Enter price" required>
-                  <small style="display: block; color: #666; margin-top: 5px;">Note: ₹5 will be deducted as platform fees</small>
-                </div>
-              </div>
+            <label for="pdfFileInput">Upload PDF (max 100MB):</label>
+            <input type="file" id="pdfFileInput" name="pdfFileInput" accept="application/pdf" required />
+            <div id="notesPdfUploadStatus" aria-live="polite" style="display: none;">
+              <i class="fas fa-spinner fa-spin"></i>
+              <span id="pdfUploadProgress">Uploading PDF...</span>
             </div>
             
-            <!-- Room specific form fields -->
-            <div id="roomForm" class="room-form">
-              <div class="room-form-left">
-                <label for="hostelName">Hostel/PG Name</label>
-                <input type="text" id="hostelName" name="hostelName" placeholder="Enter hostel or PG name">
-                
-                <label for="roomImageUpload">Upload Room Images (up to 10)</label>
-                <div class="image-preview-container" id="roomImagePreviews"></div>
-                <input type="file" id="roomImageUpload" accept="image/*" multiple>
-                <small>Maximum 50MB total</small>
-                <div id="roomImageUploadStatus" aria-live="polite" style="display: none;">
-                  <i class="fas fa-spinner fa-spin"></i>
-                  <span id="roomUploadProgress">Uploading images...</span>
-                </div>
-                
-                <label for="ownerName">Owner Name</label>
-                <input type="text" id="ownerName" name="ownerName" placeholder="Enter owner name">
-                
-                <label for="contact1">Contact Number 1</label>
-                <input type="tel" id="contact1" name="contact1" placeholder="Enter primary contact number" pattern="[0-9]{10}">
-                
-                <label for="contact2">Contact Number 2 (Optional)</label>
-                <input type="tel" id="contact2" name="contact2" placeholder="Enter secondary contact number" pattern="[0-9]{10}">
-                
-                <div class="location-buttons">
-                  <button type="button" id="currentLocationBtn" class="location-button">
-                    <i class="fas fa-map-marker-alt"></i> Current Location
-                  </button>
-                  <button type="button" id="mapLocationBtn" class="location-button">
-                    <i class="fas fa-map"></i> Select on Map
-                  </button>
-                </div>
-                <small id="roomLocationStatus">Location not yet obtained</small>
-              </div>
-              
-              <div class="room-form-right">
-                <label for="collegeDistance">Distance from College (km)</label>
-                <input type="number" id="collegeDistance" name="collegeDistance" placeholder="Enter distance in kilometers" step="0.1">
-                
-                <label for="occupancy">Occupancy</label>
-                <input type="number" id="occupancy" name="occupancy" placeholder="Number of people" min="1">
-                
-                <label>Amenities</label>
-                <div class="checkbox-group">
+            <label for="notesDescription">Description</label>
+            <textarea id="notesDescription" name="notesDescription" rows="5" placeholder="Write a detailed description of your notes" required></textarea>
+            
+            <button type="submit" class="submit-button" id="notesSubmitBtn">
+              <i class="fas fa-check-circle"></i> List Notes
+            </button>
+          </div>
+        </div>
+      </form>
+      
+      <!-- Room/Hostel Form -->
+      <form class="sell-form" id="roomForm" style="display: none;">
+        <h2><i class="fas fa-home"></i> List Room/Hostel</h2>
+        <div class="form-columns">
+          <div class="form-column">
+            <label for="roomTitle">Title</label>
+            <input type="text" id="roomTitle" name="roomTitle" placeholder="e.g., Single Room near VIT" required>
+            
+            <label for="roomType">Type</label>
+            <select id="roomType" name="roomType" required>
+              <option value="">Select Room Type</option>
+              <option value="Single Room">Single Room</option>
+              <option value="Shared Room">Shared Room</option>
+              <option value="1BHK">1BHK</option>
+              <option value="2BHK">2BHK</option>
+              <option value="3BHK">3BHK</option>
+              <option value="PG">PG</option>
+              <option value="Hostel">Hostel</option>
+            </select>
+            
+            <label for="roomRent">Monthly Rent (₹)</label>
+            <input type="number" id="roomRent" name="roomRent" placeholder="Enter monthly rent" required>
+            
+            <label for="depositAmount">Deposit Amount (₹)</label>
+            <input type="number" id="depositAmount" name="depositAmount" placeholder="Enter deposit amount" required>
+            
+            <label for="roomDescription">Description</label>
+            <textarea id="roomDescription" name="roomDescription" rows="5" placeholder="Write a detailed description of the room/hostel" required></textarea>
+            
+            <label for="collegeDistance">Distance from College (km)</label>
+            <input type="number" id="collegeDistance" name="collegeDistance" placeholder="Enter distance in kilometers" step="0.1">
+            
+            <label for="occupancy">Occupancy</label>
+            <input type="number" id="occupancy" name="occupancy" placeholder="Number of people" min="1">
+          </div>
+          
+          <div class="form-column">
+            <label for="roomImageUpload">Upload Room Images (up to 10)</label>
+            <div class="image-preview-container" id="roomImagePreviews"></div>
+            <input type="file" id="roomImageUpload" accept="image/*" multiple required>
+            <small>Maximum 50MB total</small>
+            <div id="roomImageUploadStatus" aria-live="polite" style="display: none;">
+              <i class="fas fa-spinner fa-spin"></i>
+              <span id="roomUploadProgress">Uploading images...</span>
+            </div>
+            
+            <label for="ownerName">Owner Name</label>
+            <input type="text" id="ownerName" name="ownerName" placeholder="Enter owner name" required>
+            
+            <label for="contact1">Contact Number 1</label>
+            <input type="tel" id="contact1" name="contact1" placeholder="Enter primary contact number" pattern="[0-9]{10}" required>
+            
+            <label for="contact2">Contact Number 2 (Optional)</label>
+            <input type="tel" id="contact2" name="contact2" placeholder="Enter secondary contact number" pattern="[0-9]{10}">
+            
+            <label>Amenities</label>
+            <div class="amenities-container">
                   <div class="checkbox-item">
                     <input type="checkbox" id="ac" name="amenities" value="ac">
                     <label for="ac">AC</label>
@@ -616,30 +709,54 @@
                     <input type="checkbox" id="mess" name="amenities" value="mess">
                     <label for="mess">Mess Included</label>
                   </div>
+                  <div class="checkbox-item">
+                    <input type="checkbox" id="fridge" name="amenities" value="fridge">
+                    <label for="fridge">Refrigerator</label>
+                  </div>
+                  <div class="checkbox-item">
+                    <input type="checkbox" id="parking" name="amenities" value="parking">
+                    <label for="parking">Parking</label>
+                  </div>
+                  <div class="checkbox-item">
+                    <input type="checkbox" id="geyser" name="amenities" value="geyser">
+                    <label for="geyser">Hot Water/Geyser</label>
+                  </div>
+                  <div class="checkbox-item">
+                    <input type="checkbox" id="furnished" name="amenities" value="furnished">
+                    <label for="furnished">Furnished</label>
+                  </div>
                 </div>
                 
-                <div id="messSection" style="display: none;">
-                  <label for="messPrice">Mess Price (₹)</label>
-                  <input type="number" id="messPrice" name="messPrice" placeholder="Enter mess price">
+                <div id="messSection">
+                  <label for="messType">Mess Type</label>
+                  <select id="messType" name="messType">
+                    <option value="">Select Mess Type</option>
+                    <option value="Veg">Veg</option>
+                    <option value="Non-Veg">Non-Veg</option>
+                    <option value="Both">Both</option>
+                  </select>
                 </div>
+                
+                <div class="location-buttons">
+                  <button type="button" id="currentLocationBtn" class="location-button">
+                    <i class="fas fa-map-marker-alt"></i> Current Location
+                  </button>
+                  <button type="button" id="mapLocationBtn" class="location-button">
+                    <i class="fas fa-map"></i> Select on Map
+                  </button>
+                </div>
+                <small id="roomLocationStatus">Location not yet obtained</small>
+                
+                <button type="submit" class="submit-button" id="roomSubmitBtn">
+                  <i class="fas fa-check-circle"></i> List Room/Hostel
+                </button>
                 
                 <div class="checkbox-item">
                   <input type="checkbox" id="installment" name="installment">
                   <label for="installment">Installment Option Available</label>
                 </div>
-                
-                <label for="roomPrice">Price</label>
-                <div class="price-container">
-                  <input type="number" id="roomPrice" name="roomPrice" placeholder="Enter price" required>
-                  <select id="priceType" name="priceType">
-                    <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
-        </select>
-                </div>
               </div>
             </div>
-            
-            <button type="submit" id="submitButton">Submit</button>
           </div>
         </form>
       </section>
@@ -804,6 +921,45 @@
   }
 
   // -----------------------------
+  // Tabbed Interface Handling
+  // -----------------------------
+  function setupTabButtons() {
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const forms = {
+      'regularForm': document.getElementById('regularProductForm'),
+      'notesForm': document.getElementById('notesForm'),
+      'roomForm': document.getElementById('roomForm')
+    };
+    
+    // Function to switch active tab and form
+    function switchTab(activeFormId) {
+      // Hide all forms
+      Object.values(forms).forEach(form => {
+        if (form) form.style.display = 'none';
+      });
+      
+      // Remove active class from all tabs
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+      
+      // Show the selected form and activate its tab
+      if (forms[activeFormId]) {
+        forms[activeFormId].style.display = 'block';
+        document.querySelector(`.tab-button[data-form="${activeFormId}"]`).classList.add('active');
+      }
+    }
+    
+    // Add click event listeners to all tab buttons
+    tabButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const formId = this.getAttribute('data-form');
+        switchTab(formId);
+      });
+    });
+    
+    return switchTab; // Return the function for external use
+  }
+  
+  // -----------------------------
   // Form and Image Upload Handling
   // -----------------------------
   document.addEventListener('DOMContentLoaded', function() {
@@ -818,21 +974,38 @@
     // Initialize the form and state
     initForm();
     
-    // Hide room and notes forms initially
-    document.getElementById('roomForm').style.display = 'none';
-    document.getElementById('notesForm').style.display = 'none';
+    // Setup tab switching functionality
+    const switchTab = setupTabButtons();
     
     // Show only the appropriate form based on the URL parameter
     const urlParams = new URLSearchParams(window.location.search);
     const formType = urlParams.get('type');
     
     if (formType) {
-      // Set the category dropdown based on the URL parameter
+      // Switch to the appropriate form based on URL parameter
       if (formType === 'notes') {
-        document.getElementById('category').value = 'Notes';
-      } else if (formType === 'room') {
-        document.getElementById('category').value = 'Room';
+        switchTab('notesForm');
+      } else if (formType === 'room' || formType === 'hostel') {
+        switchTab('roomForm');
+      } else {
+        switchTab('regularForm');
       }
+    } else {
+      // Default to regular product form
+      switchTab('regularForm');
+    }
+    
+    // Set up checkbox behavior for mess section
+    const messCheckbox = document.getElementById('mess');
+    const messSection = document.getElementById('messSection');
+    
+    if (messCheckbox && messSection) {
+      messCheckbox.addEventListener('change', function() {
+        messSection.style.display = this.checked ? 'block' : 'none';
+      });
+      
+      // Initialize state
+      messSection.style.display = messCheckbox.checked ? 'block' : 'none';
     }
     
     // Trigger category change event to set the initial form state
@@ -1580,38 +1753,148 @@
     // Add handler for notes location
     document.getElementById('getLocationBtn').addEventListener('click', getLocation);
     
-    // Add Cloudinary integration for PDF uploads
+    // Supabase Storage integration for PDF uploads (supports up to 100MB)
+    // Optimized for Vercel deployment - bypasses serverless functions
     async function uploadPdfToCloudinary(file) {
       try {
+        // Show upload status
         document.getElementById('notesPdfUploadStatus').style.display = 'flex';
-        document.getElementById('pdfUploadProgress').textContent = 'Uploading PDF...';
+        document.getElementById('pdfUploadProgress').textContent = 'Preparing PDF upload...';
         
-        // Create form data for the file
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', 'studx_pdf_upload'); // <-- use your unsigned preset
-        
-        // Upload to Cloudinary
-        const response = await fetch('https://api.cloudinary.com/v1_1/djouqnug2/auto/upload', {
-          method: 'POST',
-          body: formData
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to upload PDF');
+        // Check file size
+        if (file.size > SUPABASE_MAX_FILE_SIZE) {
+          throw new Error(`File size exceeds the maximum limit of ${SUPABASE_MAX_FILE_SIZE / (1024 * 1024)}MB`);
         }
         
-        const data = await response.json();
-        document.getElementById('pdfUploadProgress').textContent = 'PDF uploaded successfully!';
-        return data.secure_url; // Return the Cloudinary URL
+        // Create a unique filename with timestamp to prevent collisions
+        const timestamp = Date.now();
+        const sanitizedFilename = file.name.replace(/[^a-zA-Z0-9.-]/g, '_'); // Remove special characters
+        const filename = `${timestamp}_${sanitizedFilename}`;
+        
+        // Upload directly to Supabase Storage (client-side)
+        document.getElementById('pdfUploadProgress').textContent = 'Uploading PDF to storage...';
+        
+        // Use chunked upload for large files to improve reliability
+        const chunkSize = 2 * 1024 * 1024; // 2MB chunks to avoid Vercel limits
+        const totalChunks = Math.ceil(file.size / chunkSize);
+        
+        // For files under 4MB, upload directly
+        if (file.size <= 4 * 1024 * 1024) {
+          const { data, error } = await supabaseClient
+            .storage
+            .from('pdfs')
+            .upload(filename, file, {
+              cacheControl: '3600',
+              upsert: true
+            });
+          
+          if (error) {
+            throw error;
+          }
+          
+          // Get the public URL
+          const { data: urlData } = supabaseClient
+            .storage
+            .from('pdfs')
+            .getPublicUrl(filename);
+          
+          document.getElementById('pdfUploadProgress').textContent = 'PDF uploaded successfully!';
+          
+          // Hide status after a delay
+          setTimeout(() => {
+            document.getElementById('notesPdfUploadStatus').style.display = 'none';
+          }, 3000);
+          
+          return urlData.publicUrl;
+        } 
+        // For larger files, use chunk upload strategy
+        else {
+          // Create upload progress tracking
+          let uploadedChunks = 0;
+          
+          // Process each chunk
+          for (let i = 0; i < totalChunks; i++) {
+            const start = i * chunkSize;
+            const end = Math.min(file.size, start + chunkSize);
+            const chunk = file.slice(start, end);
+            
+            // Upload this chunk
+            const { data, error } = await supabaseClient
+              .storage
+              .from('pdfs')
+              .upload(`${filename}_part${i}`, chunk, {
+                cacheControl: '3600',
+                upsert: true
+              });
+            
+            if (error) {
+              throw error;
+            }
+            
+            // Update progress
+            uploadedChunks++;
+            const progress = Math.round((uploadedChunks / totalChunks) * 100);
+            document.getElementById('pdfUploadProgress').textContent = `Uploading PDF: ${progress}%`;
+          }
+          
+          // All chunks uploaded, now combine them (this happens client-side)
+          document.getElementById('pdfUploadProgress').textContent = 'Finalizing upload...';
+          
+          // Get URLs for all chunks
+          const chunkUrls = [];
+          for (let i = 0; i < totalChunks; i++) {
+            const { data } = supabaseClient
+              .storage
+              .from('pdfs')
+              .getPublicUrl(`${filename}_part${i}`);
+            
+            chunkUrls.push(data.publicUrl);
+          }
+          
+          // Store the chunk information in a metadata file
+          const metadata = {
+            originalFilename: file.name,
+            totalChunks: totalChunks,
+            chunkUrls: chunkUrls,
+            mimeType: file.type,
+            size: file.size,
+            timestamp: timestamp
+          };
+          
+          const metadataBlob = new Blob([JSON.stringify(metadata)], { type: 'application/json' });
+          
+          const { data: metadataData, error: metadataError } = await supabaseClient
+            .storage
+            .from('pdfs')
+            .upload(`${filename}_metadata.json`, metadataBlob, {
+              cacheControl: '3600',
+              upsert: true
+            });
+          
+          if (metadataError) {
+            throw metadataError;
+          }
+          
+          // Get the metadata URL which will be used for downloading
+          const { data: metadataUrlData } = supabaseClient
+            .storage
+            .from('pdfs')
+            .getPublicUrl(`${filename}_metadata.json`);
+          
+          document.getElementById('pdfUploadProgress').textContent = 'PDF uploaded successfully!';
+          
+          // Hide status after a delay
+          setTimeout(() => {
+            document.getElementById('notesPdfUploadStatus').style.display = 'none';
+          }, 3000);
+          
+          // Return the metadata URL as the PDF URL
+          return metadataUrlData.publicUrl;
+        }
       } catch (error) {
         console.error('PDF upload error:', error);
-        document.getElementById('pdfUploadProgress').textContent = 'Failed to upload PDF';
+        document.getElementById('pdfUploadProgress').textContent = `Failed to upload PDF: ${error.message || 'Unknown error'}`;
         throw error;
-      } finally {
-        setTimeout(() => {
-          document.getElementById('notesPdfUploadStatus').style.display = 'none';
-        }, 3000);
       }
     }
     
