@@ -373,7 +373,16 @@ async function handleSellSubmit(e) {
       if (pdfFile && pdfFile.size > 0) {
         if (pdfFile.size > window.SUPABASE_MAX_FILE_SIZE) throw new Error('PDF exceeds 100MB limit');
         pdfUrl = await uploadPdfToSupabase(pdfFile);
-        payload.pdfUrl = pdfUrl;
+        // Ensure the pdfUrl is always set and valid
+        if (pdfUrl && typeof pdfUrl === 'string' && pdfUrl.startsWith('https://')) {
+          payload.pdfUrl = pdfUrl;
+        } else {
+          alert('PDF upload failed: No valid URL returned');
+          throw new Error('PDF upload failed: No valid URL returned');
+        }
+      } else {
+        // Defensive: Always set pdfUrl to empty string if no file uploaded
+        payload.pdfUrl = '';
       }
       // Submit to backend
       await apiRequest(API_ENDPOINTS.ADD_NOTES, 'POST', payload);

@@ -371,31 +371,7 @@
 </head>
 <body>
   <header>
-    <div class="navbar">
-      <div class="navlogo">
-        <a href="index.html">
-          <img src="Logo1.png" alt="StudXchange">
-        </a>
-      </div>
-      <div class="search-container">
-        <form class="searchbar" action="search-results.html" method="GET">
-          <select name="category" class="category-select">
-            <option value="all">All</option>
-            <option value="VIT">VIT</option>
-            <option value="COEP">COEP</option>
-            <option value="PICT">PICT</option>
-            <option value="DYP">DYP</option>
-            <option value="PCCOE">PCCOE</option>
-          </select>
-          <input type="text" name="query" placeholder="Search products...">
-          <button type="submit"><i class="fas fa-search"></i></button>
-        </form>
-      </div>
-      <div class="button-container">
-        <a class="wishlist-button" href="wishlist.html"><i class="fa-regular fa-heart"></i></a>
-        <a class="profile-button" href="PROFILE_FINAL.html"><i class="fas fa-user"></i></a>
-      </div>
-    </div>
+    <div id="common-navbar"></div>
   </header>
   <main>
     <div class="loading-spinner" id="loadingSpinner">
@@ -685,5 +661,6 @@
     `;
   }
   </script>
+  <script src="js/navbar.js"></script>
 </body>
 </html>
