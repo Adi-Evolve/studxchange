@@ -578,25 +578,23 @@
   }
 
   function getValidPdfUrl(product) {
-    // 1. If pdfUrl is present and looks like a full URL, use it
+    // The actual upload logic in sell.js saves the PUBLIC URL returned by Supabase as pdfUrl.
+    // So if product.pdfUrl exists, it is already a public URL (https://...supabase.co/storage/v1/object/public/notes/...).
     if (product.pdfUrl && /^https?:\/\//.test(product.pdfUrl)) {
       return product.pdfUrl;
     }
-    // 2. If pdfUrl is a relative path (e.g. just the filename), try to build the full Supabase public URL
+    // Defensive fallback: if pdfUrl is present but not a full URL, try to reconstruct it
     if (product.pdfUrl && product.pdfUrl !== 'null' && product.pdfUrl !== '') {
-      // If it looks like a Supabase storage key (starts with 'notes/')
-      if (product.pdfUrl.startsWith('notes/')) {
-        // Use your Supabase project URL and bucket name
-        return `https://ygfjhicakkcctduoscdy.supabase.co/storage/v1/object/public/notes/${product.pdfUrl.replace('notes/', '')}`;
+      // The upload in sell.js always saves with a prefix 'notes/' and the filename
+      // But the returned public URL does not have the 'notes/' prefix in the path, it's already correct
+      // So just in case, if pdfUrl is just a filename, reconstruct the public URL
+      if (!product.pdfUrl.includes('supabase.co')) {
+        // Defensive: add prefix if needed
+        return `https://ygfjhicakkcctduoscdy.supabase.co/storage/v1/object/public/notes/${product.pdfUrl.replace('notes/','')}`;
       }
-      // If it looks like a filename only
-      if (!product.pdfUrl.includes('/')) {
-        return `https://ygfjhicakkcctduoscdy.supabase.co/storage/v1/object/public/notes/${product.pdfUrl}`;
-      }
-      // Otherwise, treat as is
       return product.pdfUrl;
     }
-    // 3. If no pdfUrl, return empty string
+    // If no pdfUrl, return empty string
     return '';
   }
 
@@ -618,7 +616,7 @@
 
   function renderProductDetails(product, type) {
     const main = document.querySelector('main') || document.body;
-    // Special layout for NOTES
+    // For notes, always use the public URL format as stored by sell.js
     const pdfUrl = getValidPdfUrl(product);
     if (type === 'notes' || type === 'note' || pdfUrl) {
       main.innerHTML = `
@@ -640,7 +638,7 @@
               <p>${product.description || 'No description available.'}</p>
             </div>
             <div style="margin-top:2rem;">
-              ${(pdfUrl) ? `<button class='btn btn-primary' id='downloadPdfBtn'><i class="fas fa-file-pdf"></i> Download PDF</button>` : '<span style="color:#dc3545">No PDF available for download.</span>'}
+              ${(pdfUrl) ? `<button class='btn btn-primary' id='downloadPdfBtn'><i class=\"fas fa-file-pdf\"></i> Download PDF</button>` : '<span style=\"color:#dc3545\">No PDF available for download.</span>'}
             </div>
           </div>
         </div>
