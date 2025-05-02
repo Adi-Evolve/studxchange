@@ -1,0 +1,313 @@
+/* StudXchange Sell Page Styles - Consistent Modern Theme */
+
+body {
+  background-color: #f4f6f9;
+  color: #333;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  min-height: 100vh;
+}
+
+main {
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.sell-container {
+  display: flex;
+  width: 100%;
+  max-width: 1200px;
+  gap: 20px;
+}
+
+.sell-page {
+  flex: 1;
+  background-color: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.sell-page h1 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #2a3d56;
+}
+
+.category-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.category-tab {
+  background: #e9ecef;
+  color: #2a3d56;
+  border: none;
+  border-radius: 8px 8px 0 0;
+  padding: 10px 25px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.category-tab.active {
+  background: #2a3d56;
+  color: #fff;
+}
+
+.sell-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+.form-columns {
+  display: flex;
+  gap: 20px;
+}
+.form-column {
+  flex: 1;
+  min-width: 250px;
+}
+.sell-form label {
+  display: block;
+  margin: 10px 0 5px;
+  font-weight: bold;
+  color: #2a3d56;
+}
+.sell-form input,
+.sell-form select,
+.sell-form textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+.sell-form button,
+.submit-button {
+  width: 100%;
+  padding: 10px;
+  background-color: #2a3d56;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+.sell-form button:hover,
+.submit-button:hover {
+  background-color: #4d6a88;
+}
+
+.image-preview-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+.image-preview {
+  width: 80px;
+  height: 80px;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+.image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.remove-image {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: red;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.location-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background-color: #28a745;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+.location-button:hover {
+  background-color: #218838;
+}
+
+.price-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+.price-container input {
+  flex: 2;
+}
+.price-container select {
+  flex: 1;
+}
+
+/* Modal Styles */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  overflow-y: auto;
+}
+.modal-content {
+  background-color: #fff;
+  margin: 5% auto;
+  padding: 20px;
+  width: 80%;
+  max-width: 400px;
+  border-radius: 8px;
+  text-align: center;
+}
+.close {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  font-size: 2rem;
+  color: #333;
+  cursor: pointer;
+}
+
+/* Responsive Styles */
+@media (max-width: 900px) {
+  .form-columns {
+    flex-direction: column;
+  }
+  .sell-container {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .sell-page {
+    padding: 10px;
+  }
+  .modal-content {
+    width: 98%;
+    max-width: 98vw;
+  }
+}
+
+/* Navbar Consistency */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #2a3d56;
+  padding: 15px 30px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.navlogo img {
+  height: 100px;
+  width: 250px;
+}
+.button-container {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+.nav-button {
+  padding: 10px 25px;
+  border-radius: 25px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  font-weight: 500;
+  display: inline-block;
+}
+.sell-button {
+  color: white;
+  background-color: transparent;
+  border-color: transparent;
+}
+.sell-button:hover {
+  background-color: #546e78;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.signup-button {
+  color: white;
+  background-color: transparent;
+  border-color: transparent;
+}
+.signup-button:hover {
+  background-color: #546e78;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.profile-button {
+  color: white;
+  background-color: #2a3d56;
+  border-color: transparent;
+}
+.profile-button:hover {
+  background-color: #1a2a3a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.nav-button:hover {
+  border-color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+}
+
+/* Miscellaneous */
+#imageUploadStatus, #notesImageUploadStatus, #roomImageUploadStatus {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+#selectedLocationDisplay {
+  margin-bottom: 10px;
+  padding: 8px;
+  background: #f4f4f4;
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
+.map-loading {
+  display: none;
+  text-align: center;
+  padding: 20px;
+  font-weight: bold;
+  color: #666;
+}
+.map-loading i {
+  margin-right: 10px;
+  color: #2a3d56;
+}
+
+#map, #mapContainer {
+  width: 100%;
+  height: 400px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
