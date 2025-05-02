@@ -14,7 +14,7 @@ require('./models/otp'); // Add this line to register the OTP model
 require('./models/user');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 9000;
 
 // Configure multer for file uploads
 const upload = multer({ 
