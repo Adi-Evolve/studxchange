@@ -577,6 +577,29 @@
     return await res.json();
   }
 
+  function getValidPdfUrl(product) {
+    // 1. If pdfUrl is present and looks like a full URL, use it
+    if (product.pdfUrl && /^https?:\/\//.test(product.pdfUrl)) {
+      return product.pdfUrl;
+    }
+    // 2. If pdfUrl is a relative path (e.g. just the filename), try to build the full Supabase public URL
+    if (product.pdfUrl && product.pdfUrl !== 'null' && product.pdfUrl !== '') {
+      // If it looks like a Supabase storage key (starts with 'notes/')
+      if (product.pdfUrl.startsWith('notes/')) {
+        // Use your Supabase project URL and bucket name
+        return `https://ygfjhicakkcctduoscdy.supabase.co/storage/v1/object/public/notes/${product.pdfUrl.replace('notes/', '')}`;
+      }
+      // If it looks like a filename only
+      if (!product.pdfUrl.includes('/')) {
+        return `https://ygfjhicakkcctduoscdy.supabase.co/storage/v1/object/public/notes/${product.pdfUrl}`;
+      }
+      // Otherwise, treat as is
+      return product.pdfUrl;
+    }
+    // 3. If no pdfUrl, return empty string
+    return '';
+  }
+
   document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id');
@@ -596,7 +619,8 @@
   function renderProductDetails(product, type) {
     const main = document.querySelector('main') || document.body;
     // Special layout for NOTES
-    if (type === 'notes' || type === 'note' || product.pdfUrl) {
+    const pdfUrl = getValidPdfUrl(product);
+    if (type === 'notes' || type === 'note' || pdfUrl) {
       main.innerHTML = `
         <div class="product-container">
           <div class="product-images">
@@ -616,19 +640,20 @@
               <p>${product.description || 'No description available.'}</p>
             </div>
             <div style="margin-top:2rem;">
-              ${(product.pdfUrl && product.pdfUrl !== 'null' && product.pdfUrl !== '') ? `<button class='btn btn-primary' id='downloadPdfBtn'><i class="fas fa-file-pdf"></i> Download PDF</button>` : '<span style="color:#dc3545">No PDF available for download.</span>'}
+              ${(pdfUrl) ? `<button class='btn btn-primary' id='downloadPdfBtn'><i class="fas fa-file-pdf"></i> Download PDF</button>` : '<span style="color:#dc3545">No PDF available for download.</span>'}
             </div>
           </div>
         </div>
       `;
-      if (product.pdfUrl && product.pdfUrl !== 'null' && product.pdfUrl !== '') {
+      if (pdfUrl) {
         setTimeout(() => {
           const btn = document.getElementById('downloadPdfBtn');
           if(btn) {
             btn.onclick = e => {
               e.stopPropagation();
               const a = document.createElement('a');
-              a.href = product.pdfUrl;
+              a.href = pdfUrl;
+              a.target = '_blank';
               a.download = product.title ? `${product.title}.pdf` : 'notes.pdf';
               document.body.appendChild(a);
               a.click();
