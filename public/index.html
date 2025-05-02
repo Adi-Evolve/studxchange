@@ -894,23 +894,36 @@ async function handleLocation() {
 
         async function loadFeaturedProducts() {
             try {
-                const response = await fetch('/api/notes');
-                const products = await response.json();
+                const [productsRes, notesRes, roomsRes] = await Promise.all([
+                    fetch('/api/products'),
+                    fetch('/api/notes'),
+                    fetch('/api/rooms')
+                ]);
+                const [products, notes, rooms] = await Promise.all([
+                    productsRes.json(),
+                    notesRes.json(),
+                    roomsRes.json()
+                ]);
+                // Merge all
+                const allItems = [...products, ...notes, ...rooms];
                 const sliderTrack = document.getElementById('sliderTrack');
                 sliderTrack.innerHTML = '';
-                if (!products || products.length === 0) {
+                if (!allItems || allItems.length === 0) {
                     sliderTrack.innerHTML = '<p>No featured products available.</p>';
                     return;
                 }
-                products.forEach(item => {
+                allItems.forEach(item => {
                     const productCard = document.createElement('div');
-                    productCard.className = 'product-card';
+                    productCard.className = 'product-card clickable';
+                    productCard.onclick = () => {
+                        window.location.href = `product_interface.html?id=${item._id || item.id || ''}&type=${item.category ? encodeURIComponent(item.category.toLowerCase()) : ''}`;
+                    };
                     productCard.innerHTML = `
                         <div class="product-image" style="background-image: url('${item.images?.[0] || item.image || 'placeholder.jpg'}')"></div>
                         <div class="product-info">
                             <h3 class="product-title">${item.title}</h3>
                             <p class="product-price">${item.price ? '₹' + item.price : ''}</p>
-                            ${(item.pdfUrl) ? `<button class='btn btn-primary' onclick="window.open('${item.pdfUrl}','_blank')">Download PDF</button>` : ''}
+                            ${(item.pdfUrl) ? `<button class='btn btn-primary' onclick=\"event.stopPropagation(); window.open('${item.pdfUrl}','_blank')\">Download PDF</button>` : ''}
                         </div>
                     `;
                     sliderTrack.appendChild(productCard);

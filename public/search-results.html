@@ -565,31 +565,56 @@ async function getLocation() {
   });
 }
 
+    async function fetchAllSearchItems() {
+        const [productsRes, notesRes, roomsRes] = await Promise.all([
+            fetch('/api/products'),
+            fetch('/api/notes'),
+            fetch('/api/rooms')
+        ]);
+        const [products, notes, rooms] = await Promise.all([
+            productsRes.json(),
+            notesRes.json(),
+            roomsRes.json()
+        ]);
+        return [...products, ...notes, ...rooms];
+    }
     async function loadResults() {
-      try {
-        const response = await fetch('/api/notes');
-        const products = await response.json();
-        const searchResultsDiv = document.getElementById('searchResults');
-        searchResultsDiv.innerHTML = '';
-        if (!products || products.length === 0) {
-          searchResultsDiv.innerHTML = '<p>No products found.</p>';
-          return;
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const searchQuery = urlParams.get('query')?.toLowerCase() || '';
+            const selectedCategory = urlParams.get('category')?.toLowerCase() || 'all';
+            const allItems = await fetchAllSearchItems();
+            const searchResultsDiv = document.getElementById('searchResults');
+            searchResultsDiv.innerHTML = '';
+            let filtered = allItems;
+            if (searchQuery) {
+                filtered = filtered.filter(item => item.title?.toLowerCase().includes(searchQuery));
+            }
+            if (selectedCategory !== 'all') {
+                filtered = filtered.filter(item => item.category?.toLowerCase() === selectedCategory);
+            }
+            if (!filtered || filtered.length === 0) {
+                searchResultsDiv.innerHTML = '<p>No products found.</p>';
+                return;
+            }
+            filtered.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.className = 'product clickable';
+                productCard.onclick = () => {
+                    window.location.href = `product_interface.html?id=${product._id || product.id || ''}&type=${product.category ? encodeURIComponent(product.category.toLowerCase()) : ''}`;
+                };
+                productCard.innerHTML = `
+                    <div class=\"product-img\" style=\"background-image: url('${product.images?.[0] || product.image || 'placeholder.jpg'}')\"></div>
+                    <h4>${product.title}</h4>
+                    <p class=\"price\">₹${product.price || ''}</p>
+                    ${(product.pdfUrl) ? `<button class='buy-now' onclick=\"event.stopPropagation(); window.open('${product.pdfUrl}','_blank')\">Download PDF</button>` : ''}
+                `;
+                searchResultsDiv.appendChild(productCard);
+            });
+        } catch (error) {
+            console.error('Error loading results:', error);
+            document.getElementById('searchResults').innerHTML = '<p>Error loading products. Please try again.</p>';
         }
-        products.forEach(product => {
-          const productCard = document.createElement('div');
-          productCard.className = 'product';
-          productCard.innerHTML = `
-            <div class="product-img" style="background-image: url('${product.images?.[0] || product.image || 'placeholder.jpg'}')"></div>
-            <h4>${product.title}</h4>
-            <p class="price">₹${product.price || ''}</p>
-            ${(product.pdfUrl) ? `<button class='buy-now' onclick=\"window.open('${product.pdfUrl}','_blank')\">Download PDF</button>` : ''}
-          `;
-          searchResultsDiv.appendChild(productCard);
-        });
-      } catch (error) {
-        console.error('Error loading results:', error);
-        document.getElementById('searchResults').innerHTML = '<p>Error loading products. Please try again.</p>';
-      }
     }
 
     document.addEventListener('DOMContentLoaded', async () => {

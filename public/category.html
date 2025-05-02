@@ -581,54 +581,53 @@ async function getLocation() {
   });
 } 
 
-    async function fetchProducts() {
-      try {
-        const response = await fetch('/api/notes');
-        if (!response.ok) {
-          throw new Error('Failed to fetch products');
-        }
-        return await response.json();
-      } catch (error) {
-        console.error("Failed to load products:", error);
-        return [];
-      }
+    // Fetch all products, notes, rooms and merge for category section
+    async function fetchAllCategoryItems() {
+        const [productsRes, notesRes, roomsRes] = await Promise.all([
+            fetch('/api/products'),
+            fetch('/api/notes'),
+            fetch('/api/rooms')
+        ]);
+        const [products, notes, rooms] = await Promise.all([
+            productsRes.json(),
+            notesRes.json(),
+            roomsRes.json()
+        ]);
+        return [...products, ...notes, ...rooms];
     }
-
-    function isInWishlist(product) {
-      const wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
-      return wishlist.some(item => item.title === product.title);
-    }
-
     async function loadCategoryProducts() {
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const categoryParam = urlParams.get('category')?.toLowerCase() || 'all';
-        const products = await fetchProducts();
-        const productList = document.getElementById('productList');
-        productList.innerHTML = '';
-        let filtered = products;
-        if (categoryParam !== 'all') {
-          filtered = products.filter(p => p.category?.toLowerCase() === categoryParam);
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const categoryParam = urlParams.get('category')?.toLowerCase() || 'all';
+            const allItems = await fetchAllCategoryItems();
+            const productList = document.getElementById('productList');
+            productList.innerHTML = '';
+            let filtered = allItems;
+            if (categoryParam !== 'all') {
+                filtered = allItems.filter(p => p.category?.toLowerCase() === categoryParam);
+            }
+            if (!filtered || filtered.length === 0) {
+                productList.innerHTML = '<p>No products found.</p>';
+                return;
+            }
+            filtered.forEach(product => {
+                const productContainer = document.createElement('div');
+                productContainer.className = 'product-card clickable';
+                productContainer.onclick = () => {
+                    window.location.href = `product_interface.html?id=${product._id || product.id || ''}&type=${product.category ? encodeURIComponent(product.category.toLowerCase()) : ''}`;
+                };
+                productContainer.innerHTML = `
+                    <div class=\"product-img\" style=\"background-image: url('${product.images?.[0] || product.image || 'placeholder.jpg'}')\"></div>
+                    <h2>${product.title}</h2>
+                    <p class=\"price\">₹${product.price || ''}</p>
+                    ${(product.pdfUrl) ? `<button class='buy-now' onclick=\"event.stopPropagation(); window.open('${product.pdfUrl}','_blank')\">Download PDF</button>` : ''}
+                `;
+                productList.appendChild(productContainer);
+            });
+        } catch (error) {
+            console.error('Error loading products:', error);
+            document.getElementById('productList').innerHTML = '<p>Error loading products. Please refresh.</p>';
         }
-        if (!filtered || filtered.length === 0) {
-          productList.innerHTML = '<p>No products found.</p>';
-          return;
-        }
-        filtered.forEach(product => {
-          const productContainer = document.createElement('div');
-          productContainer.className = 'product-card';
-          productContainer.innerHTML = `
-            <div class="product-img" style="background-image: url('${product.images?.[0] || product.image || 'placeholder.jpg'}')"></div>
-            <h2>${product.title}</h2>
-            <p class="price">₹${product.price || ''}</p>
-            ${(product.pdfUrl) ? `<button class='buy-now' onclick=\"window.open('${product.pdfUrl}','_blank')\">Download PDF</button>` : ''}
-          `;
-          productList.appendChild(productContainer);
-        });
-      } catch (error) {
-        console.error('Error loading products:', error);
-        document.getElementById('productList').innerHTML = '<p>Error loading products. Please refresh.</p>';
-      }
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
