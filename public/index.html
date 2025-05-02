@@ -733,6 +733,11 @@
         </div>
     </section>
 
+    <section id="featuredNotes">
+        <h2 style="text-align:center; color:#2a3d56; margin-bottom:30px;">Featured Notes</h2>
+        <div id="featuredNotesContainer"></div>
+    </section>
+
     <footer>
         <div class="Footpanel1">Back To Top</div>
         <div class="Footpanel2">Contact: studxchange@example.com</div>
@@ -955,10 +960,36 @@ async function handleLocation() {
                 totalSlides = Math.ceil(reversedItems.length / 5);
                 updateSliderControls();
 
+                renderFeaturedNotes(reversedItems);
+
             } catch (error) {
                 console.error('Error loading featured products:', error);
                 document.getElementById('sliderTrack').innerHTML = '<p>Error loading products. Please refresh.</p>';
             }
+        }
+
+        function renderFeaturedNotes(products) {
+            const notes = products.filter(item => item.category === 'notes');
+            const notesContainer = document.getElementById('featuredNotesContainer');
+            if (!notesContainer) return;
+            notesContainer.innerHTML = '';
+            if (notes.length === 0) {
+                notesContainer.innerHTML = '<p>No featured notes available.</p>';
+                return;
+            }
+            notes.forEach(note => {
+                const noteCard = document.createElement('div');
+                noteCard.className = 'product-card';
+                noteCard.innerHTML = `
+                    <div class="product-image" style="background-image: url('${note.images?.[0] || note.image || 'placeholder.jpg'}')"></div>
+                    <div class="product-info">
+                        <h3 class="product-title">${note.title}</h3>
+                        <p class="product-price">${note.price ? '₹' + note.price : ''}</p>
+                        ${note.pdfUrl ? `<button class='btn btn-primary' onclick="window.open('${note.pdfUrl}','_blank')">Download PDF</button>` : ''}
+                    </div>
+                `;
+                notesContainer.appendChild(noteCard);
+            });
         }
 
         function updateSliderControls() {

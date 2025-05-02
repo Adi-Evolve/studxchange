@@ -511,6 +511,7 @@
   <main>
     <section class="product-list">
       <h1 id="categoryHeader"> Latest </h1>
+      <div id="notesHeroSection"></div>
       <div id="productList" class="container"></div>
     </section>
   </main>
@@ -771,6 +772,28 @@ async function getLocation() {
       }
     }
 
+    function renderNotesHeroSection(products) {
+      const notes = products.filter(item => item.category === 'notes');
+      const heroContainer = document.getElementById('notesHeroSection');
+      if (!heroContainer) return;
+      heroContainer.innerHTML = '';
+      if (notes.length === 0) {
+        heroContainer.innerHTML = '<p>No notes found in this category.</p>';
+        return;
+      }
+      notes.forEach(note => {
+        const noteCard = document.createElement('div');
+        noteCard.className = 'product';
+        noteCard.innerHTML = `
+          <div class="product-img" style="background-image: url('${note.images?.[0] || note.image || 'placeholder.jpg'}')"></div>
+          <h2>${note.title}</h2>
+          <p class="price">₹${note.price || ''}</p>
+          ${note.pdfUrl ? `<button class='buy-now' onclick="window.open('${note.pdfUrl}','_blank')">Download PDF</button>` : ''}
+        `;
+        heroContainer.appendChild(noteCard);
+      });
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
       // Get user location if not already stored
       if (!userLocation) {
@@ -780,9 +803,56 @@ async function getLocation() {
         }
       }
       
-      loadCategoryProducts();
-      // Refresh products every 30 seconds
-      setInterval(loadCategoryProducts, 30000);
+      const urlParams = new URLSearchParams(window.location.search);
+      const categoryParam = urlParams.get('category')?.toLowerCase() || 'all';
+
+      try {
+        // Fetch both products and rooms
+        const [products, rooms] = await Promise.all([
+          fetchProducts(),
+          fetchRooms()
+        ]);
+        
+        // Combine products and rooms
+        let allItems = [...products];
+        
+        // Only add rooms if we're showing all categories or specifically the room category
+        if (categoryParam === 'all' || categoryParam === 'room') {
+          allItems = [...allItems, ...rooms];
+        }
+        
+        // Filter by category if needed
+        const filteredItems = categoryParam === 'all' 
+          ? allItems 
+          : allItems.filter(p => p.category?.toLowerCase() === categoryParam);
+
+        // Add distance calculation if user location is available
+        let itemsWithDistance = filteredItems;
+        if (userLocation) {
+          itemsWithDistance = filteredItems.map(item => {
+            if (item.coordinates) {
+              const distance = calculateDistance(
+                userLocation.lat, 
+                userLocation.lon, 
+                item.coordinates.lat, 
+                item.coordinates.lon
+              );
+              return { ...item, distance };
+            }
+            return { ...item, distance: Infinity };
+          });
+          
+          // Sort by distance
+          itemsWithDistance.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
+        }
+
+        renderNotesHeroSection(itemsWithDistance);
+        loadCategoryProducts();
+        // Refresh products every 30 seconds
+        setInterval(loadCategoryProducts, 30000);
+      } catch (error) {
+        console.error('Error loading products:', error);
+      }
     });
   </script>
   

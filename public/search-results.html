@@ -473,6 +473,7 @@
   </div>
 
   <div id="searchResults" style="display: none;"></div>
+  <div id="searchNotesContainer" style="display: none;"></div>
 
   <footer>
     <p>For any help, contact us at: Studxchange05@gmail.com | Phone: 8857053541</p>
@@ -628,6 +629,7 @@ async function getLocation() {
         // Show loading animation
         document.getElementById('loadingContainer').style.display = 'flex';
         document.getElementById('searchResults').style.display = 'none';
+        document.getElementById('searchNotesContainer').style.display = 'none';
         
         // Fetch both products and rooms
         const [products, rooms] = await Promise.all([
@@ -772,6 +774,10 @@ async function getLocation() {
         // Hide loading animation and show results
         document.getElementById('loadingContainer').style.display = 'none';
         document.getElementById('searchResults').style.display = 'flex';
+        
+        // Render notes
+        renderSearchNotes(itemsWithDistance);
+        document.getElementById('searchNotesContainer').style.display = 'flex';
       } catch (error) {
         console.error('Error loading results:', error);
         searchResultsDiv.innerHTML = '<p>Error loading products. Please try again.</p>';
@@ -780,6 +786,28 @@ async function getLocation() {
         document.getElementById('loadingContainer').style.display = 'none';
         document.getElementById('searchResults').style.display = 'flex';
       }
+    }
+
+    function renderSearchNotes(results) {
+      const notes = results.filter(item => item.category === 'notes');
+      const notesContainer = document.getElementById('searchNotesContainer');
+      if (!notesContainer) return;
+      notesContainer.innerHTML = '';
+      if (notes.length === 0) {
+        notesContainer.innerHTML = '<p>No notes found in search results.</p>';
+        return;
+      }
+      notes.forEach(note => {
+        const noteCard = document.createElement('div');
+        noteCard.className = 'product';
+        noteCard.innerHTML = `
+          <div class="product-img" style="background-image: url('${note.images?.[0] || note.image || 'placeholder.jpg'}')"></div>
+          <h4>${note.title}</h4>
+          <p class="price">₹${note.price || ''}</p>
+          ${note.pdfUrl ? `<button class='buy-now' onclick="window.open('${note.pdfUrl}','_blank')">Download PDF</button>` : ''}
+        `;
+        notesContainer.appendChild(noteCard);
+      });
     }
 
     document.addEventListener('DOMContentLoaded', async () => {

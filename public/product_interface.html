@@ -1048,11 +1048,7 @@
           soldItems: [] // Will be populated on demand
         };
         
-        console.log("Combined data structure:", {
-          productsCount: data.products.length,
-          roomsCount: data.rooms.length,
-          notesCount: data.notes.length
-        });
+        console.log("Combined data structure:", Object.keys(data));
         
         // Log sample data for debugging
         if (data.products.length > 0) {
@@ -2249,7 +2245,7 @@ if (currentProduct.category === 'Notes') {
       </div>
     `;
     const productInfoSection = document.querySelector('.product-info');
-    productInfoSection.parentNode.insertBefore(previewSection, productInfoSection);
+    productInfoSection.parentNode.insertBefore(previewSection, productInfoSection.nextSibling);
     const style = document.createElement('style');
     style.textContent = `.pdf-preview-container { margin-bottom: 18px; }`;
     document.head.appendChild(style);
@@ -2416,6 +2412,31 @@ async function downloadPdf() {
   }
 }
 
+function renderDownloadPdfButton(product) {
+  if (product.category === 'notes' && product.pdfUrl) {
+    const actionButtons = document.getElementById('actionButtons');
+    if (!actionButtons) return;
+    const downloadBtn = document.createElement('button');
+    downloadBtn.className = 'btn btn-primary';
+    downloadBtn.innerHTML = '<i class="fas fa-file-pdf"></i> Download PDF';
+    downloadBtn.onclick = () => {
+      // Direct download
+      const a = document.createElement('a');
+      a.href = product.pdfUrl;
+      a.download = product.title ? `${product.title}.pdf` : 'notes.pdf';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => document.body.removeChild(a), 100);
+    };
+    actionButtons.appendChild(downloadBtn);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadProductDetails().then(() => {
+    renderDownloadPdfButton(currentProduct);
+  });
+});
 </script>
  
 
