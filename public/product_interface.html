@@ -615,20 +615,27 @@
             <div class="product-description">
               <p>${product.description || 'No description available.'}</p>
             </div>
-            ${product.pdfUrl ? `<button class='btn btn-primary' id='downloadPdfBtn'><i class="fas fa-file-pdf"></i> Download PDF</button>` : ''}
+            <div style="margin-top:2rem;">
+              ${(product.pdfUrl && product.pdfUrl !== 'null' && product.pdfUrl !== '') ? `<button class='btn btn-primary' id='downloadPdfBtn'><i class="fas fa-file-pdf"></i> Download PDF</button>` : '<span style="color:#dc3545">No PDF available for download.</span>'}
+            </div>
           </div>
         </div>
       `;
-      if (product.pdfUrl) {
-        document.getElementById('downloadPdfBtn').onclick = e => {
-          e.stopPropagation();
-          const a = document.createElement('a');
-          a.href = product.pdfUrl;
-          a.download = product.title ? `${product.title}.pdf` : 'notes.pdf';
-          document.body.appendChild(a);
-          a.click();
-          setTimeout(() => document.body.removeChild(a), 100);
-        };
+      if (product.pdfUrl && product.pdfUrl !== 'null' && product.pdfUrl !== '') {
+        setTimeout(() => {
+          const btn = document.getElementById('downloadPdfBtn');
+          if(btn) {
+            btn.onclick = e => {
+              e.stopPropagation();
+              const a = document.createElement('a');
+              a.href = product.pdfUrl;
+              a.download = product.title ? `${product.title}.pdf` : 'notes.pdf';
+              document.body.appendChild(a);
+              a.click();
+              setTimeout(() => document.body.removeChild(a), 100);
+            };
+          }
+        }, 100);
       }
       return;
     }
