@@ -273,21 +273,37 @@ function setupMapModal() {
   };
 }
 
-// --- Image and PDF Upload Helpers ---
+// --- Robust imgbb Upload Function ---
 async function uploadImageToImgbb(file) {
-  const apiKey = 'YOUR_IMGBB_API_KEY'; // TODO: Replace with env or backend proxy
+  // Fetch the imgbb API key from window.env (populated via server-side injection)
+  const apiKey = window.env && window.env.IMGBB_API_KEY ? window.env.IMGBB_API_KEY : undefined;
+  if (!apiKey) {
+    alert('imgbb API key is missing. Please set it in your environment/config.');
+    throw new Error('imgbb API key missing');
+  }
   const formData = new FormData();
   formData.append('image', file);
   formData.append('key', apiKey);
-  const response = await fetch('https://api.imgbb.com/1/upload', {
-    method: 'POST',
-    body: formData
-  });
-  const data = await response.json();
-  if (data.success) return data.data.url;
-  throw new Error('Image upload failed');
+  try {
+    const response = await fetch('https://api.imgbb.com/1/upload', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      console.error('imgbb upload failed:', data);
+      alert('Image upload failed: ' + (data.error?.message || response.statusText));
+      throw new Error(data.error?.message || 'imgbb upload failed');
+    }
+    return data.data.url;
+  } catch (err) {
+    console.error('imgbb upload error:', err);
+    alert('Image upload failed: ' + err.message);
+    throw err;
+  }
 }
 
+// --- Image and PDF Upload Helpers ---
 async function uploadPdfToSupabase(file) {
   // Uses window.supabaseClient from firebase-config.js
   const supabase = window.supabaseClient;
