@@ -319,6 +319,89 @@ button, input, optgroup, select, textarea {
 button, select {
     text-transform: none;
 }
+    /* UI improvements and effects for consistency */
+    .listed-item {
+      box-shadow: 0 2px 8px rgba(42,61,86,0.08);
+      transition: transform 0.22s cubic-bezier(.4,2,.6,1), box-shadow 0.22s cubic-bezier(.4,2,.6,1);
+      background: linear-gradient(90deg, #f4f6f9 80%, #e8ecf4 100%);
+      border: 1.5px solid #e1e7f0;
+    }
+    .listed-item:hover {
+      transform: scale(1.025) translateX(8px);
+      box-shadow: 0 6px 20px rgba(42,61,86,0.16);
+      background: linear-gradient(90deg, #e8ecf4 80%, #f4f6f9 100%);
+    }
+    .sold-label {
+      background: #dc3545;
+      color: #fff;
+      font-weight: bold;
+      padding: 7px 16px;
+      border-radius: 16px;
+      font-size: 1rem;
+      letter-spacing: 1px;
+      margin-left: 10px;
+      box-shadow: 0 2px 8px rgba(220,53,69,0.18);
+    }
+    .sold-effect {
+      opacity: 0.8;
+      filter: grayscale(0.25) blur(0.5px);
+      border-left: 4px solid #dc3545;
+    }
+    .item-details h3 {
+      font-size: 1.18rem;
+      color: #2a3d56;
+      margin-bottom: 3px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+    .item-details p {
+      font-size: 1.02rem;
+      color: #1a75ff;
+      margin-bottom: 0;
+      font-weight: 500;
+    }
+    .item-image {
+      border: 2px solid #e1e7f0;
+      box-shadow: 0 2px 8px rgba(42,61,86,0.04);
+      transition: box-shadow 0.22s cubic-bezier(.4,2,.6,1);
+    }
+    .listed-item:hover .item-image {
+      box-shadow: 0 6px 20px rgba(42,61,86,0.10);
+      border-color: #b3c6e0;
+    }
+    .sold-effect .item-image {
+      border-color: #dc3545;
+    }
+    .sold-btn, .delete-btn {
+      font-size: 1rem;
+      border-radius: 24px;
+      padding: 8px 18px;
+      margin-left: 2px;
+      margin-right: 2px;
+      box-shadow: 0 2px 8px rgba(42,61,86,0.10);
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .sold-btn:hover {
+      background: #1a75ff !important;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(26,117,255,0.16);
+    }
+    .delete-btn:hover {
+      background: #ff1744 !important;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(255,23,68,0.16);
+    }
+    /* Consistent section spacing */
+    .account-container > div, .account-details > div {
+      margin-bottom: 34px !important;
+    }
+    /* Responsive tweaks */
+    @media (max-width: 600px) {
+      .listed-item { flex-direction: column; align-items: flex-start; }
+      .item-image { width: 96vw; max-width: 330px; height: 180px; margin-bottom: 10px; }
+      .item-details { width: 100%; }
+      .item-actions { width: 100%; justify-content: flex-end; }
+    }
   </style>
 </head>
 <body>
@@ -362,7 +445,7 @@ button, select {
       <header class="account-header">
           <h1 style="color: white;">Welcome, <span id="userName" style="color: white;"></span></h1>
           <div class="account-actions">
-              <button onclick="editProfile()">Edit Profile</button>
+              <button onclick="openEditProfileModal()">Edit Profile</button>
               <button onclick="logout()">Logout</button>
           </div>
       </header>
@@ -405,16 +488,106 @@ button, select {
           <!-- Account Settings Section -->
           <div class="settings">
               <h2>Account Settings</h2>
-              <button onclick="changePassword()">Change Password</button>
-              <button onclick="updatePaymentMethod()">Update Payment Method</button>
-              <button onclick="updateAddress()">Update Shipping Address</button>
           </div>
       </div>
   </div>
 
-  <footer>
-      <p>For any help, contact us at: Studxchange05@gmail.com | Phone: 8857053541</p>
+  <footer class="main-footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <img src="Logo1.png" alt="StudXchange" style="height: 60px; margin-bottom: 8px;">
+        <h3>StudXchange</h3>
+        <p>Empowering students to buy, sell, and exchange with ease.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Quick Links</h4>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="category.html">Categories</a></li>
+          <li><a href="sell.html">Sell/Donate</a></li>
+          <li><a href="PROFILE_FINAL.html">Profile</a></li>
+          <li><a href="wishlist.html">Wishlist</a></li>
+        </ul>
+      </div>
+      <div class="footer-contact">
+        <h4>Contact</h4>
+        <p>Email: <a href="mailto:DON_Agency@gmail.com">DON_Agency@gmail.com</a></p>
+        <p>Phone: 8857053541</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      &copy; 2025 StudXchange. All rights reserved.
+    </div>
   </footer>
+  <style>
+    .main-footer {
+      background: #232f3e;
+      color: #fff;
+      padding: 40px 0 0 0;
+      margin-top: 40px;
+    }
+    .footer-container {
+      max-width: 1200px;
+      margin: auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 30px;
+      padding: 0 20px;
+    }
+    .footer-brand {
+      flex: 1 1 220px;
+      text-align: center;
+    }
+    .footer-brand h3 {
+      margin-top: 8px;
+      margin-bottom: 8px;
+      color: #ffb300;
+    }
+    .footer-links {
+      flex: 1 1 180px;
+    }
+    .footer-links ul {
+      list-style: none;
+      padding: 0;
+    }
+    .footer-links li {
+      margin-bottom: 10px;
+    }
+    .footer-links a {
+      color: #fff;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover {
+      color: #ffb300;
+    }
+    .footer-contact {
+      flex: 1 1 180px;
+    }
+    .footer-contact a {
+      color: #ffb300;
+      text-decoration: none;
+    }
+    .footer-bottom {
+      text-align: center;
+      padding: 18px 0 8px 0;
+      font-size: 1rem;
+      border-top: 1px solid #39495a;
+      margin-top: 32px;
+      background: #1a232e;
+    }
+    @media (max-width: 800px) {
+      .footer-container {
+        flex-direction: column;
+        align-items: center;
+      }
+      .footer-brand, .footer-links, .footer-contact {
+        text-align: center;
+      }
+    }
+  </style>
 
   <!-- Phone Modal -->
   <div id="phoneModal" class="modal">
@@ -426,6 +599,20 @@ button, select {
       </div>
   </div>
 
+  <!-- Edit Profile Modal -->
+  <div id="editProfileModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeEditProfileModal()">&times;</span>
+      <h2>Edit Profile</h2>
+      <form id="editProfileForm">
+        <label for="editName">Name:</label>
+        <input type="text" id="editName" name="editName" required><br><br>
+        <label for="editPhone">Phone:</label>
+        <input type="tel" id="editPhone" name="editPhone" pattern="[0-9]{10}" required><br><br>
+        <button type="submit">Save Changes</button>
+      </form>
+    </div>
+  </div>
 
   <script src="js/navbar.js"></script>
   <script>
@@ -517,40 +704,37 @@ button, select {
                 document.getElementById('listedItemsList').innerHTML = '<p>Please log in to view your listed items.</p>';
                 return;
             }
-            
-            console.log('Fetching products for email:', currentUser.email);
             document.getElementById('listedItemsList').innerHTML = '<p>Loading your items...</p>';
-            
-            const response = await fetch(`${API_ENDPOINTS.GET_PRODUCTS}?sellerEmail=${encodeURIComponent(currentUser.email)}`);
-            
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                console.error('Failed to fetch listed items:', response.status, errorData);
-                throw new Error(errorData.message || 'Failed to fetch listed items');
+            // Fetch all products, notes, and rooms listed by the user
+            const [productsRes, notesRes, roomsRes] = await Promise.all([
+                fetch(`${API_ENDPOINTS.GET_PRODUCTS}?sellerEmail=${encodeURIComponent(currentUser.email)}`),
+                fetch(`${API_ENDPOINTS.GET_NOTES}?sellerEmail=${encodeURIComponent(currentUser.email)}`),
+                fetch(`${API_ENDPOINTS.GET_ROOMS}?sellerEmail=${encodeURIComponent(currentUser.email)}`)
+            ]);
+            if (!productsRes.ok && !notesRes.ok && !roomsRes.ok) {
+                throw new Error('Failed to fetch any listed items');
             }
-            
-            const products = await response.json();
-            console.log(`Found ${products.length} listed items`);
-            
+            const products = productsRes.ok ? await productsRes.json() : [];
+            const notes = notesRes.ok ? await notesRes.json() : [];
+            const rooms = roomsRes.ok ? await roomsRes.json() : [];
+            const allItems = [...products, ...notes, ...rooms];
             const listedItems = document.getElementById('listedItemsList');
             listedItems.innerHTML = '';
-            
-            if (products.length === 0) {
+            if (allItems.length === 0) {
                 listedItems.innerHTML = '<p>You have no listed items.</p>';
                 return;
             }
-            
-            products.forEach(product => {
+            allItems.forEach(item => {
                 listedItems.innerHTML += `
                     <li class="listed-item">
-                        <img src="${product.images?.[0] || product.image || 'placeholder.jpg'}" class="item-image" alt="${product.title}">
+                        <img src="${item.images?.[0] || item.image || 'placeholder.jpg'}" class="item-image" alt="${item.title || item.roomType || 'Item'}">
                         <div class="item-details">
-                            <h3>${product.title || 'Untitled Item'}</h3>
-                            <p>₹${product.price || '0'}</p>
+                            <h3>${item.title || item.roomType || 'Untitled Item'}</h3>
+                            <p>₹${item.price || item.deposit || '0'}</p>
                         </div>
                         <div class="item-actions">
-                            <button class="sold-btn" onclick="handleSold('${product._id}')">Mark Sold</button>
-                            <button class="delete-btn" onclick="deleteItem('${product._id}')">Remove</button>
+                            <button class="sold-btn" onclick="handleSold('${item._id}')">Mark Sold</button>
+                            <button class="delete-btn" onclick="deleteItem('${item._id}')">Remove</button>
                         </div>
                     </li>
                 `;
@@ -569,37 +753,31 @@ button, select {
                 document.getElementById('soldItemsList').innerHTML = '<p>Please log in to view your sold items.</p>';
                 return;
             }
-            
-            console.log('Fetching sold items for email:', currentUser.email);
             document.getElementById('soldItemsList').innerHTML = '<p>Loading your sold items...</p>';
-            
+            // Fetch only sold products for the user
             const response = await fetch(`${API_ENDPOINTS.GET_SOLD_ITEMS}?sellerEmail=${encodeURIComponent(currentUser.email)}`);
-            
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 console.error('Failed to fetch sold items:', response.status, errorData);
                 throw new Error(errorData.message || 'Failed to fetch sold items');
             }
-            
             const soldItems = await response.json();
-            console.log(`Found ${soldItems.length} sold items`);
-            
             const soldItemsList = document.getElementById('soldItemsList');
             soldItemsList.innerHTML = '';
-            
             if (soldItems.length === 0) {
                 soldItemsList.innerHTML = '<p>You have no sold items.</p>';
                 return;
             }
-            
             soldItems.forEach(item => {
                 soldItemsList.innerHTML += `
-                    <li class="listed-item">
-                        <img src="${item.image || 'placeholder.jpg'}" class="item-image" alt="${item.title}">
+                    <li class="listed-item sold-effect">
+                        <img src="${item.images?.[0] || item.image || 'placeholder.jpg'}" class="item-image" alt="${item.title || 'Product'}">
                         <div class="item-details">
-                            <h3>${item.title || 'Untitled Item'}</h3>
+                            <h3>${item.title || 'Untitled Product'}</h3>
                             <p>₹${item.price || '0'}</p>
-                            <p>Sold on: ${new Date(item.soldDate).toLocaleDateString()}</p>
+                        </div>
+                        <div class="item-actions">
+                            <span class="sold-label">SOLD</span>
                         </div>
                     </li>
                 `;
@@ -653,27 +831,53 @@ button, select {
         }
     }
 
-    // Other account actions
-    function editProfile() {
-        alert('Edit profile feature coming soon!');
+    function openEditProfileModal() {
+      const user = JSON.parse(localStorage.getItem('currentUser'));
+      document.getElementById('editName').value = user.name || '';
+      document.getElementById('editPhone').value = user.phone || '';
+      document.getElementById('editProfileModal').style.display = 'block';
     }
-    
+    function closeEditProfileModal() {
+      document.getElementById('editProfileModal').style.display = 'none';
+    }
+    document.getElementById('editProfileForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const newName = document.getElementById('editName').value.trim();
+      const newPhone = document.getElementById('editPhone').value.trim();
+      if (!newName || !/^\d{10}$/.test(newPhone)) {
+        alert('Please enter a valid name and 10-digit phone number');
+        return;
+      }
+      try {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        // Update in MongoDB
+        const response = await fetch(API_ENDPOINTS.UPDATE_USER, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: currentUser.email, name: newName, phone: newPhone })
+        });
+        if (!response.ok) throw new Error('Failed to update profile');
+        // Update localStorage
+        currentUser.name = newName;
+        currentUser.phone = newPhone;
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        // Update UI
+        document.getElementById('userName').textContent = newName;
+        document.getElementById('profileName').textContent = newName;
+        document.getElementById('profilePhone').textContent = newPhone;
+        document.getElementById('addPhoneBtn').style.display = 'none';
+        closeEditProfileModal();
+        alert('Profile updated successfully!');
+      } catch (err) {
+        alert('Failed to update profile: ' + err.message);
+      }
+    };
+
+    // Other account actions
     function logout() {
         localStorage.removeItem('currentUser');
         window.location.href = 'login.html';
     }
-    
-    function changePassword() {
-        alert('Password change feature coming soon!');
-    }
-    
-    function updatePaymentMethod() {
-        alert('Payment method update coming soon!');
-    }
-    
-    function updateAddress() {
-        alert('Address update feature coming soon!');
-    }
-</script>
+  </script>
 </body>
 </html>

@@ -501,6 +501,80 @@
   }
 }
 
+.centered-card { display: flex; justify-content: center; align-items: center; margin: 32px 0; }
+.notes-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(42,61,86,0.08);
+  max-width: 390px;
+  margin: 0 auto;
+  padding: 30px 32px 28px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: box-shadow 0.22s cubic-bezier(.4,2,.6,1), transform 0.22s cubic-bezier(.4,2,.6,1);
+}
+.notes-card:hover {
+  box-shadow: 0 8px 32px rgba(42,61,86,0.18);
+  transform: scale(1.025);
+}
+.notes-image-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.notes-image {
+  max-width: 240px;
+  max-height: 180px;
+  border-radius: 12px;
+  border: 2px solid #e1e7f0;
+  box-shadow: 0 2px 8px rgba(42,61,86,0.06);
+}
+.notes-title {
+  font-size: 1.32rem;
+  color: #2a3d56;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 10px;
+}
+.notes-desc {
+  font-size: 1.08rem;
+  color: #444;
+  margin-bottom: 14px;
+  text-align: center;
+}
+.notes-meta {
+  margin-bottom: 16px;
+  text-align: center;
+}
+.notes-price {
+  font-size: 1.15rem;
+  color: #1a75ff;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+.notes-buynow-btn {
+  background: #1a75ff;
+  color: #fff;
+  border: none;
+  border-radius: 28px;
+  padding: 12px 38px;
+  font-size: 1.08rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(26,117,255,0.10);
+  margin-top: 8px;
+}
+.notes-buynow-btn:hover {
+  background: #1558b0;
+  box-shadow: 0 4px 16px rgba(26,117,255,0.18);
+}
+@media (max-width: 600px) {
+  .notes-card { max-width: 98vw; padding: 18px 4vw 18px 4vw; }
+  .notes-image { max-width: 90vw; }
+}
   </style>
   
 </head>
@@ -514,6 +588,102 @@
       <div id="productList" class="container"></div>
     </section>
   </main>
+  <footer class="main-footer">
+      <div class="footer-container">
+        <div class="footer-brand">
+          <img src="Logo1.png" alt="StudXchange" style="height: 60px; margin-bottom: 8px;">
+          <h3>StudXchange</h3>
+          <p>Empowering students to buy, sell, and exchange with ease.</p>
+        </div>
+        <div class="footer-links">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="category.html">Categories</a></li>
+            <li><a href="sell.html">Sell/Donate</a></li>
+            <li><a href="PROFILE_FINAL.html">Profile</a></li>
+            <li><a href="wishlist.html">Wishlist</a></li>
+          </ul>
+        </div>
+        <div class="footer-contact">
+          <h4>Contact</h4>
+          <p>Email: <a href="mailto:DON_Agency@gmail.com">DON_Agency@gmail.com</a></p>
+          <p>Phone: 8857053541</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        &copy; 2025 StudXchange. All rights reserved.
+      </div>
+    </footer>
+    <style>
+      .main-footer {
+        background: #232f3e;
+        color: #fff;
+        padding: 40px 0 0 0;
+        margin-top: 40px;
+      }
+      .footer-container {
+        max-width: 1200px;
+        margin: auto;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 30px;
+        padding: 0 20px;
+      }
+      .footer-brand {
+        flex: 1 1 220px;
+        text-align: center;
+      }
+      .footer-brand h3 {
+        margin-top: 8px;
+        margin-bottom: 8px;
+        color: #ffb300;
+      }
+      .footer-links {
+        flex: 1 1 180px;
+      }
+      .footer-links ul {
+        list-style: none;
+        padding: 0;
+      }
+      .footer-links li {
+        margin-bottom: 10px;
+      }
+      .footer-links a {
+        color: #fff;
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      .footer-links a:hover {
+        color: #ffb300;
+      }
+      .footer-contact {
+        flex: 1 1 180px;
+      }
+      .footer-contact a {
+        color: #ffb300;
+        text-decoration: none;
+      }
+      .footer-bottom {
+        text-align: center;
+        padding: 18px 0 8px 0;
+        font-size: 1rem;
+        border-top: 1px solid #39495a;
+        margin-top: 32px;
+        background: #1a232e;
+      }
+      @media (max-width: 800px) {
+        .footer-container {
+          flex-direction: column;
+          align-items: center;
+        }
+        .footer-brand, .footer-links, .footer-contact {
+          text-align: center;
+        }
+      }
+    </style>
   <script src="js/navbar.js"></script>
   <script>
     let userLocation = JSON.parse(localStorage.getItem('userLocation')) || null;

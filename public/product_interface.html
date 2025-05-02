@@ -199,14 +199,73 @@
       font-size: 1rem;
     }
 
-    footer {
-      background-color: var(--primary-color);
-      color: var(--white-color);
-      text-align: center;
-      padding: 1.5rem;
-      margin-top: auto;
+    .main-footer {
+      background: #232f3e;
+      color: #fff;
+      padding: 40px 0 0 0;
+      margin-top: 40px;
     }
-
+    .footer-container {
+      max-width: 1200px;
+      margin: auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 30px;
+      padding: 0 20px;
+    }
+    .footer-brand {
+      flex: 1 1 220px;
+      text-align: center;
+    }
+    .footer-brand h3 {
+      margin-top: 8px;
+      margin-bottom: 8px;
+      color: #ffb300;
+    }
+    .footer-links {
+      flex: 1 1 180px;
+    }
+    .footer-links ul {
+      list-style: none;
+      padding: 0;
+    }
+    .footer-links li {
+      margin-bottom: 10px;
+    }
+    .footer-links a {
+      color: #fff;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover {
+      color: #ffb300;
+    }
+    .footer-contact {
+      flex: 1 1 180px;
+    }
+    .footer-contact a {
+      color: #ffb300;
+      text-decoration: none;
+    }
+    .footer-bottom {
+      text-align: center;
+      padding: 18px 0 8px 0;
+      font-size: 1rem;
+      border-top: 1px solid #39495a;
+      margin-top: 32px;
+      background: #1a232e;
+    }
+    @media (max-width: 800px) {
+      .footer-container {
+        flex-direction: column;
+        align-items: center;
+      }
+      .footer-brand, .footer-links, .footer-contact {
+        text-align: center;
+      }
+    }
     .modal {
       display: none;
       position: fixed;
@@ -363,6 +422,43 @@
       margin: 1rem 0;
       box-shadow: var(--shadow);
     }
+
+    /* Notes Photos Gallery */
+    .gallery-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+    .gallery-main {
+      margin-bottom: 14px;
+    }
+    .gallery-main-img {
+      max-width: 340px;
+      max-height: 240px;
+      border-radius: 12px;
+      border: 2px solid #e1e7f0;
+      box-shadow: 0 2px 8px rgba(42,61,86,0.06);
+    }
+    .gallery-thumbs {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    .gallery-thumb-img {
+      width: 60px;
+      height: 44px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 2px solid #e1e7f0;
+      cursor: pointer;
+      opacity: 0.7;
+      transition: border 0.18s, opacity 0.18s;
+    }
+    .gallery-thumb-img.active, .gallery-thumb-img:hover {
+      border: 2px solid #1a75ff;
+      opacity: 1;
+    }
   </style>
   <link href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" rel="stylesheet" />
   <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
@@ -371,7 +467,37 @@
 </head>
 <body>
   <header>
-    <div id="common-navbar"></div>
+    <div class="navbar">
+      <div class="navlogo">
+        <img src="Logo1.png" alt="StudXchange">
+      </div>
+      <div class="search-container">
+        <form class="searchbar" action="search-results.html" method="GET">
+          <select name="category">
+            <option value="all">All</option>
+            <option value="VIT">VIT</option>
+            <option value="COEP">COEP</option>
+            <option value="PICT">PICT</option>
+            <option value="DYP">DYP</option>
+            <option value="PCCOE">PCCOE</option>
+          </select>
+          <input type="text" name="query" placeholder="Search products...">
+          <button type="submit"><i class="fas fa-search"></i></button>
+        </form>
+      </div>
+      <button class="nav-button location-button" id="locationButton">
+        <i class="fas fa-map-marker-alt"></i>
+        <span id="locationText">Get Location</span>
+      </button>
+      <span id="locationStatus" class="location-status"></span>
+      <div class="button-container">
+        <a class="nav-button wishlist-button me-2" href="wishlist.html">
+          <i class="far fa-heart"></i>
+        </a>
+        <a class="nav-button sell-button" href="sell.html">Sell/Donate</a>
+        <div id="authButtonContainer"></div>
+      </div>
+    </div>
   </header>
   <main>
     <div class="loading-spinner" id="loadingSpinner">
@@ -476,6 +602,14 @@
       </div>
     </div>
 
+    <!-- Notes Photos Gallery -->
+    <div id="notesPhotosGallery" class="gallery-container" style="display:none;">
+      <div class="gallery-main">
+        <img id="mainNotesPhoto" src="" alt="Notes Main Photo" class="gallery-main-img">
+      </div>
+      <div class="gallery-thumbs" id="galleryThumbs"></div>
+    </div>
+
     <!-- Buy Now Modal -->
     <div id="buyModal" class="modal">
       <div class="modal-content">
@@ -529,8 +663,32 @@
     </div>
   </main>
 
-  <footer>
-    <p>For any help, contact us at: Studxchange05@gmail.com | Phone: 8857053541</p>
+  <footer class="main-footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <img src="Logo1.png" alt="StudXchange" style="height: 60px; margin-bottom: 8px;">
+        <h3>StudXchange</h3>
+        <p>Empowering students to buy, sell, and exchange with ease.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Quick Links</h4>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="category.html">Categories</a></li>
+          <li><a href="sell.html">Sell/Donate</a></li>
+          <li><a href="PROFILE_FINAL.html">Profile</a></li>
+          <li><a href="wishlist.html">Wishlist</a></li>
+        </ul>
+      </div>
+      <div class="footer-contact">
+        <h4>Contact</h4>
+        <p>Email: <a href="mailto:DON_Agency@gmail.com">DON_Agency@gmail.com</a></p>
+        <p>Phone: 8857053541</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      &copy; 2025 StudXchange. All rights reserved.
+    </div>
   </footer>
 
   <script>
@@ -660,6 +818,28 @@
       </div>
     `;
   }
+
+  // Show gallery if notes with multiple photos
+  function showNotesGallery(images) {
+    if (!images || images.length === 0) return;
+    document.getElementById('notesPhotosGallery').style.display = 'flex';
+    const mainImg = document.getElementById('mainNotesPhoto');
+    const thumbs = document.getElementById('galleryThumbs');
+    mainImg.src = images[0];
+    thumbs.innerHTML = '';
+    images.forEach((img, idx) => {
+      const thumb = document.createElement('img');
+      thumb.src = img;
+      thumb.className = 'gallery-thumb-img' + (idx === 0 ? ' active' : '');
+      thumb.onclick = function() {
+        mainImg.src = img;
+        document.querySelectorAll('.gallery-thumb-img').forEach(t => t.classList.remove('active'));
+        thumb.classList.add('active');
+      };
+      thumbs.appendChild(thumb);
+    });
+  }
+  // Example: showNotesGallery(['note1a.jpg','note1b.jpg','note1c.jpg']);
   </script>
   <script src="js/navbar.js"></script>
 </body>

@@ -141,467 +141,6 @@
                 font-size: 14px;
             }
         }
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        body {
-            background-color: #f4f6f9;
-            color: #333;
-        }
-        /* ===== Navbar ===== */
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #2a3d56;
-            padding: 15px 30px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .navlogo img {
-            height: 100px;
-            width: 250px;
-        }
-        .navbar .button-container {
-            display: flex;
-            gap: 20px;
-        }
-        /* ===== Search Bar ===== */
-        .search-container {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            margin: 0 20px;
-        }
-        .searchbar {
-            display: flex;
-            align-items: center;
-            background: white;
-            border-radius: 30px;
-            padding: 2px;
-            width: 100%;
-            max-width: 600px;
-        }
-        .searchbar select,
-        .searchbar input,
-        .searchbar button {
-            border: none;
-            padding: 10px;
-        }
-        .searchbar select {
-            background: #2a3d56;
-            color: white;
-            border-radius: 30px 0 0 30px;
-        }
-        .searchbar input {
-            width: 100%;
-        }
-        .searchbar button {
-            background: #2a3d56;
-            color: white;
-            border-radius: 0 30px 30px 0;
-        }
-        /* ===== Profile/Signup Button ===== */
-        .button-container {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-        .profile-button, .signup-button {
-            color: white;
-            padding: 10px 20px;
-            border-radius: 25px;
-            text-decoration: none;
-            transition: background 0.3s;
-        }
-        .profile-button {
-            background: transparent;
-        }
-        .signup-button {
-            background: #1a75ff;
-            cursor: pointer;
-        }
-        /* ===== Hero Section ===== */
-        .hero-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-            padding: 40px 30px;
-        }
-        .box {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            overflow: hidden;
-            position: relative;
-        }
-        .box:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-        }
-        .box:hover .box1-img {
-            transform: scale(1.05);
-        }
-        .box1-img {
-            height: 250px;
-            width: 100%;
-            background-size: cover;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            transition: transform 0.5s ease;
-        }
-        /* ===== Footer ===== */
-        footer {
-            background: #3a4a62;
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-        .navbar a:hover {
-            background-color: #4d6a88;
-        }
-        .navbar .button-container {
-            display: flex;
-            gap: 20px;
-        }
-        /* ===== Updated Button Styles ===== */
-        .nav-button {
-            padding: 10px 25px;
-            border-radius: 25px;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-            font-weight: 500;
-            display: inline-block;
-        }
-        /* Sell Button */
-        .sell-button {
-            color: white;
-            background-color: transparent;
-            border-color: transparent;
-        }
-        .sell-button:hover {
-            background-color: #546e78;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-        /* Signup Button */
-        .signup-button {
-            color: white;
-            background-color: transparent;
-            border-color: transparent;
-        }
-        .signup-button:hover {
-            background-color: #546e78;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-        /* Profile Button */
-        .profile-button {
-            color: white;
-            background-color: #2a3d56;
-            border-color: transparent;
-        }
-        .profile-button:hover {
-            background-color: #1a2a3a;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-        /* Common Hover Effects */
-        .nav-button:hover {
-            border-color: rgba(255, 255, 255, 0.6);
-            cursor: pointer;
-        }
-        #featuredProducts {
-            padding: 20px;
-        }
-        #featuredProducts h2 {
-            text-align: center;
-            color: #2a3d56;
-            margin-bottom: 30px;
-        }
-        #featuredContainer {
-            display: flex;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            padding: 20px 0;
-            gap: 15px;
-            scroll-behavior: smooth;
-        }
-        .product-card {
-            flex: 0 0 200px;
-            scroll-snap-align: start;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            text-decoration: none;
-            color: inherit;
-            overflow: hidden;
-            position: relative;
-        }
-        .product-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 20px rgba(0,0,0,0.2);
-        }
-        .product-card:hover .product-image {
-            transform: scale(1.05);
-        }
-        .product-image {
-            height: 150px;
-            background-size: cover;
-            background-position: center;
-            border-radius: 8px 8px 0 0;
-            transition: transform 0.5s ease;
-        }
-        .product-info {
-            padding: 12px;
-        }
-        .product-title {
-            font-size: 0.9rem;
-            color: #2a3d56;
-            margin: 0 0 8px 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .product-price {
-            font-size: 0.9rem;
-            color: #1a75ff;
-            font-weight: bold;
-        }
-        #featuredContainer::-webkit-scrollbar {
-            display: none;
-        }
-        .slider-container {
-            position: relative;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 30px;
-        }
-        .slider-wrapper {
-            overflow: hidden;
-            position: relative;
-        }
-        .slider-track {
-            display: flex;
-            transition: transform 0.5s ease;
-            gap: 15px;
-        }
-        .product-card {
-            flex: 0 0 calc(20% - 12px);
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            text-decoration: none;
-            color: inherit;
-        }
-        .product-image {
-            height: 150px;
-            background-size: cover;
-            background-position: center;
-            border-radius: 8px 8px 0 0;
-        }
-        .product-info {
-            padding: 12px;
-        }
-        .product-title {
-            font-size: 0.9rem;
-            color: #2a3d56;
-            margin: 0 0 8px 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .product-price {
-            font-size: 0.9rem;
-            color: #1a75ff;
-            font-weight: bold;
-        }
-        .slider-nav {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(42,61,86,0.8);
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 50%;
-            cursor: pointer;
-            z-index: 1;
-        }
-        .slider-prev {
-            left: 0;
-        }
-        .slider-next {
-            right: 0;
-        }
-        /* Add to existing styles */
-.location-button {
-    background-color: #28a745 !important;
-    margin-right: 10px;
-}
-
-.location-button:hover {
-    background-color: #218838 !important;
-}
-
-.location-status {
-    color: white;
-    margin-left: 10px;
-    font-size: 0.9rem;
-}
-
-.distance {
-    color: #666;
-    font-size: 0.9rem;
-    margin-top: 8px;
-}
-/* Wishlist Icon */
-.wishlist-button {
-    color: white;
-    font-size: 1.5rem;
-    transition: color 0.3s;
-    padding: 8px;
-    display: flex;
-    align-items: center;
-}
- /* ===== Original Desktop Styles ===== */
- * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        body {
-            background-color: #f4f6f9;
-            color: #333;
-        }
-        
-        /* Navbar Desktop Styles */
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #2a3d56;
-            padding: 15px 30px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .navlogo img {
-            height: 100px;
-            width: 250px;
-        }
-        .navbar .button-container {
-            display: flex;
-            gap: 20px;
-        }
-
-        /* Search Bar Desktop */
-        .search-container {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            margin: 0 20px;
-        }
-        .searchbar {
-            display: flex;
-            align-items: center;
-            background: white;
-            border-radius: 30px;
-            padding: 2px;
-            width: 100%;
-            max-width: 600px;
-        }
-
-        /* Hero Section Desktop */
-        .hero-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-            padding: 40px 30px;
-        }
-
-        /* ===== Mobile Responsive Styles ===== */
-        @media (max-width: 768px) {
-            /* Navbar Mobile */
-            .navbar {
-                flex-direction: column;
-                padding: 15px;
-            }
-            
-            .navlogo img {
-                height: 80px;
-                width: 200px;
-                margin-bottom: 15px;
-            }
-            
-            .search-container {
-                width: 100%;
-                margin: 15px 0;
-            }
-            
-            .button-container {
-                flex-direction: column;
-                width: 100%;
-                gap: 10px;
-                margin-top: 15px;
-            }
-            
-            /* Search Bar Mobile */
-            .searchbar select {
-                padding: 8px;
-                font-size: 14px;
-            }
-            
-            .searchbar input {
-                font-size: 14px;
-            }
-            
-            .searchbar button {
-                padding: 8px;
-            }
-            
-            /* Hero Section Mobile */
-            .hero-section {
-                grid-template-columns: 1fr;
-                padding: 20px 15px;
-                gap: 15px;
-            }
-            
-            .box {
-                padding: 15px;
-            }
-            
-            .box1-img {
-                height: 200px;
-            }
-            
-            /* Featured Products Mobile */
-            .slider-container {
-                padding: 0 15px;
-            }
-            
-            .product-card {
-                flex: 0 0 180px;
-            }
-            
-            /* Location Button Mobile */
-            .location-button {
-                margin: 10px 0;
-                width: 100%;
-                text-align: center;
-            }
-            
-            /* Footer Mobile */
-            footer {
-                padding: 15px;
-                font-size: 14px;
-            }
-        }
     </style>
     <!-- Add Bootstrap CSS -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -733,10 +272,102 @@
         </div>
     </section>
 
-    <footer>
-        <div class="Footpanel1">Back To Top</div>
-        <div class="Footpanel2">Contact: studxchange@example.com</div>
+    <footer class="main-footer">
+      <div class="footer-container">
+        <div class="footer-brand">
+          <img src="Logo1.png" alt="StudXchange" style="height: 60px; margin-bottom: 8px;">
+          <h3>StudXchange</h3>
+          <p>Empowering students to buy, sell, and exchange with ease.</p>
+        </div>
+        <div class="footer-links">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="category.html">Categories</a></li>
+            <li><a href="sell.html">Sell/Donate</a></li>
+            <li><a href="PROFILE_FINAL.html">Profile</a></li>
+            <li><a href="wishlist.html">Wishlist</a></li>
+          </ul>
+        </div>
+        <div class="footer-contact">
+          <h4>Contact</h4>
+          <p>Email: <a href="mailto:DON_Agency@gmail.com">DON_Agency@gmail.com</a></p>
+          <p>Phone: 8857053541</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        &copy; 2025 StudXchange. All rights reserved.
+      </div>
     </footer>
+    <style>
+      .main-footer {
+        background: #232f3e;
+        color: #fff;
+        padding: 40px 0 0 0;
+        margin-top: 40px;
+      }
+      .footer-container {
+        max-width: 1200px;
+        margin: auto;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 30px;
+        padding: 0 20px;
+      }
+      .footer-brand {
+        flex: 1 1 220px;
+        text-align: center;
+      }
+      .footer-brand h3 {
+        margin-top: 8px;
+        margin-bottom: 8px;
+        color: #ffb300;
+      }
+      .footer-links {
+        flex: 1 1 180px;
+      }
+      .footer-links ul {
+        list-style: none;
+        padding: 0;
+      }
+      .footer-links li {
+        margin-bottom: 10px;
+      }
+      .footer-links a {
+        color: #fff;
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      .footer-links a:hover {
+        color: #ffb300;
+      }
+      .footer-contact {
+        flex: 1 1 180px;
+      }
+      .footer-contact a {
+        color: #ffb300;
+        text-decoration: none;
+      }
+      .footer-bottom {
+        text-align: center;
+        padding: 18px 0 8px 0;
+        font-size: 1rem;
+        border-top: 1px solid #39495a;
+        margin-top: 32px;
+        background: #1a232e;
+      }
+      @media (max-width: 800px) {
+        .footer-container {
+          flex-direction: column;
+          align-items: center;
+        }
+        .footer-brand, .footer-links, .footer-contact {
+          text-align: center;
+        }
+      }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         let currentSlide = 0;
