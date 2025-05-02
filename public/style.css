@@ -1,5 +1,8 @@
 /* StudXchange Sell Page Styles - Consistent Modern Theme */
-
+*{
+  margin: 0;
+  padding: 0;
+}
 body {
   background-color: #f4f6f9;
   color: #222;
