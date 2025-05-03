@@ -277,6 +277,7 @@ function setupMapModal() {
 async function uploadImageToImgbb(file) {
   // Fetch the imgbb API key from window.env (populated via server-side injection)
   const apiKey = window.env && window.env.IMGBB_API_KEY ? window.env.IMGBB_API_KEY : undefined;
+  console.log('[imgbb] Using API Key:', apiKey);
   if (!apiKey) {
     alert('imgbb API key is missing. Please set it in your environment/config.');
     throw new Error('imgbb API key missing');
@@ -289,15 +290,27 @@ async function uploadImageToImgbb(file) {
       method: 'POST',
       body: formData
     });
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (jsonErr) {
+      console.error('[imgbb] Failed to parse JSON:', jsonErr);
+      throw new Error('imgbb upload failed: Invalid JSON response');
+    }
     if (!response.ok) {
-      console.error('imgbb upload failed:', data);
+      console.error('[imgbb] upload failed:', data);
       alert('Image upload failed: ' + (data.error?.message || response.statusText));
       throw new Error(data.error?.message || 'imgbb upload failed');
     }
+    if (!data?.data?.url) {
+      console.error('[imgbb] No image URL returned:', data);
+      alert('Image upload failed: No image URL returned');
+      throw new Error('imgbb upload failed: No image URL returned');
+    }
+    console.log('[imgbb] Image uploaded successfully:', data.data.url);
     return data.data.url;
   } catch (err) {
-    console.error('imgbb upload error:', err);
+    console.error('[imgbb] upload error:', err);
     alert('Image upload failed: ' + err.message);
     throw err;
   }
@@ -307,14 +320,44 @@ async function uploadImageToImgbb(file) {
 async function uploadPdfToSupabase(file) {
   // Uses window.supabaseClient from firebase-config.js
   const supabase = window.supabaseClient;
+  if (!supabase) {
+    alert('Supabase client is not initialized. Check your script order and config.');
+    throw new Error('Supabase client not initialized');
+  }
   const fileName = `notes/${Date.now()}_${file.name}`;
-  let { data, error } = await supabase.storage.from('notes').upload(fileName, file, {
-    cacheControl: '3600',
-    upsert: false
-  });
-  if (error) throw new Error('PDF upload failed: ' + error.message);
+  let uploadResult;
+  try {
+    uploadResult = await supabase.storage.from('notes').upload(fileName, file, {
+      cacheControl: '3600',
+      upsert: false
+    });
+  } catch (uploadErr) {
+    console.error('[Supabase] PDF upload threw error:', uploadErr);
+    alert('PDF upload failed: ' + uploadErr.message);
+    throw uploadErr;
+  }
+  const { data, error } = uploadResult;
+  console.log('[Supabase] Upload result:', data, error);
+  if (error) {
+    alert('PDF upload failed: ' + error.message);
+    throw new Error('PDF upload failed: ' + error.message);
+  }
   // Get public URL
-  const { publicURL } = supabase.storage.from('notes').getPublicUrl(fileName).data;
+  let publicURL = '';
+  try {
+    const publicUrlResult = supabase.storage.from('notes').getPublicUrl(fileName);
+    publicURL = publicUrlResult.data?.publicURL;
+    console.log('[Supabase] Public URL result:', publicUrlResult);
+  } catch (getUrlErr) {
+    console.error('[Supabase] Failed to get public URL:', getUrlErr);
+    alert('Failed to get public URL for PDF: ' + getUrlErr.message);
+    throw getUrlErr;
+  }
+  if (!publicURL || typeof publicURL !== 'string' || !publicURL.startsWith('https://')) {
+    alert('PDF upload failed: No valid URL returned');
+    throw new Error('PDF upload failed: No valid URL returned');
+  }
+  console.log('[Supabase] PDF uploaded and public URL:', publicURL);
   return publicURL;
 }
 
