@@ -459,6 +459,126 @@
       border: 2px solid #1a75ff;
       opacity: 1;
     }
+
+    /* StudXchange NAVBAR STYLES (from index.html, improved responsive) */
+    .navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #2a3d56;
+        padding: 15px 30px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .navlogo img {
+        height: 100px;
+        width: 250px;
+    }
+    .navbar .button-container {
+        display: flex;
+        gap: 20px;
+    }
+    .search-container {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        margin: 0 20px;
+    }
+    .searchbar {
+        display: flex;
+        align-items: center;
+        background: white;
+        border-radius: 30px;
+        padding: 2px;
+        width: 100%;
+        max-width: 600px;
+    }
+    .searchbar select,
+    .searchbar input,
+    .searchbar button {
+        border: none;
+        padding: 10px;
+    }
+    .searchbar select {
+        background: #2a3d56;
+        color: white;
+        border-radius: 30px 0 0 30px;
+        width: 80px;
+    }
+    .searchbar input {
+        flex: 1;
+    }
+    .searchbar button {
+        background: #2a3d56;
+        color: white;
+        border-radius: 0 30px 30px 0;
+        cursor: pointer;
+    }
+    .profile-button, .signup-button {
+        color: white;
+        padding: 10px 15px;
+        border-radius: 25px;
+        text-decoration: none;
+        background: transparent;
+        border: 2px solid white;
+        transition: all 0.3s;
+    }
+    .profile-button:hover, .signup-button:hover {
+        background: #fff;
+        color: #2a3d56;
+    }
+    .sell-button {
+        background: #1a75ff;
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 10px 18px;
+        margin-left: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 2px 8px rgba(26,117,255,0.10);
+    }
+    .sell-button:hover {
+        background-color: #546e78;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    @media (max-width: 900px) {
+        .navbar {
+            flex-direction: column;
+            padding: 15px;
+        }
+        .navlogo img {
+            height: 80px;
+            width: 200px;
+            margin-bottom: 15px;
+        }
+        .search-container {
+            width: 100%;
+            margin: 15px 0;
+        }
+        .button-container {
+            flex-direction: column;
+            width: 100%;
+            gap: 10px;
+            margin-top: 15px;
+        }
+    }
+    @media (max-width: 600px) {
+        .navbar {
+            padding: 10px;
+        }
+        .navlogo img {
+            height: 60px;
+            width: 130px;
+        }
+        .searchbar {
+            max-width: 95vw;
+        }
+        .button-container {
+            gap: 6px;
+        }
+    }
   </style>
   <link href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" rel="stylesheet" />
   <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
@@ -469,29 +589,22 @@
   <header>
     <div class="navbar">
       <div class="navlogo">
-        <img src="Logo1.png" alt="StudXchange">
+        <a href="index.html"><img src="Logo1.png" alt="StudXchange"></a>
       </div>
       <div class="search-container">
         <form class="searchbar" action="search-results.html" method="GET">
           <select name="category">
             <option value="all">All</option>
-            <option value="VIT">VIT</option>
-            <option value="COEP">COEP</option>
-            <option value="PICT">PICT</option>
-            <option value="DYP">DYP</option>
-            <option value="PCCOE">PCCOE</option>
+            <option value="books">Books</option>
+            <option value="notes">Notes</option>
+            <option value="rooms">Rooms</option>
           </select>
-          <input type="text" name="query" placeholder="Search products...">
+          <input type="text" name="q" placeholder="Search...">
           <button type="submit"><i class="fas fa-search"></i></button>
         </form>
       </div>
-      <button class="nav-button location-button" id="locationButton">
-        <i class="fas fa-map-marker-alt"></i>
-        <span id="locationText">Get Location</span>
-      </button>
-      <span id="locationStatus" class="location-status"></span>
       <div class="button-container">
-        <a class="nav-button wishlist-button me-2" href="wishlist.html">
+        <a class="wishlist-button" href="wishlist.html" title="Wishlist">
           <i class="far fa-heart"></i>
         </a>
         <a class="nav-button sell-button" href="sell.html">Sell/Donate</a>

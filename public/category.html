@@ -503,16 +503,20 @@
 
 .centered-card { display: flex; justify-content: center; align-items: center; margin: 32px 0; }
 .notes-card {
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(42,61,86,0.08);
-  max-width: 390px;
-  margin: 0 auto;
-  padding: 30px 32px 28px 32px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: box-shadow 0.22s cubic-bezier(.4,2,.6,1), transform 0.22s cubic-bezier(.4,2,.6,1);
+  justify-content: center;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(42,61,86,0.10);
+  width: 200px;
+  height: 200px;
+  margin: 14px;
+  padding: 18px 12px 18px 12px;
+  text-align: center;
+  transition: transform 0.3s, box-shadow 0.3s;
+  position: relative;
 }
 .notes-card:hover {
   box-shadow: 0 8px 32px rgba(42,61,86,0.18);
@@ -522,58 +526,215 @@
   width: 100%;
   display: flex;
   justify-content: center;
-  margin-bottom: 18px;
+  align-items: center;
+  margin-bottom: 8px;
 }
 .notes-image {
-  max-width: 240px;
-  max-height: 180px;
-  border-radius: 12px;
+  max-width: 90px;
+  max-height: 90px;
+  border-radius: 10px;
   border: 2px solid #e1e7f0;
   box-shadow: 0 2px 8px rgba(42,61,86,0.06);
+  object-fit: cover;
 }
 .notes-title {
-  font-size: 1.32rem;
+  font-size: 0.92rem;
   color: #2a3d56;
   font-weight: 600;
-  text-align: center;
-  margin-bottom: 10px;
-}
-.notes-desc {
-  font-size: 1.08rem;
-  color: #444;
-  margin-bottom: 14px;
-  text-align: center;
-}
-.notes-meta {
-  margin-bottom: 16px;
+  margin-bottom: 6px;
+  white-space: normal;
+  word-break: break-word;
+  max-width: 100%;
   text-align: center;
 }
 .notes-price {
-  font-size: 1.15rem;
+  font-size: 1.08rem;
   color: #1a75ff;
   font-weight: bold;
-  letter-spacing: 1px;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+  text-align: center;
 }
 .notes-buynow-btn {
   background: #1a75ff;
   color: #fff;
   border: none;
-  border-radius: 28px;
-  padding: 12px 38px;
-  font-size: 1.08rem;
+  border-radius: 24px;
+  padding: 8px 20px;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s, box-shadow 0.2s;
   box-shadow: 0 2px 8px rgba(26,117,255,0.10);
-  margin-top: 8px;
+  margin-top: 5px;
+  margin-bottom: 0;
+  display: block;
+  width: 90%;
+  max-width: 120px;
+  margin-left: auto;
+  margin-right: auto;
 }
 .notes-buynow-btn:hover {
   background: #1558b0;
   box-shadow: 0 4px 16px rgba(26,117,255,0.18);
 }
-@media (max-width: 600px) {
-  .notes-card { max-width: 98vw; padding: 18px 4vw 18px 4vw; }
-  .notes-image { max-width: 90vw; }
+.product-list .container {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+  justify-items: center;
+  align-items: center;
+  padding: 20px 0;
+}
+@media (max-width: 1100px) {
+  .product-list .container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 700px) {
+  .product-list .container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .notes-card {
+    width: 98vw;
+    max-width: 98vw;
+    height: auto;
+  }
+}
+@media (max-width: 500px) {
+  .product-list .container {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- PRODUCT/ROOM CARD CUSTOMIZATION --- */
+.product-card, .room-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(42,61,86,0.10);
+  margin: 14px;
+  padding: 18px 12px 18px 12px;
+  text-align: center;
+  transition: transform 0.3s, box-shadow 0.3s;
+  position: relative;
+}
+.product-card:hover, .room-card:hover {
+  box-shadow: 0 8px 32px rgba(42,61,86,0.18);
+  transform: scale(1.025);
+}
+.product-image-container, .room-image-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.product-image, .room-image {
+  max-width: 90px;
+  max-height: 90px;
+  border-radius: 10px;
+  border: 2px solid #e1e7f0;
+  box-shadow: 0 2px 8px rgba(42,61,86,0.06);
+  object-fit: cover;
+}
+.product-title, .room-title {
+  font-size: 0.92rem;
+  color: #2a3d56;
+  font-weight: 600;
+  margin-bottom: 6px;
+  white-space: normal;
+  word-break: break-word;
+  max-width: 100%;
+  text-align: center;
+}
+.product-price, .room-price {
+  font-size: 1.08rem;
+  color: #1a75ff;
+  font-weight: bold;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+.product-info, .room-info {
+  font-size: 0.92rem;
+  color: #444;
+  margin-bottom: 6px;
+  text-align: center;
+  white-space: normal;
+  word-break: break-word;
+  max-width: 100%;
+}
+.product-buynow-btn, .room-buynow-btn {
+  background: #1a75ff;
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  padding: 8px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(26,117,255,0.10);
+  margin-top: 5px;
+  margin-bottom: 0;
+  display: block;
+  width: 90%;
+  max-width: 120px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.product-buynow-btn:hover, .room-buynow-btn:hover {
+  background: #1558b0;
+  box-shadow: 0 4px 16px rgba(26,117,255,0.18);
+}
+/* Grid for different types */
+.container.products-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  justify-items: center;
+  align-items: center;
+  padding: 20px 0;
+}
+.container.rooms-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  justify-items: center;
+  align-items: center;
+  padding: 20px 0;
+}
+.container.notes-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+  justify-items: center;
+  align-items: center;
+  padding: 20px 0;
+}
+@media (max-width: 1100px) {
+  .container.products-grid { grid-template-columns: repeat(2, 1fr); }
+  .container.rooms-grid { grid-template-columns: 1fr; }
+  .container.notes-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 700px) {
+  .container.products-grid, .container.rooms-grid, .container.notes-grid {
+    grid-template-columns: 1fr;
+  }
+  .product-card, .room-card, .notes-card {
+    width: 98vw;
+    max-width: 98vw;
+    height: auto;
+  }
+}
+@media (max-width: 500px) {
+  .container.products-grid, .container.rooms-grid, .container.notes-grid {
+    grid-template-columns: 1fr;
+  }
 }
   </style>
   
@@ -684,19 +845,68 @@ async function getLocation() {
                 productList.innerHTML = '<p>No products found.</p>';
                 return;
             }
+            // Categorize for grid
+            let hasNotes = filtered.some(p => p.category && p.category.toLowerCase() === 'notes');
+            let hasRooms = filtered.some(p => p.category && p.category.toLowerCase() === 'rooms');
+            let hasProducts = filtered.some(p => !['notes','rooms'].includes(p.category?.toLowerCase()));
+            let gridClass = '';
+            if (hasNotes && !hasRooms && !hasProducts) gridClass = 'notes-grid';
+            else if (hasRooms && !hasNotes && !hasProducts) gridClass = 'rooms-grid';
+            else if (hasProducts && !hasNotes && !hasRooms) gridClass = 'products-grid';
+            else gridClass = '';
+            productList.className = 'container ' + gridClass;
             filtered.forEach(product => {
-                const productContainer = document.createElement('div');
-                productContainer.className = 'product-card clickable';
-                productContainer.onclick = () => {
-                    window.location.href = `product_interface.html?id=${product._id || product.id || ''}&type=${product.category ? encodeURIComponent(product.category.toLowerCase()) : ''}`;
-                };
-                productContainer.innerHTML = `
-                    <div class=\"product-img\" style=\"background-image: url('${product.images?.[0] || product.image || 'placeholder.jpg'}')\"></div>
-                    <h2>${product.title}</h2>
-                    <p class=\"price\">₹${product.price || ''}</p>
-                    ${(product.pdfUrl) ? `<button class='buy-now' onclick=\"event.stopPropagation(); window.open('${product.pdfUrl}','_blank')\">Download PDF</button>` : ''}
-                `;
-                productList.appendChild(productContainer);
+                let cat = product.category?.toLowerCase();
+                if (cat === 'notes') {
+                    const noteDiv = document.createElement('div');
+                    noteDiv.className = 'notes-card';
+                    noteDiv.innerHTML = `
+                        <div class="notes-image-container">
+                            <img class="notes-image" src="${product.images?.[0] || product.image || 'placeholder.jpg'}" alt="${product.title}" />
+                        </div>
+                        <div class="notes-title">${product.title}</div>
+                        <div class="notes-price">₹${product.price || ''}</div>
+                        <button class="notes-buynow-btn" onclick="event.stopPropagation(); window.open('${product.pdfUrl || '#'}','_blank')">Buy Now</button>
+                    `;
+                    noteDiv.onclick = () => {
+                        window.location.href = `product_interface.html?id=${product._id || product.id || ''}&type=notes`;
+                    };
+                    productList.appendChild(noteDiv);
+                } else if (cat === 'rooms') {
+                    const roomDiv = document.createElement('div');
+                    roomDiv.className = 'room-card';
+                    roomDiv.innerHTML = `
+                        <div class="room-image-container">
+                            <img class="room-image" src="${product.images?.[0] || product.image || 'placeholder.jpg'}" alt="${product.title}" />
+                        </div>
+                        <div class="room-title">${product.title}</div>
+                        <div class="room-price">₹${product.price || ''}</div>
+                        <div class="room-info">${product.description ? product.description.slice(0, 90) + (product.description.length > 90 ? '...' : '') : 'No details.'}</div>
+                        <div class="room-info">Location: ${product.location || 'N/A'}</div>
+                        <button class="room-buynow-btn" onclick="event.stopPropagation(); window.location.href='product_interface.html?id=${product._id || product.id || ''}&type=rooms'">View Room</button>
+                    `;
+                    roomDiv.onclick = () => {
+                        window.location.href = `product_interface.html?id=${product._id || product.id || ''}&type=rooms`;
+                    };
+                    productList.appendChild(roomDiv);
+                } else {
+                    const prodDiv = document.createElement('div');
+                    prodDiv.className = 'product-card';
+                    prodDiv.innerHTML = `
+                        <div class="product-image-container">
+                            <img class="product-image" src="${product.images?.[0] || product.image || 'placeholder.jpg'}" alt="${product.title}" />
+                        </div>
+                        <div class="product-title">${product.title}</div>
+                        <div class="product-price">₹${product.price || ''}</div>
+                        <div class="product-info">${product.description ? product.description.slice(0, 90) + (product.description.length > 90 ? '...' : '') : 'No details.'}</div>
+                        <div class="product-info">Condition: ${product.condition || 'N/A'}</div>
+                        <button class="product-buynow-btn" onclick="event.stopPropagation(); window.location.href='product_interface.html?id=${product._id || product.id || ''}&type=${encodeURIComponent(product.category ? product.category.toLowerCase() : '')}'">View Product</button>
+                    `;
+                    prodDiv.onclick = () => {
+                        window.location.href = `product_interface.html?id=${product._id || product.id || ''}&type=${encodeURIComponent(product.category ? product.category.toLowerCase() : '')}`;
+                    };
+                    productList.appendChild(prodDiv);
+                }
             });
         } catch (error) {
             console.error('Error loading products:', error);

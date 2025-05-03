@@ -892,16 +892,44 @@ async function handleLocation() {
         }
     }
 
+    async function fetchNotes() {
+        try {
+            console.log('Fetching notes from:', API_ENDPOINTS.GET_NOTES);
+            const response = await fetch(API_ENDPOINTS.GET_NOTES);
+            console.log('Notes response status:', response.status);
+            
+            if (!response.ok) {
+                let errorMessage = `HTTP error! status: ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                    console.error('API error details:', errorData);
+                } catch (e) {
+                    console.error('Could not parse error response:', e);
+                }
+                throw new Error(errorMessage);
+            }
+            
+            const data = await response.json();
+            console.log('Notes data received:', data.length, 'items');
+            return data;
+        } catch (error) {
+            console.error('Failed to load notes:', error);
+            return [];
+        }
+    }
+
         async function loadFeaturedProducts() {
             try {
                 // Fetch both products and rooms
-                const [products, rooms] = await Promise.all([
+                const [products, rooms, notes] = await Promise.all([
                     fetchProducts(),
-                    fetchRooms()
+                    fetchRooms(),
+                    fetchNotes()
                 ]);
                 
                 // Combine products and rooms
-                let allItems = [...products, ...rooms];
+                let allItems = [...products, ...rooms, ...notes];
                 
                 // Add distance to each item
                 const itemsWithDistance = allItems.map(item => ({
