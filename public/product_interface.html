@@ -653,9 +653,7 @@
           <!-- Map for regular products -->
           <div id="map" style="display: none;"></div>
           
-          <div class="action-buttons" id="actionButtons">
-            <!-- Buttons will be dynamically populated based on product type -->
-          </div>
+          <div class="action-buttons" id="actionButtons"></div>
         </div>
         
         <div class="product-description room-description">
@@ -845,6 +843,46 @@
     return '';
   }
 
+  function populateActionButtons(product, type) {
+    const actionButtons = document.getElementById('actionButtons');
+    if (!actionButtons) return;
+    actionButtons.innerHTML = '';
+    // Regular products
+    if (type === 'product' || (!type || type === 'products')) {
+      actionButtons.innerHTML = `
+        <button class="btn btn-primary" id="buyNowBtn"><i class="fas fa-shopping-cart"></i> Buy Now</button>
+        <button class="btn btn-secondary" id="sellerInfoBtn"><i class="fas fa-user"></i> Seller Info</button>
+        <button class="btn btn-compare" id="compareBtn"><i class="fas fa-balance-scale"></i> Compare</button>
+      `;
+      document.getElementById('buyNowBtn').onclick = () => openBuyNowModal(product);
+      document.getElementById('sellerInfoBtn').onclick = () => openSellerInfoModal(product.sellerId);
+      document.getElementById('compareBtn').onclick = () => openCompareModal(product);
+    } else if (type === 'room' || type === 'rooms') {
+      actionButtons.innerHTML = `
+        <button class="btn btn-primary" id="contactSellerBtn"><i class="fas fa-envelope"></i> Contact Seller</button>
+        <button class="btn btn-compare" id="compareBtn"><i class="fas fa-balance-scale"></i> Compare</button>
+      `;
+      document.getElementById('contactSellerBtn').onclick = () => openContactSellerModal(product.sellerId);
+      document.getElementById('compareBtn').onclick = () => openCompareModal(product);
+    }
+  }
+
+  // Dummy modal openers (implementations should exist or be added)
+  function openBuyNowModal(product) {
+    alert('Buy Now functionality coming soon!');
+  }
+  function openSellerInfoModal(sellerId) {
+    document.getElementById('sellerInfoModal').style.display = 'flex';
+    // Fetch and populate seller info here
+  }
+  function openContactSellerModal(sellerId) {
+    alert('Contact Seller functionality coming soon!');
+  }
+  function openCompareModal(product) {
+    document.getElementById('compareModal').style.display = 'flex';
+    // Populate compare modal here
+  }
+
   document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id');
@@ -927,9 +965,12 @@
           <div class="product-description">
             <p>${product.description || 'No description available.'}</p>
           </div>
+          <div class="action-buttons" id="actionButtons"></div>
         </div>
       </div>
     `;
+    // Dynamically populate buttons for products/rooms
+    populateActionButtons(product, type);
   }
 
   // Show gallery if notes with multiple photos

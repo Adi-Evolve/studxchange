@@ -898,9 +898,8 @@ async function getLocation() {
                         </div>
                         <div class="product-title">${product.title}</div>
                         <div class="product-price">₹${product.price || ''}</div>
-                        <div class="product-info">${product.description ? product.description.slice(0, 90) + (product.description.length > 90 ? '...' : '') : 'No details.'}</div>
                         <div class="product-info">Condition: ${product.condition || 'N/A'}</div>
-                        <button class="product-buynow-btn" onclick="event.stopPropagation(); window.location.href='product_interface.html?id=${product._id || product.id || ''}&type=${encodeURIComponent(product.category ? product.category.toLowerCase() : '')}'">View Product</button>
+                        <button class="product-buynow-btn" onclick="window.location.href='product_interface.html?id=${product._id || product.id || ''}&type=${encodeURIComponent(product.category ? product.category.toLowerCase() : '')}'">View Product</button>
                     `;
                     prodDiv.onclick = () => {
                         window.location.href = `product_interface.html?id=${product._id || product.id || ''}&type=${encodeURIComponent(product.category ? product.category.toLowerCase() : '')}`;
@@ -928,7 +927,5 @@ async function getLocation() {
       setInterval(loadCategoryProducts, 30000);
     });
   </script>
-  
-  
 </body>
 </html>

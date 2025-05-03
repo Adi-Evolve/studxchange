@@ -88,12 +88,6 @@
     .settings button:hover {
       background-color: #4d6a88;
     }
-    footer {
-      background-color: #124559;
-      color: white;
-      padding: 20px;
-      text-align: center;
-    }
     .phone-button {
       margin-left: 10px;
       padding: 5px 10px;
@@ -492,103 +486,6 @@ button, select {
       </div>
   </div>
 
-  <footer>
-    <div class="footer-container">
-      <div class="footer-brand">
-        <img src="Logo1.png" alt="StudXchange" style="height: 60px; margin-bottom: 8px;">
-        <h3>StudXchange</h3>
-        <p>Empowering students to buy, sell, and exchange with ease.</p>
-      </div>
-      <div class="footer-links">
-        <h4>Quick Links</h4>
-        <ul>
-          <li><a href="index.html">Home</a></li>
-          <li><a href="category.html">Categories</a></li>
-          <li><a href="sell.html">Sell/Donate</a></li>
-          <li><a href="PROFILE_FINAL.html">Profile</a></li>
-          <li><a href="wishlist.html">Wishlist</a></li>
-        </ul>
-      </div>
-      <div class="footer-contact">
-        <h4>Contact</h4>
-        <p>Email: <a href="mailto:DON_Agency@gmail.com">DON_Agency@gmail.com</a></p>
-        <p>Phone: 8857053541</p>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      &copy; 2025 StudXchange. All rights reserved.
-    </div>
-  </footer>
-  <style>
-    footer {
-      background-color: #232f3e;
-      color: #fff;
-      padding: 40px 0 0 0;
-      margin-top: 40px;
-    }
-    .footer-container {
-      max-width: 1200px;
-      margin: auto;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 30px;
-      padding: 0 20px;
-    }
-    .footer-brand {
-      flex: 1 1 220px;
-      text-align: center;
-    }
-    .footer-brand h3 {
-      margin-top: 8px;
-      margin-bottom: 8px;
-      color: #ffb300;
-    }
-    .footer-links {
-      flex: 1 1 180px;
-    }
-    .footer-links ul {
-      list-style: none;
-      padding: 0;
-    }
-    .footer-links li {
-      margin-bottom: 10px;
-    }
-    .footer-links a {
-      color: #fff;
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-    .footer-links a:hover {
-      color: #ffb300;
-    }
-    .footer-contact {
-      flex: 1 1 180px;
-    }
-    .footer-contact a {
-      color: #ffb300;
-      text-decoration: none;
-    }
-    .footer-bottom {
-      text-align: center;
-      padding: 18px 0 8px 0;
-      font-size: 1rem;
-      border-top: 1px solid #39495a;
-      margin-top: 32px;
-      background: #1a232e;
-    }
-    @media (max-width: 800px) {
-      .footer-container {
-        flex-direction: column;
-        align-items: center;
-      }
-      .footer-brand, .footer-links, .footer-contact {
-        text-align: center;
-      }
-    }
-  </style>
-
   <!-- Phone Modal -->
   <div id="phoneModal" class="modal">
       <div class="modal-content">
@@ -707,30 +604,28 @@ button, select {
             document.getElementById('listedItemsList').innerHTML = '<p>Loading your items...</p>';
             // Fetch all products, notes, and rooms listed by the user
             const [productsRes, notesRes, roomsRes] = await Promise.all([
-                fetch(`${API_ENDPOINTS.GET_PRODUCTS}?sellerEmail=${encodeURIComponent(currentUser.email)}`),
-                fetch(`${API_ENDPOINTS.GET_NOTES}?sellerEmail=${encodeURIComponent(currentUser.email)}`),
-                fetch(`${API_ENDPOINTS.GET_ROOMS}?sellerEmail=${encodeURIComponent(currentUser.email)}`)
+                fetch(`/api/products?user=${encodeURIComponent(currentUser.email)}`),
+                fetch(`/api/notes?user=${encodeURIComponent(currentUser.email)}`),
+                fetch(`/api/rooms?user=${encodeURIComponent(currentUser.email)}`)
             ]);
-            if (!productsRes.ok && !notesRes.ok && !roomsRes.ok) {
-                throw new Error('Failed to fetch any listed items');
-            }
-            const products = productsRes.ok ? await productsRes.json() : [];
-            const notes = notesRes.ok ? await notesRes.json() : [];
-            const rooms = roomsRes.ok ? await roomsRes.json() : [];
+            const [products, notes, rooms] = await Promise.all([
+                productsRes.json(),
+                notesRes.json(),
+                roomsRes.json()
+            ]);
             const allItems = [...products, ...notes, ...rooms];
-            const listedItems = document.getElementById('listedItemsList');
-            listedItems.innerHTML = '';
             if (allItems.length === 0) {
-                listedItems.innerHTML = '<p>You have no listed items.</p>';
+                document.getElementById('listedItemsList').innerHTML = '<p>No items listed yet.</p>';
                 return;
             }
+            document.getElementById('listedItemsList').innerHTML = '';
             allItems.forEach(item => {
-                listedItems.innerHTML += `
+                document.getElementById('listedItemsList').innerHTML += `
                     <li class="listed-item">
-                        <img src="${item.images?.[0] || item.image || 'placeholder.jpg'}" class="item-image" alt="${item.title || item.roomType || 'Item'}">
+                        <img src="${item.image || 'placeholder.jpg'}" class="item-image" alt="${item.title || 'Product'}">
                         <div class="item-details">
-                            <h3>${item.title || item.roomType || 'Untitled Item'}</h3>
-                            <p>₹${item.price || item.deposit || '0'}</p>
+                            <h3>${item.title || 'Untitled Product'}</h3>
+                            <p>₹${item.price || '0'}</p>
                         </div>
                         <div class="item-actions">
                             <button class="sold-btn" onclick="handleSold('${item._id}')">Mark Sold</button>
