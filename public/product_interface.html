@@ -653,7 +653,9 @@
           <!-- Map for regular products -->
           <div id="map" style="display: none;"></div>
           
-          <div class="action-buttons" id="actionButtons"></div>
+          <div class="action-buttons" id="actionButtons">
+            <!-- Buttons will be dynamically populated based on product type -->
+          </div>
         </div>
         
         <div class="product-description room-description">
@@ -843,46 +845,6 @@
     return '';
   }
 
-  function populateActionButtons(product, type) {
-    const actionButtons = document.getElementById('actionButtons');
-    if (!actionButtons) return;
-    actionButtons.innerHTML = '';
-    // Regular products
-    if (type === 'product' || (!type || type === 'products')) {
-      actionButtons.innerHTML = `
-        <button class="btn btn-primary" id="buyNowBtn"><i class="fas fa-shopping-cart"></i> Buy Now</button>
-        <button class="btn btn-secondary" id="sellerInfoBtn"><i class="fas fa-user"></i> Seller Info</button>
-        <button class="btn btn-compare" id="compareBtn"><i class="fas fa-balance-scale"></i> Compare</button>
-      `;
-      document.getElementById('buyNowBtn').onclick = () => openBuyNowModal(product);
-      document.getElementById('sellerInfoBtn').onclick = () => openSellerInfoModal(product.sellerId);
-      document.getElementById('compareBtn').onclick = () => openCompareModal(product);
-    } else if (type === 'room' || type === 'rooms') {
-      actionButtons.innerHTML = `
-        <button class="btn btn-primary" id="contactSellerBtn"><i class="fas fa-envelope"></i> Contact Seller</button>
-        <button class="btn btn-compare" id="compareBtn"><i class="fas fa-balance-scale"></i> Compare</button>
-      `;
-      document.getElementById('contactSellerBtn').onclick = () => openContactSellerModal(product.sellerId);
-      document.getElementById('compareBtn').onclick = () => openCompareModal(product);
-    }
-  }
-
-  // Dummy modal openers (implementations should exist or be added)
-  function openBuyNowModal(product) {
-    alert('Buy Now functionality coming soon!');
-  }
-  function openSellerInfoModal(sellerId) {
-    document.getElementById('sellerInfoModal').style.display = 'flex';
-    // Fetch and populate seller info here
-  }
-  function openContactSellerModal(sellerId) {
-    alert('Contact Seller functionality coming soon!');
-  }
-  function openCompareModal(product) {
-    document.getElementById('compareModal').style.display = 'flex';
-    // Populate compare modal here
-  }
-
   document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id');
@@ -898,6 +860,67 @@
       document.body.innerHTML = `<h2>Product not found.</h2><p>${err.message}</p>`;
     }
   });
+
+  function populateActionButtons(product, type) {
+    const actionButtons = document.getElementById('actionButtons');
+    if (!actionButtons) return;
+    actionButtons.innerHTML = '';
+    // For regular products
+    if (type === 'product' || (!type || (type !== 'room' && type !== 'rooms' && type !== 'notes' && type !== 'note'))) {
+      actionButtons.innerHTML += `
+        <button class="btn btn-primary" id="buyNowBtn"><i class="fas fa-bolt"></i> Buy Now</button>
+        <button class="btn btn-secondary" id="sellerInfoBtn"><i class="fas fa-user"></i> Seller Info</button>
+        <button class="btn btn-compare" id="compareBtn"><i class="fas fa-balance-scale"></i> Compare</button>
+      `;
+      document.getElementById('buyNowBtn').onclick = function() { openBuyNowModal(product); };
+      document.getElementById('sellerInfoBtn').onclick = function() { openSellerInfoModal(product.sellerId); };
+      document.getElementById('compareBtn').onclick = function() { openCompareModal(product); };
+    } else if (type === 'room' || type === 'rooms') {
+      actionButtons.innerHTML += `
+        <button class="btn btn-primary" id="contactSellerBtn"><i class="fas fa-envelope"></i> Contact Seller</button>
+        <button class="btn btn-compare" id="compareBtn"><i class="fas fa-balance-scale"></i> Compare</button>
+      `;
+      document.getElementById('contactSellerBtn').onclick = function() { openContactSellerModal(product.sellerId); };
+      document.getElementById('compareBtn').onclick = function() { openCompareModal(product); };
+    }
+  }
+
+  function openBuyNowModal(product) {
+    alert('Buy Now clicked for: ' + product.title);
+  }
+  function openSellerInfoModal(sellerId) {
+    document.getElementById('sellerInfoModal').style.display = 'flex';
+    // Populate seller info here
+  }
+  function openContactSellerModal(sellerId) {
+    alert('Contact Seller clicked. Seller ID: ' + sellerId);
+  }
+  function openCompareModal(product) {
+    document.getElementById('compareModal').style.display = 'flex';
+    // Populate compare modal here
+  }
+
+  const oldRenderProductDetails = renderProductDetails;
+  renderProductDetails = function(product, type) {
+    oldRenderProductDetails(product, type);
+    // Only show action buttons and map for regular products and rooms
+    if (type !== 'notes' && type !== 'note') {
+      populateActionButtons(product, type);
+      // Show map if location exists
+      if (product.location) {
+        const mapSection = document.getElementById('mapSection');
+        if (mapSection) mapSection.style.display = '';
+        if (window.L && document.getElementById('mapContainer')) {
+          const loc = typeof product.location === 'string' ? JSON.parse(product.location) : product.location;
+          const map = L.map('mapContainer').setView([loc.lat, loc.lon], 13);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+          }).addTo(map);
+          L.marker([loc.lat, loc.lon]).addTo(map);
+        }
+      }
+    }
+  };
 
   function renderProductDetails(product, type) {
     const main = document.querySelector('main') || document.body;
@@ -965,12 +988,9 @@
           <div class="product-description">
             <p>${product.description || 'No description available.'}</p>
           </div>
-          <div class="action-buttons" id="actionButtons"></div>
         </div>
       </div>
     `;
-    // Dynamically populate buttons for products/rooms
-    populateActionButtons(product, type);
   }
 
   // Show gallery if notes with multiple photos
