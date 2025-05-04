@@ -36,7 +36,7 @@ class ProductService {
 
     static renderProductCard(product) {
         return `
-            <div class="product" onclick="window.location.href='product_interface.html?id=${product._id}'">
+            <div class="product" onclick="window.location.href='product_interface.html?id=${product._id || product.id}&type=${encodeURIComponent(product.category ? product.category.toLowerCase() : '')}'">
                 <div class="product-img" style="background-image: url('${product.images[0] || 'default-product.jpg'}')"></div>
                 <div class="product-info">
                     <h3>${product.title}</h3>
