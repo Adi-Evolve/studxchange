@@ -965,7 +965,7 @@ async function handleLocation() {
                 reversedItems.forEach(item => {
                     const productCard = document.createElement('a');
                     productCard.className = 'product-card';
-                    productCard.href = `product_interface.html?product=${encodeURIComponent(item.title)}`;
+                    productCard.href = `product_interface.html?id=${item._id || item.id || ''}&type=${encodeURIComponent(item.category ? item.category.toLowerCase() : '')}`;
                     
                     const featuredImage = item.images?.[0] || item.image || 'placeholder.jpg';
                     
