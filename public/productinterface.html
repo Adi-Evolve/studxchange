@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details | StudXchange</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f6f9;
+            color: #333;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #2a3d56;
+            padding: 15px 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .navlogo img {
+            height: 100px;
+            width: 250px;
+        }
+        .navbar .button-container {
+            display: flex;
+            gap: 20px;
+        }
+        .product-detail-container {
+            display: flex;
+            flex-wrap: wrap;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 16px rgba(44, 62, 80, 0.07);
+            margin: 40px auto;
+            max-width: 1100px;
+            padding: 32px 24px;
+            gap: 32px;
+        }
+        .product-images {
+            flex: 1 1 340px;
+            min-width: 300px;
+            max-width: 420px;
+        }
+        .product-images img {
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            object-fit: cover;
+            max-height: 320px;
+        }
+        .map-container {
+            width: 100%;
+            height: 220px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+        .product-info {
+            flex: 2 1 400px;
+            min-width: 320px;
+        }
+        .product-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .product-price {
+            font-size: 1.4rem;
+            color: #2a3d56;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        .product-meta {
+            margin-bottom: 18px;
+        }
+        .product-meta span {
+            display: inline-block;
+            margin-right: 18px;
+            font-size: 1rem;
+            color: #555;
+        }
+        .product-buttons {
+            margin-bottom: 20px;
+        }
+        .product-buttons button {
+            margin-right: 16px;
+            margin-bottom: 8px;
+            border-radius: 20px;
+            min-width: 120px;
+        }
+        .product-description {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 18px;
+            margin-top: 22px;
+            font-size: 1.1rem;
+        }
+        @media (max-width: 900px) {
+            .product-detail-container {
+                flex-direction: column;
+                padding: 18px 6px;
+            }
+            .product-images, .product-info {
+                min-width: 0;
+                max-width: 100%;
+            }
+        }
+        .main-image-wrapper {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .main-product-image {
+            width: 100%;
+            max-width: 370px;
+            max-height: 320px;
+            border-radius: 10px;
+            object-fit: cover;
+            box-shadow: 0 2px 8px rgba(44,62,80,0.12);
+        }
+        .thumbnail-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .thumbnail-img {
+            width: 40px;
+            height: 40px;
+            aspect-ratio: 1/1;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+            transition: border 0.2s;
+        }
+        .thumbnail-img.selected {
+            border: 2px solid #2a3d56;
+        }
+        .thumbnail-img:hover {
+            border: 2px solid #2a3d56;
+        }
+    </style>
+    <script>
+    function updateMainImage(imgUrl) {
+        const mainImg = document.getElementById('mainProductImage');
+        if (mainImg) mainImg.src = imgUrl;
+    }
+    </script>
+    <script>
+    // Fetch and render similar products
+    function renderSimilarProducts(currentItem) {
+        const container = document.getElementById('similarProductsContainer');
+        if (!container || !currentItem || !window.allDataCache) return;
+        // Find similar by category, but exclude current
+        let similar = (window.allDataCache.products || []).filter(p => p._id !== currentItem._id && p.category === currentItem.category);
+        if (similar.length === 0 && currentItem.college) {
+            // fallback: same college
+            similar = (window.allDataCache.products || []).filter(p => p._id !== currentItem._id && p.college === currentItem.college);
+        }
+        if (similar.length === 0) {
+            container.innerHTML = '<div style="padding:30px;color:#888;text-align:center;width:100%;">No similar products found.</div>';
+            return;
+        }
+        container.innerHTML = similar.slice(0, 10).map(p => `
+            <div class="similar-product-card" onclick="window.location.href='productinterface.html?id=${p._id}'">
+                <img src="${(p.images && p.images[0]) ? p.images[0] : 'https://via.placeholder.com/140x100?text=No+Image'}" class="similar-product-img" alt="Product Image">
+                <div class="similar-product-title">${p.title || 'Untitled'}</div>
+                <div class="similar-product-price">₹${p.price || 'N/A'}</div>
+                <div style="font-size:0.95em;color:#666;">${p.college || ''}</div>
+            </div>
+        `).join('');
+    }
+    // Patch main loader to render similar products after detail
+    const origRenderDetail = window.renderDetail;
+    window.renderDetail = function(item) {
+        origRenderDetail(item);
+        renderSimilarProducts(item);
+    }
+    </script>
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <div class="navlogo">
+                <img src="Logo1.png" alt="StudXchange">
+            </div>
+            <div class="search-container">
+                <form class="searchbar" id="searchbarForm" action="search-results.html" method="GET">
+                    <select name="category">
+                        <option value="all">All</option>
+                        <option value="laptop">Laptop</option>
+                        <option value="notes">Notes</option>
+                        <option value="room">Room</option>
+                    </select>
+                    <input type="text" name="query" placeholder="Search products, rooms, notes...">
+                    <button type="submit"><i class="fas fa-search"></i></button>
+                </form>
+            </div>
+            <div class="button-container">
+                <a class="nav-button wishlist-button me-2" href="wishlist.html">
+                    <i class="far fa-heart"></i>
+                </a>
+                <a class="nav-button sell-button" href="sell.html">Sell/Donate</a>
+                <div id="authButtonContainer"></div>
+            </div>
+        </div>
+    </header>
+    <main>
+        <div class="product-detail-container" id="productDetailContainer">
+            <!-- Product detail will be dynamically injected here -->
+        </div>
+    </main>
+    <section>
+        <div id="similarProductsContainer" class="similar-products-container">
+            <!-- Similar products will be loaded here -->
+        </div>
+    </section>
+    <style>
+        .similar-products-container {
+            margin: 40px auto 0 auto;
+            max-width: 1100px;
+            padding: 20px 0 10px 0;
+            overflow-x: auto;
+            display: flex;
+            gap: 20px;
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 2px 8px rgba(44,62,80,0.07);
+        }
+        .similar-product-card {
+            flex: 0 0 200px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(44,62,80,0.08);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: box-shadow 0.2s;
+        }
+        .similar-product-card:hover {
+            box-shadow: 0 4px 16px rgba(44,62,80,0.14);
+        }
+        .similar-product-img {
+            width: 100%;
+            max-width: 140px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .similar-product-title {
+            font-size: 1.05rem;
+            font-weight: 500;
+            margin-bottom: 4px;
+            text-align: center;
+        }
+        .similar-product-price {
+            color: #2a3d56;
+            font-size: 1rem;
+            margin-bottom: 2px;
+        }
+    </style>
+
+    <!-- Seller Info Modal -->
+    <div class="modal fade" id="sellerInfoModal" tabindex="-1" aria-labelledby="sellerInfoModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="sellerInfoModalLabel">Seller Information</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" id="sellerInfoContent">
+            <!-- Seller info will be injected here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Compare Modal -->
+    <div class="modal fade" id="compareModal" tabindex="-1" aria-labelledby="compareModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="compareModalLabel">Compare Products</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" id="compareContent">
+            <!-- Compare UI will be injected here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/db-config.js"></script>
+    <script src="js/productService.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="js/product_interface.js"></script>
+</body>
+</html>

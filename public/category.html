@@ -869,7 +869,7 @@ async function getLocation() {
                         <button class="notes-buynow-btn" onclick="event.stopPropagation(); window.open('${product.pdfUrl || '#'}','_blank')">Buy Now</button>
                     `;
                     noteDiv.onclick = () => {
-                        window.location.href = `product_interface.html?id=${product._id || product.id || ''}&type=notes`;
+                        window.location.href = `productinterface.html?id=${product._id || product.id || ''}&type=notes`;
                     };
                     productList.appendChild(noteDiv);
                 } else if (cat === 'rooms') {

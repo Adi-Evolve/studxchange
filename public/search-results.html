@@ -601,7 +601,7 @@ async function getLocation() {
                 const productCard = document.createElement('div');
                 productCard.className = 'product clickable';
                 productCard.onclick = () => {
-                    window.location.href = `product_interface.html?id=${product._id || product.id || ''}&type=${product.category ? encodeURIComponent(product.category.toLowerCase()) : ''}`;
+                    window.location.href = `productinterface.html?id=${product._id || product.id || ''}&type=${product.category ? encodeURIComponent(product.category.toLowerCase()) : ''}`;
                 };
                 productCard.innerHTML = `
                     <div class=\"product-img\" style=\"background-image: url('${product.images?.[0] || product.image || 'placeholder.jpg'}')\"></div>

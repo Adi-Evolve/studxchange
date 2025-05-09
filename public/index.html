@@ -63,6 +63,11 @@
             gap: 20px;
             padding: 40px 30px;
         }
+        @media (min-width: 992px) {
+            .hero-section {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
 
         /* ===== Mobile Responsive Styles ===== */
         @media (max-width: 768px) {
@@ -229,6 +234,11 @@
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 20px;
             padding: 40px 30px;
+        }
+        @media (min-width: 992px) {
+            .hero-section {
+                grid-template-columns: repeat(4, 1fr);
+            }
         }
         .box {
             background: white;
@@ -523,6 +533,11 @@
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 20px;
             padding: 40px 30px;
+        }
+        @media (min-width: 992px) {
+            .hero-section {
+                grid-template-columns: repeat(4, 1fr);
+            }
         }
 
         /* ===== Mobile Responsive Styles ===== */
@@ -965,7 +980,7 @@ async function handleLocation() {
                 reversedItems.forEach(item => {
                     const productCard = document.createElement('a');
                     productCard.className = 'product-card';
-                    productCard.href = `product_interface.html?id=${item._id || item.id || ''}&type=${encodeURIComponent(item.category ? item.category.toLowerCase() : '')}`;
+                    productCard.href = `productinterface.html?id=${item._id || item.id || ''}&type=${encodeURIComponent(item.category ? item.category.toLowerCase() : '')}`;
                     
                     const featuredImage = item.images?.[0] || item.image || 'placeholder.jpg';
                     

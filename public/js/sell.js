@@ -324,57 +324,38 @@ async function uploadPdfToSupabase(file) {
     alert('Supabase client is not initialized. Check your script order and config.');
     throw new Error('Supabase client not initialized');
   }
-  // Check bucket existence by listing buckets (debug only)
-  try {
-    const bucketList = await supabase.storage.listBuckets();
-    console.log('[Supabase] Available buckets:', bucketList);
-    const hasNotesBucket = bucketList.data && bucketList.data.some(b => b.id === 'notes');
-    if (!hasNotesBucket) {
-      alert('Supabase bucket "notes" does not exist. Please create it in your Supabase dashboard.');
-      throw new Error('Supabase bucket "notes" does not exist.');
-    }
-  } catch (bucketErr) {
-    console.error('[Supabase] Could not list buckets:', bucketErr);
-  }
-  // Use only the filename for Supabase storage path
+
+  // Generate a unique filename
   const fileName = `${Date.now()}_${file.name}`;
-  let uploadResult;
+
+  // Upload
+  let uploadResponse;
   try {
-    uploadResult = await supabase.storage.from('notes').upload(fileName, file, {
+    uploadResponse = await supabase.storage.from('notes').upload(fileName, file, {
       cacheControl: '3600',
       upsert: false
     });
   } catch (uploadErr) {
-    console.error('[Supabase] PDF upload threw error:', uploadErr);
-    alert('PDF upload failed: ' + (uploadErr.message || uploadErr));
-    throw uploadErr;
+    throw new Error('PDF upload failed: ' + (uploadErr.message || uploadErr));
   }
-  const { data, error } = uploadResult || {};
-  console.log('[Supabase] Upload result:', uploadResult);
-  if (error) {
-    alert('PDF upload failed: ' + error.message);
-    throw new Error('PDF upload failed: ' + error.message);
+  console.log('[Supabase] upload response:', uploadResponse);
+  const data = uploadResponse && uploadResponse.data;
+  const error = uploadResponse && uploadResponse.error;
+  if (error) throw new Error('PDF upload failed: ' + error.message);
+  if (!data || !data.path) throw new Error('PDF upload failed: No data/path returned from Supabase.');
+
+  // Get public URL (handle all property names)
+  const publicUrlResult = supabase.storage.from('notes').getPublicUrl(data.path);
+  console.log('[Supabase] getPublicUrl result:', publicUrlResult);
+
+  // Try all possible property names
+  let publicURL = publicUrlResult.data?.publicUrl || publicUrlResult.data?.publicURL;
+  if (!publicURL && typeof publicUrlResult.data === 'string') publicURL = publicUrlResult.data;
+
+  if (!publicURL || typeof publicURL !== 'string' || !publicURL.startsWith('http')) {
+    throw new Error('PDF upload failed: No valid public URL returned. Check your Supabase bucket policy and public access settings.');
   }
-  if (!data) {
-    alert('PDF upload failed: No data returned from Supabase.');
-    throw new Error('PDF upload failed: No data returned from Supabase.');
-  }
-  // Get public URL using only the filename
-  let publicURL = '';
-  try {
-    const publicUrlResult = supabase.storage.from('notes').getPublicUrl(fileName);
-    publicURL = publicUrlResult.data?.publicURL;
-    console.log('[Supabase] Public URL result:', publicUrlResult);
-  } catch (getUrlErr) {
-    console.error('[Supabase] Failed to get public URL:', getUrlErr);
-    alert('Failed to get public URL for PDF: ' + (getUrlErr.message || getUrlErr));
-    throw getUrlErr;
-  }
-  if (!publicURL || typeof publicURL !== 'string' || !publicURL.startsWith('https://')) {
-    alert('PDF upload failed: No valid URL returned. Check your Supabase bucket policy and public access settings.');
-    throw new Error('PDF upload failed: No valid URL returned');
-  }
-  console.log('[Supabase] PDF uploaded and public URL:', publicURL);
+
   return publicURL;
 }
 
