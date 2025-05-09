@@ -420,7 +420,7 @@ async function handleSellSubmit(e) {
         contact2: formData.get('contact2'),
         amenities: Array.from(sellForm.querySelectorAll('input[name="amenities"]:checked')).map(cb => cb.value),
         messType: formData.get('messType'),
-        location: formData.get('location') ? JSON.parse(formData.get('location')) : null
+        location: formData.get('location') || ''
       };
       // Upload images
       const files = formData.getAll('roomImages');
@@ -477,7 +477,7 @@ async function handleSellSubmit(e) {
         price: formData.get('price'),
         condition: formData.get('condition'),
         description: formData.get('description'),
-        location: formData.get('location') ? JSON.parse(formData.get('location')) : null
+        location: formData.get('location') || ''
       };
       // Upload images
       const files = formData.getAll('images');
