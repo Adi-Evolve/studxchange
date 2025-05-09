@@ -2239,7 +2239,7 @@ if (currentProduct.category === 'Notes') {
   }
 }
 
-// Add downloadPdf function optimized for Vercel deployment
+// Download PDF directly from Supabase (no Vercel proxy)
 async function downloadPdf() {
   try {
     console.log("Download PDF button clicked");
@@ -2332,40 +2332,31 @@ async function downloadPdf() {
     } 
     // Regular Supabase URL (non-chunked file)
     else if (pdfUrl.includes('supabase')) {
-      // This is a Supabase URL, we can use the Supabase client to download it
+      // Always download directly from Supabase public URL
       downloadButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Downloading file...';
-      
-      // Get the file path from the URL (everything after the bucket name)
-      const urlParts = pdfUrl.split('pdfs/');
-      if (urlParts.length < 2) {
-        throw new Error('Invalid PDF URL format');
+      try {
+        const response = await fetch(pdfUrl);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch PDF: ${response.status}`);
+        }
+        const blob = await response.blob();
+        const downloadUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = currentProduct.title ? `${currentProduct.title}.pdf` : 'note.pdf';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          URL.revokeObjectURL(downloadUrl);
+          document.body.removeChild(a);
+        }, 100);
+      } catch (err) {
+        alert('Failed to download PDF directly from Supabase. Please try again later.');
+        console.error('Supabase PDF download error:', err);
+      } finally {
+        downloadButton.innerHTML = originalButtonText;
+        downloadButton.disabled = false;
       }
-      
-      const filePath = urlParts[1];
-      console.log("Downloading file from path:", filePath);
-      
-      // For Vercel deployment, avoid using the Supabase client directly for large files
-      // Instead, use fetch to download the file directly from the URL
-      const response = await fetch(pdfUrl);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch PDF: ${response.status}`);
-      }
-      
-      const blob = await response.blob();
-      
-      // Create a download link
-      const downloadUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = downloadUrl;
-      a.download = currentProduct.title ? `${currentProduct.title}.pdf` : filePath.split('/').pop();
-      document.body.appendChild(a);
-      a.click();
-      
-      // Clean up
-      setTimeout(() => {
-        URL.revokeObjectURL(downloadUrl);
-        document.body.removeChild(a);
-      }, 100);
     } 
     // Direct URL (not Supabase)
     else {
