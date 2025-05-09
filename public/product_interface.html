@@ -1829,18 +1829,23 @@ async function deleteMessage(index) {
 }
 document.addEventListener('DOMContentLoaded', () => {
   loadProductDetails();
-  
-  // Initialize chat message input
-  document.getElementById('chatMessage').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      sendMessage();
-    }
-  });
+
+  // Initialize chat message input safely
+  const chatInput = document.getElementById('chatMessage');
+  if (chatInput) {
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+  }
+  const sendBtn = document.getElementById('sendMessageBtn');
+  if (sendBtn) {
+    sendBtn.addEventListener('click', sendMessage);
+  }
 });
 
-    document.addEventListener('DOMContentLoaded', loadProductDetails);
-// Call this after loading product details
-document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => {
   loadProductDetails().then(updateWishlistIcon);
 });
 
@@ -2208,7 +2213,7 @@ window.addEventListener('resize', function() {
 });
 
 // Preview Before Buy for Notes
-if (currentProduct.category === 'Notes') {
+if (currentProduct && currentProduct.category === 'Notes') {
   document.getElementById('productMRP').textContent = `Platform Fee: ₹5`;
   document.getElementById('productCondition').style.display = 'none';
   document.getElementById('mapSection').style.display = 'none';
