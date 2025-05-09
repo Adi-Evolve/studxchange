@@ -336,7 +336,8 @@ async function uploadPdfToSupabase(file) {
   } catch (bucketErr) {
     console.error('[Supabase] Could not list buckets:', bucketErr);
   }
-  const fileName = `notes/${Date.now()}_${file.name}`;
+  // Use only the filename for Supabase storage path
+  const fileName = `${Date.now()}_${file.name}`;
   let uploadResult;
   try {
     uploadResult = await supabase.storage.from('notes').upload(fileName, file, {
@@ -358,7 +359,7 @@ async function uploadPdfToSupabase(file) {
     alert('PDF upload failed: No data returned from Supabase.');
     throw new Error('PDF upload failed: No data returned from Supabase.');
   }
-  // Get public URL
+  // Get public URL using only the filename
   let publicURL = '';
   try {
     const publicUrlResult = supabase.storage.from('notes').getPublicUrl(fileName);
