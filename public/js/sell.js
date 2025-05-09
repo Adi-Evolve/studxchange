@@ -324,6 +324,18 @@ async function uploadPdfToSupabase(file) {
     alert('Supabase client is not initialized. Check your script order and config.');
     throw new Error('Supabase client not initialized');
   }
+  // Check bucket existence by listing buckets (debug only)
+  try {
+    const bucketList = await supabase.storage.listBuckets();
+    console.log('[Supabase] Available buckets:', bucketList);
+    const hasNotesBucket = bucketList.data && bucketList.data.some(b => b.id === 'notes');
+    if (!hasNotesBucket) {
+      alert('Supabase bucket "notes" does not exist. Please create it in your Supabase dashboard.');
+      throw new Error('Supabase bucket "notes" does not exist.');
+    }
+  } catch (bucketErr) {
+    console.error('[Supabase] Could not list buckets:', bucketErr);
+  }
   const fileName = `notes/${Date.now()}_${file.name}`;
   let uploadResult;
   try {
@@ -333,14 +345,18 @@ async function uploadPdfToSupabase(file) {
     });
   } catch (uploadErr) {
     console.error('[Supabase] PDF upload threw error:', uploadErr);
-    alert('PDF upload failed: ' + uploadErr.message);
+    alert('PDF upload failed: ' + (uploadErr.message || uploadErr));
     throw uploadErr;
   }
-  const { data, error } = uploadResult;
-  console.log('[Supabase] Upload result:', data, error);
+  const { data, error } = uploadResult || {};
+  console.log('[Supabase] Upload result:', uploadResult);
   if (error) {
     alert('PDF upload failed: ' + error.message);
     throw new Error('PDF upload failed: ' + error.message);
+  }
+  if (!data) {
+    alert('PDF upload failed: No data returned from Supabase.');
+    throw new Error('PDF upload failed: No data returned from Supabase.');
   }
   // Get public URL
   let publicURL = '';
@@ -350,16 +366,17 @@ async function uploadPdfToSupabase(file) {
     console.log('[Supabase] Public URL result:', publicUrlResult);
   } catch (getUrlErr) {
     console.error('[Supabase] Failed to get public URL:', getUrlErr);
-    alert('Failed to get public URL for PDF: ' + getUrlErr.message);
+    alert('Failed to get public URL for PDF: ' + (getUrlErr.message || getUrlErr));
     throw getUrlErr;
   }
   if (!publicURL || typeof publicURL !== 'string' || !publicURL.startsWith('https://')) {
-    alert('PDF upload failed: No valid URL returned');
+    alert('PDF upload failed: No valid URL returned. Check your Supabase bucket policy and public access settings.');
     throw new Error('PDF upload failed: No valid URL returned');
   }
   console.log('[Supabase] PDF uploaded and public URL:', publicURL);
   return publicURL;
 }
+
 
 // --- Form Submission ---
 async function handleSellSubmit(e) {
