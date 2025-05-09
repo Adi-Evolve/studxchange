@@ -3,7 +3,11 @@
 
 // List of Indian colleges for autocomplete
 const colleges = [
-  "All", "IIT Bombay", "IIT Delhi", "IIT Kanpur", "IIT Kharagpur", "IIT Madras", "IIT Roorkee", "IIT Guwahati", "IIT Hyderabad", "IIT BHU", "IIT Dhanbad", "IIT Indore", "IIT Mandi", "IIT Ropar", "IIT Gandhinagar", "IIT Jodhpur", "IIT Patna", "IIT Palakkad", "IIT Tirupati", "IIT Bhilai", "IIT Goa", "IIT Jammu", "IIT Dharwad", "IIT Bhubaneswar", "IIT ISM Dhanbad", "IIT Varanasi", "IIT (ISM) Dhanbad", "IIT (BHU) Varanasi", "IIT (ISM)", "IIT (BHU)", "NIT Trichy", "NIT Surathkal", "NIT Warangal", "NIT Rourkela", "NIT Calicut", "NIT Kurukshetra", "NIT Durgapur", "NIT Jaipur", "NIT Allahabad", "NIT Nagpur", "NIT Silchar", "NIT Surat", "NIT Bhopal", "NIT Jalandhar", "NIT Patna", "NIT Raipur", "NIT Goa", "NIT Delhi", "NIT Meghalaya", "NIT Arunachal Pradesh", "NIT Agartala", "NIT Puducherry", "NIT Manipur", "NIT Mizoram", "NIT Sikkim", "NIT Hamirpur", "NIT Uttarakhand", "NIT Andhra Pradesh", "BITS Pilani", "BITS Goa", "BITS Hyderabad", "VIT Vellore", "VIT Chennai", "SRM Chennai", "SRM Delhi NCR", "SRM Amaravati", "COEP Pune", "PICT Pune", "PCCOE Pune", "MIT Pune", "DYP Pune", "Manipal University", "Delhi University", "Mumbai University", "Jadavpur University", "Anna University", "Osmania University", "Jamia Millia Islamia", "JNU Delhi", "AMU Aligarh", "IIIT Hyderabad", "IIIT Delhi", "IIIT Bangalore", "IIIT Allahabad", "IIITDM Jabalpur", "IIITDM Kancheepuram", "IIIT Bhubaneswar", "IIIT Vadodara", "IIIT Kota", "IIIT Guwahati", "IIIT Lucknow", "IIIT Kalyani", "IIIT Una", "IIIT Sonepat", "IIIT Dharwad", "IIIT Tiruchirappalli", "IIIT Nagpur", "IIIT Pune", "IISc Bangalore", "IISER Pune", "IISER Kolkata", "IISER Mohali", "IISER Bhopal", "IISER Thiruvananthapuram", "IISER Tirupati", "IISER Berhampur", "IISER TVM", "IISER TVM", "Other"
+  "All", "IIT Bombay", "IIT Delhi", "IIT Kanpur", "IIT Kharagpur", "IIT Madras", "IIT Roorkee", "IIT Guwahati", "IIT Hyderabad", "IIT BHU", "IIT Dhanbad", "IIT Indore", "IIT Mandi", "IIT Ropar", "IIT Gandhinagar", "IIT Jodhpur", "IIT Patna", "IIT Palakkad", "IIT Tirupati", "IIT Bhilai", "IIT Goa", "IIT Jammu", "IIT Dharwad", "IIT Bhubaneswar", "IIT ISM Dhanbad", "IIT Varanasi", "IIT (ISM) Dhanbad", "IIT (BHU) Varanasi", "IIT (ISM)", "IIT (BHU)", "NIT Trichy", "NIT Surathkal", "NIT Warangal", "NIT Rourkela", "NIT Calicut", "NIT Kurukshetra", "NIT Durgapur", "NIT Jaipur", "NIT Allahabad", "NIT Nagpur", "NIT Silchar", "NIT Surat", "NIT Bhopal", "NIT Jalandhar", "NIT Patna", "NIT Raipur", "NIT Goa", "NIT Delhi", "NIT Meghalaya", "NIT Arunachal Pradesh", "NIT Agartala", "NIT Puducherry", "NIT Manipur", "NIT Mizoram", "NIT Sikkim", "NIT Hamirpur", "NIT Uttarakhand", "NIT Andhra Pradesh", "BITS Pilani", "BITS Goa", "BITS Hyderabad", "VIT Vellore", "VIT Chennai", "SRM Chennai", "SRM Delhi NCR", "SRM Amaravati",
+  // Pune & Maharashtra Major Colleges
+  "COEP Pune", "COEP Technological University", "VIT Pune", "Vishwakarma Institute of Technology Pune", "MIT WPU Pune", "MIT World Peace University Pune", "Symbiosis Institute of Technology Pune", "Symbiosis International University Pune", "SPPU Pune", "Savitribai Phule Pune University", "DY Patil College Pune", "Dr. DY Patil Institute of Technology Pune", "SIT Pune", "Sinhgad Institute of Technology Pune", "Sinhgad College of Engineering Pune", "Bharati Vidyapeeth Pune", "Bharati Vidyapeeth College of Engineering Pune", "PICT Pune", "Pune Institute of Computer Technology", "VIIT Pune", "Vishwakarma Institute of Information Technology Pune", "PCCOE Pune", "Pimpri Chinchwad College of Engineering Pune", "JSPM Pune", "JSPM's Rajarshi Shahu College of Engineering Pune", "JSPM's Imperial College of Engineering Pune", "AIT Pune", "Army Institute of Technology Pune", "Cummins College Pune", "Cummins College of Engineering for Women Pune", "Modern College Pune", "Fergusson College Pune", "Nowrosjee Wadia College Pune", "MES Garware College Pune", "Indira College of Engineering Pune", "AISSMS Pune", "AISSMS College of Engineering Pune", "Marathwada Mitra Mandal's College of Engineering Pune", "Sinhgad Academy of Engineering Pune", "Sinhgad College of Architecture Pune", "DYP Akurdi Pune", "DYP Ambi Pune", "DYP Lohegaon Pune", "DY Patil Navi Mumbai", "DY Patil Kolhapur", "Walchand College of Engineering Sangli", "Government College of Engineering Karad", "Government College of Engineering Amravati", "VJTI Mumbai", "Veermata Jijabai Technological Institute Mumbai", "ICT Mumbai", "Institute of Chemical Technology Mumbai", "KJ Somaiya College Mumbai", "KJ Somaiya College of Engineering Mumbai", "Thadomal Shahani Engineering College Mumbai", "Fr. Conceicao Rodrigues College of Engineering Mumbai", "Sardar Patel College of Engineering Mumbai", "Terna Engineering College Navi Mumbai", "Other Maharashtra College",
+  // South & North India
+  "Manipal University", "Delhi University", "Mumbai University", "Jadavpur University", "Anna University", "Osmania University", "Jamia Millia Islamia", "JNU Delhi", "AMU Aligarh", "IIIT Hyderabad", "IIIT Delhi", "IIIT Bangalore", "IIIT Allahabad", "IIITDM Jabalpur", "IIITDM Kancheepuram", "IIIT Bhubaneswar", "IIIT Vadodara", "IIIT Kota", "IIIT Guwahati", "IIIT Lucknow", "IIIT Kalyani", "IIIT Una", "IIIT Sonepat", "IIIT Dharwad", "IIIT Tiruchirappalli", "IIIT Nagpur", "IIIT Pune", "IISc Bangalore", "IISER Pune", "IISER Kolkata", "IISER Mohali", "IISER Bhopal", "IISER Thiruvananthapuram", "IISER Tirupati", "IISER Berhampur", "IISER TVM", "IISER TVM", "Other"
 ];
 
 // Helper: Smart search for college names
@@ -183,14 +187,22 @@ async function getCurrentLocation() {
         lat: position.coords.latitude,
         lon: position.coords.longitude
       };
-      // Use reverse geocoding to get location name
+      // Use reverse geocoding to get location name (improved logic)
       try {
         const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${currentLocation.lat}&lon=${currentLocation.lon}`);
         const data = await response.json();
-        currentLocation.name = data.address.city || data.address.town || data.address.village || data.address.suburb || 'Location';
+        currentLocation.name = data.display_name
+          || data.address.city
+          || data.address.town
+          || data.address.village
+          || data.address.suburb
+          || data.address.state
+          || data.address.county
+          || `Lat: ${currentLocation.lat.toFixed(4)}, Lon: ${currentLocation.lon.toFixed(4)}`;
       } catch (err) {
-        currentLocation.name = 'Location';
+        currentLocation.name = `Lat: ${currentLocation.lat.toFixed(4)}, Lon: ${currentLocation.lon.toFixed(4)}`;
       }
+      // Always store as string
       document.getElementById('location').value = JSON.stringify(currentLocation);
       alert('Location set: ' + currentLocation.name);
     },
@@ -213,6 +225,7 @@ function setupMapModal() {
   closeModal.onclick = () => { modal.style.display = 'none'; };
   confirmBtn.onclick = () => {
     if (mapLocation) {
+      // Always store as string
       document.getElementById('location').value = JSON.stringify(mapLocation);
       modal.style.display = 'none';
       alert('Location set from map!');
@@ -221,13 +234,14 @@ function setupMapModal() {
     }
   };
 
-  // Initialize Leaflet map only once
-  let mapInitialized = false;
-  document.getElementById('mapContainer').onclick = null;
-
+  // --- Map Modal Logic ---
   function openMap() {
-    if (mapInitialized) return;
-    leafletMap = L.map('mapContainer').setView([28.6139, 77.2090], 12); // Center on Delhi by default
+    // Remove any existing map instance to avoid blank map issues
+    if (leafletMap) {
+      leafletMap.remove();
+      leafletMap = null;
+    }
+    leafletMap = L.map('mapContainer').setView([19.7515, 75.7139], 6); // Center on Maharashtra by default
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: ' OpenStreetMap contributors'
     }).addTo(leafletMap);
@@ -256,19 +270,42 @@ function setupMapModal() {
       fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}`)
         .then(resp => resp.json())
         .then(data => {
-          if (data && data.address) {
-            mapLocation.name = data.display_name || mapLocation.name;
+          if (data && data.display_name) {
+            mapLocation.name = data.display_name;
           }
         });
     });
-    mapInitialized = true;
+    // --- Search bar logic ---
+    document.getElementById('mapSearchBtn').onclick = function() {
+      const query = document.getElementById('mapSearchInput').value.trim();
+      if (!query) return;
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+        .then(resp => resp.json())
+        .then(results => {
+          if (results && results.length > 0) {
+            const place = results[0];
+            const latlng = [parseFloat(place.lat), parseFloat(place.lon)];
+            leafletMap.setView(latlng, 15);
+            if (leafletMarker) leafletMap.removeLayer(leafletMarker);
+            leafletMarker = L.marker(latlng).addTo(leafletMap);
+            mapLocation = {
+              lat: latlng[0],
+              lon: latlng[1],
+              name: place.display_name
+            };
+          } else {
+            alert('Place not found. Try another search.');
+          }
+        })
+        .catch(() => alert('Error searching for place.'));
+    };
   }
 
   // Open map when modal is displayed
   const origOpen = window.openMapModal;
   window.openMapModal = function() {
     modal.style.display = 'block';
-    setTimeout(openMap, 200); // Wait for modal to render
+    setTimeout(openMap, 100); // Delay to ensure modal is visible and container has size
     if (origOpen) origOpen();
   };
 }

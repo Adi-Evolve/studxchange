@@ -43,6 +43,10 @@
     <div id="sell-map-modal" class="modal" style="display:none;">
         <div class="modal-content">
             <span class="close" id="closeMapModal">&times;</span>
+            <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center;">
+                <input id="mapSearchInput" type="text" placeholder="Search place..." style="flex:1;padding:8px 12px;border-radius:6px;border:1px solid #ccc;">
+                <button id="mapSearchBtn" type="button" style="padding:8px 16px;border-radius:6px;background:#1a75ff;color:#fff;border:none;">Search</button>
+            </div>
             <div id="mapContainer" style="width:100%; height:400px;"></div>
             <button id="confirmMapLocation" class="btn-primary">Confirm Location</button>
         </div>
