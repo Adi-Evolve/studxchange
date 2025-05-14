@@ -1,6 +1,4 @@
-const User = require('../models/user');
-const mongoose = require('mongoose');
-
+// Deprecated: This file is no longer used. Backend has migrated to Supabase.
 exports.googleAuth = async (req, res) => {
     try {
         console.log('POST /api/auth/google - Processing Google authentication');

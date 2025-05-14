@@ -647,6 +647,22 @@ app.get('/api/products', async (req, res) => {
 
 // Get all rooms
 app.get('/api/rooms', async (req, res) => {
+
+// Get a single room by ID
+app.get('/api/rooms/:id', async (req, res) => {
+  try {
+    await connectToDatabase();
+    initModels();
+    const room = await Room.findById(req.params.id);
+    if (!room) {
+      return res.status(404).json({ message: 'Room not found' });
+    }
+    res.json(room);
+  } catch (error) {
+    console.error(`GET /api/rooms/${req.params.id} - Error:`, error.message);
+    res.status(500).json({ message: error.message, stack: error.stack });
+  }
+});
   try {
     console.log('GET /api/rooms - Fetching rooms');
     

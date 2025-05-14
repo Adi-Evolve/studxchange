@@ -53,19 +53,6 @@ async function testRooms() {
     // Create the Room model
     const Room = mongoose.model('Room', roomSchema);
     console.log('Room model created successfully');
-    
-    // Find all rooms
-    const rooms = await Room.find().sort({ createdAt: -1 });
-    console.log(`Found ${rooms.length} rooms`);
-    
-    if (rooms.length > 0) {
-      console.log('First room:', JSON.stringify(rooms[0], null, 2));
-    }
-    
-    await mongoose.disconnect();
-    console.log('Disconnected from MongoDB');
-  } catch (error) {
-    console.error('Error testing rooms:', error);
   }
 }
 

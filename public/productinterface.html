@@ -7,300 +7,351 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
-            background-color: #f4f6f9;
-            color: #333;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #2a3d56;
-            padding: 15px 30px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .navlogo img {
-            height: 100px;
-            width: 250px;
-        }
-        .navbar .button-container {
-            display: flex;
-            gap: 20px;
-        }
-        .product-detail-container {
-            display: flex;
-            flex-wrap: wrap;
-            background: #fff;
-            border-radius: 18px;
-            box-shadow: 0 4px 16px rgba(44, 62, 80, 0.07);
-            margin: 40px auto;
-            max-width: 1100px;
-            padding: 32px 24px;
-            gap: 32px;
-        }
-        .product-images {
-            flex: 1 1 340px;
-            min-width: 300px;
-            max-width: 420px;
-        }
-        .product-images img {
-            width: 100%;
-            border-radius: 10px;
-            margin-bottom: 12px;
-            object-fit: cover;
-            max-height: 320px;
-        }
-        .map-container {
-            width: 100%;
-            height: 220px;
-            border-radius: 10px;
-            margin-bottom: 12px;
-            overflow: hidden;
-        }
-        .product-info {
-            flex: 2 1 400px;
-            min-width: 320px;
-        }
-        .product-title {
-            font-size: 2rem;
-            font-weight: 600;
-            margin-bottom: 12px;
-        }
-        .product-price {
-            font-size: 1.4rem;
-            color: #2a3d56;
-            font-weight: 500;
-            margin-bottom: 8px;
-        }
-        .product-meta {
-            margin-bottom: 18px;
-        }
-        .product-meta span {
-            display: inline-block;
-            margin-right: 18px;
-            font-size: 1rem;
-            color: #555;
-        }
-        .product-buttons {
-            margin-bottom: 20px;
-        }
-        .product-buttons button {
-            margin-right: 16px;
-            margin-bottom: 8px;
-            border-radius: 20px;
-            min-width: 120px;
-        }
-        .product-description {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 18px;
-            margin-top: 22px;
-            font-size: 1.1rem;
-        }
+        body { background-color: #f4f6f9; color: #333; }
+        .product-main-section { display: flex; flex-wrap: wrap; background: #fff; border-radius: 18px; box-shadow: 0 4px 16px rgba(44, 62, 80, 0.07); margin: 40px auto; max-width: 1100px; padding: 32px 24px; gap: 32px; }
+        .product-left { flex: 1 1 340px; min-width: 300px; max-width: 420px; }
+        .product-images img { width: 100%; border-radius: 10px; margin-bottom: 10px; }
+        .product-secondary-imgs { display: flex; gap: 8px; margin-top: 8px; }
+        .product-secondary-imgs img { width: 60px; height: 48px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid #eee; }
+        .product-right { flex: 2 1 400px; min-width: 320px; }
+        .product-title { font-size: 2rem; font-weight: 600; margin-bottom: 8px; }
+        .product-price { font-size: 1.4rem; color: #2a3d56; margin-bottom: 8px; }
+        .product-description { margin: 18px 0; font-size: 1.05rem; }
+        .product-details-list { margin: 18px 0; }
+        .product-details-list li { background: #f5f7fa; border-radius: 10px; padding: 8px 16px; margin-bottom: 8px; }
+        .action-buttons { margin-top: 24px; display: flex; gap: 14px; }
+        .btn-primary { background: #2a3d56; border: none; }
+        .btn-primary:hover { background: #1a2336; }
+        .back-link { margin: 24px 0 0 24px; display: inline-block; color: #2a3d56; text-decoration: none; font-weight: 500; }
+        .back-link:hover { text-decoration: underline; }
         @media (max-width: 900px) {
-            .product-detail-container {
-                flex-direction: column;
-                padding: 18px 6px;
-            }
-            .product-images, .product-info {
-                min-width: 0;
-                max-width: 100%;
-            }
+            .product-main-section { flex-direction: column; padding: 20px 10px; }
+            .product-left, .product-right { min-width: 0; max-width: 100%; }
         }
-        .main-image-wrapper {
-            width: 100%;
-            text-align: center;
-            margin-bottom: 10px;
+        .similar-products-section {
+            margin: 0 0 32px 0;
         }
-        .main-product-image {
-            width: 100%;
-            max-width: 370px;
-            max-height: 320px;
-            border-radius: 10px;
-            object-fit: cover;
-            box-shadow: 0 2px 8px rgba(44,62,80,0.12);
-        }
-        .thumbnail-row {
+        .similar-products-scroll {
             display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
-        .thumbnail-img {
-            width: 40px;
-            height: 40px;
-            aspect-ratio: 1/1;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 2px solid #e0e0e0;
-            cursor: pointer;
-            transition: border 0.2s;
-        }
-        .thumbnail-img.selected {
-            border: 2px solid #2a3d56;
-        }
-        .thumbnail-img:hover {
-            border: 2px solid #2a3d56;
-        }
-    </style>
-    <script>
-    function updateMainImage(imgUrl) {
-        const mainImg = document.getElementById('mainProductImage');
-        if (mainImg) mainImg.src = imgUrl;
-    }
-    </script>
-    <script>
-    // Fetch and render similar products
-    function renderSimilarProducts(currentItem) {
-        const container = document.getElementById('similarProductsContainer');
-        if (!container || !currentItem || !window.allDataCache) return;
-        // Find similar by category, but exclude current
-        let similar = (window.allDataCache.products || []).filter(p => p._id !== currentItem._id && p.category === currentItem.category);
-        if (similar.length === 0 && currentItem.college) {
-            // fallback: same college
-            similar = (window.allDataCache.products || []).filter(p => p._id !== currentItem._id && p.college === currentItem.college);
-        }
-        if (similar.length === 0) {
-            container.innerHTML = '<div style="padding:30px;color:#888;text-align:center;width:100%;">No similar products found.</div>';
-            return;
-        }
-        container.innerHTML = similar.slice(0, 10).map(p => `
-            <div class="similar-product-card" onclick="window.location.href='productinterface.html?id=${p._id}'">
-                <img src="${(p.images && p.images[0]) ? p.images[0] : 'https://via.placeholder.com/140x100?text=No+Image'}" class="similar-product-img" alt="Product Image">
-                <div class="similar-product-title">${p.title || 'Untitled'}</div>
-                <div class="similar-product-price">₹${p.price || 'N/A'}</div>
-                <div style="font-size:0.95em;color:#666;">${p.college || ''}</div>
-            </div>
-        `).join('');
-    }
-    // Patch main loader to render similar products after detail
-    const origRenderDetail = window.renderDetail;
-    window.renderDetail = function(item) {
-        origRenderDetail(item);
-        renderSimilarProducts(item);
-    }
-    </script>
-</head>
-<body>
-    <header>
-        <div class="navbar">
-            <div class="navlogo">
-                <img src="Logo1.png" alt="StudXchange">
-            </div>
-            <div class="search-container">
-                <form class="searchbar" id="searchbarForm" action="search-results.html" method="GET">
-                    <select name="category">
-                        <option value="all">All</option>
-                        <option value="laptop">Laptop</option>
-                        <option value="notes">Notes</option>
-                        <option value="room">Room</option>
-                    </select>
-                    <input type="text" name="query" placeholder="Search products, rooms, notes...">
-                    <button type="submit"><i class="fas fa-search"></i></button>
-                </form>
-            </div>
-            <div class="button-container">
-                <a class="nav-button wishlist-button me-2" href="wishlist.html">
-                    <i class="far fa-heart"></i>
-                </a>
-                <a class="nav-button sell-button" href="sell.html">Sell/Donate</a>
-                <div id="authButtonContainer"></div>
-            </div>
-        </div>
-    </header>
-    <main>
-        <div class="product-detail-container" id="productDetailContainer">
-            <!-- Product detail will be dynamically injected here -->
-        </div>
-    </main>
-    <section>
-        <div id="similarProductsContainer" class="similar-products-container">
-            <!-- Similar products will be loaded here -->
-        </div>
-    </section>
-    <style>
-        .similar-products-container {
-            margin: 40px auto 0 auto;
-            max-width: 1100px;
-            padding: 20px 0 10px 0;
             overflow-x: auto;
-            display: flex;
-            gap: 20px;
-            background: #fff;
-            border-radius: 14px;
-            box-shadow: 0 2px 8px rgba(44,62,80,0.07);
+            gap: 18px;
+            padding: 12px 24px 18px 24px;
+            scrollbar-width: thin;
         }
         .similar-product-card {
-            flex: 0 0 200px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            box-shadow: 0 1px 4px rgba(44,62,80,0.08);
-            padding: 12px;
+            flex: 0 0 210px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(44,62,80,0.09);
+            padding: 14px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            cursor: pointer;
-            transition: box-shadow 0.2s;
+            text-align: center;
+            transition: box-shadow 0.2s, transform 0.2s;
         }
         .similar-product-card:hover {
-            box-shadow: 0 4px 16px rgba(44,62,80,0.14);
+            box-shadow: 0 6px 18px rgba(44,62,80,0.18);
+            transform: translateY(-4px) scale(1.03);
         }
-        .similar-product-img {
-            width: 100%;
-            max-width: 140px;
-            height: 100px;
+        .similar-product-card img {
+            width: 120px;
+            height: 120px;
             object-fit: cover;
             border-radius: 8px;
             margin-bottom: 10px;
         }
         .similar-product-title {
-            font-size: 1.05rem;
+            font-size: 1.07rem;
             font-weight: 500;
+            color: #2a3d56;
             margin-bottom: 4px;
-            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
         }
         .similar-product-price {
+            color: #1a75ff;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .similar-product-link {
+            text-decoration: none;
             color: #2a3d56;
-            font-size: 1rem;
-            margin-bottom: 2px;
+            font-size: 0.97rem;
+            font-weight: 600;
         }
     </style>
+</head>
+<body>
+    <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Home</a>
+    <section class="product-main-section" id="productSection">
+        <!-- Product details will be loaded here -->
+    </section>
+    <section class="similar-products-section">
+        <h3 style="margin:32px 0 16px 24px;">Similar Products</h3>
+        <div class="similar-products-scroll" id="similarProducts"></div>
+    </section>
+    <script src="env.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+<script>
+const supabase = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 
-    <!-- Seller Info Modal -->
-    <div class="modal fade" id="sellerInfoModal" tabindex="-1" aria-labelledby="sellerInfoModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="sellerInfoModalLabel">Seller Information</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body" id="sellerInfoContent">
-            <!-- Seller info will be injected here -->
-          </div>
-        </div>
+        // Helper: Get query param
+        function getQueryParam(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        // Fetch product details from Supabase
+        async function fetchProductDetails(id) {
+            const { data: product, error } = await supabase
+                .from('products')
+                .select('*, profiles(name, email, phone)')
+                .eq('id', id)
+                .single();
+            if (error || !product) return null;
+            // Flatten seller info for convenience
+            product.sellerName = product.profiles?.name || '';
+            product.sellerEmail = product.profiles?.email || '';
+            product.sellerPhone = product.profiles?.phone || '';
+            return product;
+        }
+
+        // Fetch similar products (same category, excluding current)
+        async function fetchSimilarProducts(product) {
+            const { data, error } = await supabase
+                .from('products')
+                .select('*')
+                .eq('category', product.category)
+                .neq('id', product.id)
+                .eq('is_sold', false)
+                .limit(4);
+            if (error || !data) return [];
+            return data;
+        }
+
+        // Render product details
+        async function renderProduct() {
+            const id = getQueryParam('id');
+            if (!id) {
+                document.getElementById('productSection').innerHTML = '<p>Product not found.</p>';
+                return;
+            }
+            let product = await fetchProductDetails(id);
+            if (!product) {
+                document.getElementById('productSection').innerHTML = '<p style="color:red;">Product not found or failed to load. Check console for errors.</p>';
+                console.error('[renderProduct] Failed to fetch product for id:', id);
+                return;
+            }
+            // --- PATCH: Fetch seller details if missing or not populated ---
+            if (product.seller && (typeof product.seller === 'string' || typeof product.seller === 'number' || (product.seller._id && !product.seller.email))) {
+                // If seller is an id or not populated
+                try {
+                    const sellerId = typeof product.seller === 'object' ? product.seller._id : product.seller;
+                    const sellerRes = await fetch(`/api/users/${sellerId}`);
+                    if (sellerRes.ok) {
+                        const seller = await sellerRes.json();
+                        product.sellerName = seller.name || seller.fullName || '';
+                        product.sellerEmail = seller.email || '';
+                        product.sellerPhone = seller.phone || seller.mobile || '';
+                    }
+                } catch(e) { /* fail silently */ }
+            } else if (product.seller && typeof product.seller === 'object') {
+                // If seller is populated object
+                product.sellerName = product.seller.name || product.seller.fullName || '';
+                product.sellerEmail = product.seller.email || '';
+                product.sellerPhone = product.seller.phone || product.seller.mobile || '';
+            }
+            document.title = product.title + ' | StudXchange';
+            // Store product details globally for button logic
+            window.productDetails = product;
+            document.getElementById('productSection').innerHTML = `
+                <div class="product-left">
+                    <div class="product-images">
+                        <img src="${product.images?.[0] || product.image || 'placeholder.jpg'}" alt="Product Image" />
+                        <div class="product-secondary-imgs">
+                            ${(product.images || []).slice(1, 4).map(img => `<img src="${img}" alt="Product Image" onclick="document.querySelector('.product-images img').src='${img}'">`).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="product-right">
+                    <div class="product-title">${product.title}</div>
+                    <div class="product-price">₹${product.price}</div>
+                    <div class="product-description">${product.description || ''}</div>
+                    <ul class="product-details-list">
+                        <li><strong>Category:</strong> ${product.category || 'N/A'}</li>
+                        <li><strong>Condition:</strong> ${product.condition || 'N/A'}</li>
+                        <li><strong>Posted:</strong> ${product.createdAt ? new Date(product.createdAt).toLocaleDateString() : 'N/A'}</li>
+                        <li><strong>Seller:</strong> ${product.sellerName || 'N/A'}</li>
+                    </ul>
+                    <div class="action-buttons">
+    <button class="btn btn-primary contact-seller-btn"><i class="fas fa-envelope"></i> Contact Seller</button>
+    <button class="btn btn-outline-secondary" onclick="toggleWishlist(event, ${JSON.stringify(product).replace(/\"/g, '&quot;')})"><i class="far fa-heart"></i> Add to Wishlist</button>
+    <button class="btn btn-outline-info compare-btn"><i class="fas fa-balance-scale"></i> Compare</button>
+    <button class="btn btn-outline-dark seller-info-btn"><i class="fas fa-user"></i> Seller Info</button>
+</div>
+<div class="product-description" style="margin-top:24px;">${product.description || ''}</div>
+</div>
+</div>
+<!-- Seller Info Modal -->
+<div id="sellerInfoModal" class="modal" tabindex="-1" style="display:none;position:fixed;z-index:9999;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.35);align-items:center;justify-content:center;">
+  <div style="background:#fff;max-width:420px;width:90vw;max-height:80vh;overflow-y:auto;border-radius:12px;padding:28px 18px 18px 18px;position:relative;">
+    <button onclick="document.getElementById('sellerInfoModal').style.display='none'" style="position:absolute;top:10px;right:16px;background:none;border:none;font-size:1.4rem;cursor:pointer;">&times;</button>
+    <h4>Seller Information</h4>
+    <div id="sellerInfoDetails"></div>
+    <hr/>
+    <h5>Past Sold Items</h5>
+    <div id="sellerPastItems" style="max-height:180px;overflow-y:auto;"></div>
+  </div>
+</div>
+<!-- Compare Modal -->
+<div id="compareModal" class="modal" tabindex="-1" style="display:none;position:fixed;z-index:9999;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.35);align-items:center;justify-content:center;">
+  <div style="background:#fff;max-width:700px;width:96vw;max-height:90vh;overflow-y:auto;border-radius:12px;padding:28px 18px 18px 18px;position:relative;">
+    <button onclick="document.getElementById('compareModal').style.display='none'" style="position:absolute;top:10px;right:16px;background:none;border:none;font-size:1.4rem;cursor:pointer;">&times;</button>
+    <h4>Compare Products</h4>
+    <div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap;">
+      <div style="flex:1;min-width:220px;">
+        <div style="font-weight:600;margin-bottom:6px;">Product 1 (Current)</div>
+        <div id="compareProduct1"></div>
       </div>
-    </div>
-
-    <!-- Compare Modal -->
-    <div class="modal fade" id="compareModal" tabindex="-1" aria-labelledby="compareModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="compareModalLabel">Compare Products</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body" id="compareContent">
-            <!-- Compare UI will be injected here -->
-          </div>
-        </div>
+      <div style="flex:1;min-width:220px;">
+        <div style="font-weight:600;margin-bottom:6px;">Product 2</div>
+        <input type="text" id="compareSearch" class="form-control" placeholder="Search product..." style="margin-bottom:8px;" />
+        <div id="compareSuggestions"></div>
+        <div id="compareProduct2"></div>
       </div>
-    </div>
+</div>
+</div>
+</div>
+`;
+            // Render similar products
+            const similar = await fetchSimilarProducts(product);
+            document.getElementById('similarProducts').innerHTML = similar.map(sp => `
+                <div class="similar-product-card">
+                    <img src="${sp.images?.[0] || sp.image || 'placeholder.jpg'}" alt="Similar Product" />
+                    <div class="similar-product-title">${sp.title}</div>
+                    <div class="similar-product-price">₹${sp.price}</div>
+                    <a href="productinterface.html?id=${sp._id || sp.id}" class="similar-product-link">View Details</a>
+                </div>
+            `).join('') || '<div>No similar products found.</div>';
+            // Wire up action buttons
+            wireProductActionButtons();
+        }
 
-    <script src="js/db-config.js"></script>
-    <script src="js/productService.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="js/product_interface.js"></script>
+        // Wire up action buttons after each product render
+        function wireProductActionButtons() {
+            // Contact Seller
+            const contactBtn = document.querySelector('.contact-seller-btn');
+            if (contactBtn) {
+                contactBtn.addEventListener('click', function() {
+                    const sellerPhone = (window.productDetails && window.productDetails.sellerPhone) ? window.productDetails.sellerPhone : '';
+                    const productTitle = window.productDetails ? window.productDetails.title : '';
+                    if (!sellerPhone) {
+                        alert('Seller phone number not available.');
+                        return;
+                    }
+                    const msg = encodeURIComponent(`Hi, I am interested in buying the ${productTitle} listed on StudXchange.`);
+                    window.open(`https://wa.me/${sellerPhone}?text=${msg}`, '_blank');
+                });
+            }
+            // Compare
+            const compareBtn = document.querySelector('.compare-btn');
+            if (compareBtn) {
+                compareBtn.addEventListener('click', async function() {
+                    document.getElementById('compareModal').style.display = 'flex';
+                    const p1 = window.productDetails;
+                    document.getElementById('compareProduct1').innerHTML = `
+                        <div style='font-weight:600;'>${p1.title}</div>
+                        <img src='${p1.images?.[0] || p1.image || 'placeholder.jpg'}' style='width:80px;height:80px;object-fit:cover;border-radius:8px;margin:8px 0;'>
+                        <div>Price: ₹${p1.price}</div>
+                        <div>Category: ${p1.category || 'N/A'}</div>
+                    `;
+                    let suggestions = [];
+                    if (window.similarProductsList) {
+                        suggestions = window.similarProductsList;
+                    } else {
+                        suggestions = await fetchSimilarProducts(p1);
+                        window.similarProductsList = suggestions;
+                    }
+                    renderCompareSuggestions(suggestions);
+                    document.getElementById('compareProduct2').innerHTML = '';
+                    document.getElementById('compareSearch').value = '';
+                    document.getElementById('compareSearch').oninput = async function(e) {
+                        const q = e.target.value.trim();
+                        if (!q) {
+                            renderCompareSuggestions(suggestions);
+                            return;
+                        }
+                        const res = await fetch(`/api/products?search=${encodeURIComponent(q)}`);
+                        const data = res.ok ? await res.json() : [];
+                        renderCompareSuggestions(data);
+                    };
+                });
+            }
+            // Seller Info
+            const sellerInfoBtn = document.querySelector('.seller-info-btn');
+            if (sellerInfoBtn) {
+                sellerInfoBtn.addEventListener('click', async function() {
+                    document.getElementById('sellerInfoModal').style.display = 'flex';
+                    const p = window.productDetails || {};
+                    document.getElementById('sellerInfoDetails').innerHTML = `
+                        <div><b>Name:</b> ${p.sellerName || 'N/A'}</div>
+                        <div><b>Email:</b> ${p.sellerEmail || 'N/A'}</div>
+                        <div><b>Phone:</b> ${p.sellerPhone || 'N/A'}</div>
+                    `;
+                    let items = [];
+                    try {
+                        const { data: itemsData, error } = await supabase
+                            .from('products')
+                            .select('*')
+                            .eq('seller_id', p.seller_id)
+                            .eq('is_sold', true);
+                        items = error || !itemsData ? [] : itemsData;
+                    } catch { items = []; }
+                    const container = document.getElementById('sellerPastItems');
+                    if (!items.length) {
+                        container.innerHTML = '<div style="color:#888;padding:8px;">No past sold items.</div>';
+                    } else {
+                        container.innerHTML = items.map(item => `
+                            <div style='display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #eee;'>
+                                <img src='${item.images?.[0] || item.image || 'placeholder.jpg'}' style='width:32px;height:32px;object-fit:cover;border-radius:5px;'>
+                                <span>${item.title}</span>
+                            </div>
+                        `).join('');
+                    }
+                });
+            }
+        }
+
+        function renderCompareSuggestions(list) {
+            const container = document.getElementById('compareSuggestions');
+            if (!list.length) { container.innerHTML = '<div style="color:#888;padding:8px;">No suggestions</div>'; return; }
+            container.innerHTML = '';
+            list.forEach(sp => {
+                const div = document.createElement('div');
+                div.style.display = 'flex';
+                div.style.alignItems = 'center';
+                div.style.gap = '10px';
+                div.style.padding = '7px 0';
+                div.style.cursor = 'pointer';
+                div.style.borderBottom = '1px solid #eee';
+                div.innerHTML = `<img src='${sp.images?.[0] || sp.image || 'placeholder.jpg'}' style='width:38px;height:38px;object-fit:cover;border-radius:5px;'><span>${sp.title}</span>`;
+                div.onclick = function() {
+                    document.getElementById('compareProduct2').innerHTML = `
+                        <div style='font-weight:600;'>${sp.title}</div>
+                        <img src='${sp.images?.[0] || sp.image || 'placeholder.jpg'}' style='width:80px;height:80px;object-fit:cover;border-radius:8px;margin:8px 0;'>
+                        <div>Price: ₹${sp.price}</div>
+                        <div>Category: ${sp.category || 'N/A'}</div>
+                    `;
+                };
+                container.appendChild(div);
+            });
+        }
+
+        // Call renderProduct after DOM is ready
+        document.addEventListener('DOMContentLoaded', renderProduct);
+    </script>
 </body>
 </html>

@@ -32,18 +32,23 @@
     <div id="orderList" class="order-list"></div>
   </div>
   <script>
+    // Initialize Supabase
+    const supabase = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+
     async function fetchOrders() {
       const email = document.getElementById('orderEmail').value.trim();
       if (!email) return alert('Please enter your email.');
-      const res = await fetch(`/api/orders?email=${encodeURIComponent(email)}`);
-      const data = await res.json();
+      const { data: orders = [], error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('email', email);
       const list = document.getElementById('orderList');
       list.innerHTML = '';
-      if (!data.success || !data.orders.length) {
+      if (error || !orders.length) {
         list.innerHTML = '<p>No orders found.</p>';
         return;
       }
-      data.orders.forEach(order => {
+      orders.forEach(order => {
         const div = document.createElement('div');
         div.className = 'order-item';
         const expired = order.expiresAt && new Date(order.expiresAt) < new Date();

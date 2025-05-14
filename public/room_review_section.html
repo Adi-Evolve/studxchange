@@ -1,0 +1,21 @@
+<!-- Review & Comment Section for Room Page -->
+<div class="room-reviews-section" style="margin-top:28px; background:#f8fafc; border-radius:12px; box-shadow:0 2px 8px rgba(44,62,80,0.07); padding:18px 14px;">
+    <h5 style="margin-bottom:12px; color:#2a3d56;">Reviews & Comments</h5>
+    <div id="reviewsList"></div>
+    <form id="reviewForm" style="margin-top:16px;">
+        <div class="mb-2">
+            <label for="reviewRating" class="form-label">Rating:</label>
+            <select id="reviewRating" class="form-select" style="width:auto; display:inline-block;">
+                <option value="5">5 ★</option>
+                <option value="4">4 ★</option>
+                <option value="3">3 ★</option>
+                <option value="2">2 ★</option>
+                <option value="1">1 ★</option>
+            </select>
+        </div>
+        <div class="mb-2">
+            <textarea id="reviewComment" class="form-control" rows="2" placeholder="Write your review..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Submit Review</button>
+    </form>
+</div>

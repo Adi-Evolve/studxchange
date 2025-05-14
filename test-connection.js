@@ -13,19 +13,6 @@ async function testConnection() {
       connectTimeoutMS: 30000,
       socketTimeoutMS: 45000,
       family: 4
-    });
-    
-    console.log('Connected to MongoDB successfully!');
-    console.log('Connection state:', mongoose.connection.readyState);
-    console.log('Database name:', mongoose.connection.db.databaseName);
-    
-    // List collections
-    const collections = await mongoose.connection.db.listCollections().toArray();
-    console.log('Collections:', collections.map(c => c.name));
-    
-    await mongoose.disconnect();
-    console.log('Disconnected from MongoDB');
-  } catch (error) {
     console.error('Failed to connect to MongoDB:', error);
   }
 }

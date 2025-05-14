@@ -1,6 +1,4 @@
-require('dotenv').config();
-const mongoose = require('mongoose');
-
+// Deprecated: This file is no longer used. Backend has migrated to Supabase.
 async function testConnection() {
   console.log('Testing MongoDB connection...');
   

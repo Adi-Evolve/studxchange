@@ -1,5 +1,5 @@
 // sell.js - Handles dynamic sell form for StudXchange
-// Dependencies: db-config.js, firebase-config.js, style.css
+// Dependencies: db-config.js, env.js, style.css
 
 // List of Indian colleges for autocomplete
 const colleges = [
@@ -95,6 +95,8 @@ function renderRegularProductForm() {
 function renderRoomForm() {
   dynamicFields.innerHTML = `
     ${renderCollegeSelector()}
+    <label for="roomName">Room/Hostel Name</label>
+    <input type="text" id="roomName" name="roomName" required maxlength="100">
     <label for="roomType">Room Type</label>
     <select id="roomType" name="roomType" required>
       <option value="">Select Type</option>
@@ -106,6 +108,9 @@ function renderRoomForm() {
       <option value="pg">PG</option>
       <option value="hostel">Hostel</option>
     </select>
+    <label for="fees">Fees/Amount (INR)</label>
+    <input type="number" id="fees" name="fees" required min="0">
+    <label><input type="checkbox" id="feesIncludeMess" name="feesIncludeMess"> Include Mess in Fees</label>
     <label for="deposit">Deposit Amount (INR)</label>
     <input type="number" id="deposit" name="deposit" required min="0">
     <label for="description">Description</label>
@@ -191,14 +196,7 @@ async function getCurrentLocation() {
       try {
         const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${currentLocation.lat}&lon=${currentLocation.lon}`);
         const data = await response.json();
-        currentLocation.name = data.display_name
-          || data.address.city
-          || data.address.town
-          || data.address.village
-          || data.address.suburb
-          || data.address.state
-          || data.address.county
-          || `Lat: ${currentLocation.lat.toFixed(4)}, Lon: ${currentLocation.lon.toFixed(4)}`;
+        currentLocation.name = window.getBestLocationName(data.address);
       } catch (err) {
         currentLocation.name = `Lat: ${currentLocation.lat.toFixed(4)}, Lon: ${currentLocation.lon.toFixed(4)}`;
       }
@@ -355,7 +353,7 @@ async function uploadImageToImgbb(file) {
 
 // --- Image and PDF Upload Helpers ---
 async function uploadPdfToSupabase(file) {
-  // Uses window.supabaseClient from firebase-config.js
+  // Uses window.supabaseClient from env.js setup
   const supabase = window.supabaseClient;
   if (!supabase) {
     alert('Supabase client is not initialized. Check your script order and config.');
@@ -410,7 +408,10 @@ async function handleSellSubmit(e) {
       // Room/Hostel listing
       payload = {
         college: formData.get('college'),
+        roomName: formData.get('roomName'),
         roomType: formData.get('roomType'),
+        fees: formData.get('fees'),
+        feesIncludeMess: document.getElementById('feesIncludeMess').checked,
         deposit: formData.get('deposit'),
         description: formData.get('description'),
         distance: formData.get('distance'),

@@ -56,11 +56,12 @@
     }
     // Fetch payment requests from backend
     async function loadRequests() {
-      const res = await fetch('/api/payment-requests');
-      const data = await res.json();
+      // Initialize Supabase
+      const supabase = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+      const { data = [], error } = await supabase.from('payment_requests').select('*');
       const list = document.getElementById('requestList');
       list.innerHTML = '';
-      if (!data.length) {
+      if (error || !data.length) {
         list.innerHTML = '<p>No pending requests.</p>';
         return;
       }

@@ -56,12 +56,32 @@ function initNavbar() {
         // Restore location if available
         const userLocation = JSON.parse(localStorage.getItem('userLocation'));
         if (userLocation && userLocation.name) {
-            const locationText = document.getElementById('locationText');
-            if (locationText) {
-                locationText.textContent = userLocation.name;
-                locationButton.classList.add('active-location');
-            }
+    const locationText = document.getElementById('locationText');
+    if (locationText) {
+        // Try to re-parse the location name for accuracy
+        if (userLocation.lat && userLocation.lon) {
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lon}`)
+                .then(res => res.json())
+                .then(data => {
+                    const bestName = window.getBestLocationName(data.address);
+                    // Only update if different and better
+                    if (bestName !== userLocation.name && bestName !== 'Unknown Location') {
+                        userLocation.name = bestName;
+                        localStorage.setItem('userLocation', JSON.stringify(userLocation));
+                    }
+                    locationText.textContent = userLocation.name;
+                    locationButton.classList.add('active-location');
+                })
+                .catch(() => {
+                    locationText.textContent = userLocation.name;
+                    locationButton.classList.add('active-location');
+                });
+        } else {
+            locationText.textContent = userLocation.name;
+            locationButton.classList.add('active-location');
         }
+    }
+}
     }
 }
 
@@ -110,9 +130,8 @@ async function handleLocation() {
             
             // Extract city or town name
             if (data.address) {
-                loc.name = data.address.city || data.address.town || 
-                          data.address.village || data.address.suburb || 
-                          'Your Location';
+                const locationName = window.getBestLocationName(data.address);
+                loc.name = locationName;
             } else {
                 loc.name = 'Your Location';
             }

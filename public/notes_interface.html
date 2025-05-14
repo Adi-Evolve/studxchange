@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notes Details | StudXchange</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; color: #333; }
+        .notes-main-section { display: flex; flex-wrap: wrap; background: #fff; border-radius: 18px; box-shadow: 0 4px 16px rgba(44, 62, 80, 0.07); margin: 40px auto; max-width: 1000px; padding: 32px 24px; gap: 32px; }
+        .notes-left { flex: 1 1 340px; min-width: 300px; max-width: 420px; }
+        .notes-images img { width: 100%; border-radius: 10px; margin-bottom: 10px; }
+        .notes-secondary-imgs { display: flex; gap: 8px; margin-top: 8px; }
+        .notes-secondary-imgs img { width: 60px; height: 48px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid #eee; }
+        .notes-right { flex: 2 1 400px; min-width: 320px; }
+        .notes-title { font-size: 2rem; font-weight: 600; margin-bottom: 8px; }
+        .notes-price { font-size: 1.4rem; color: #2a3d56; margin-bottom: 8px; }
+        .notes-description { margin: 18px 0; font-size: 1.05rem; }
+        .notes-details-list { margin: 18px 0; }
+        .notes-details-list li { background: #f5f7fa; border-radius: 10px; padding: 8px 16px; margin-bottom: 8px; }
+        .action-buttons { margin-top: 24px; display: flex; gap: 14px; }
+        .btn-primary { background: #2a3d56; border: none; }
+        .btn-primary:hover { background: #1a2336; }
+        .back-link { margin: 24px 0 0 24px; display: inline-block; color: #2a3d56; text-decoration: none; font-weight: 500; }
+        .back-link:hover { text-decoration: underline; }
+        @media (max-width: 900px) {
+            .notes-main-section { flex-direction: column; padding: 20px 10px; }
+            .notes-left, .notes-right { min-width: 0; max-width: 100%; }
+        }
+        .similar-notes-section {
+            margin: 0 0 32px 0;
+        }
+        .similar-notes-scroll {
+            display: flex;
+            overflow-x: auto;
+            gap: 18px;
+            padding: 12px 24px 18px 24px;
+            scrollbar-width: thin;
+        }
+        .similar-notes-card {
+            flex: 0 0 210px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(44,62,80,0.09);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .similar-notes-card:hover {
+            box-shadow: 0 6px 18px rgba(44,62,80,0.18);
+            transform: translateY(-4px) scale(1.03);
+        }
+        .similar-notes-card img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .similar-notes-title {
+            font-size: 1.07rem;
+            font-weight: 500;
+            color: #2a3d56;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
+        }
+        .similar-notes-price {
+            color: #1a75ff;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .similar-notes-link {
+            text-decoration: none;
+            color: #2a3d56;
+            font-size: 0.97rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Home</a>
+    <section class="notes-main-section" id="notesSection">
+        <!-- Notes details will be loaded here -->
+    </section>
+    <section class="similar-notes-section">
+        <h3 style="margin:32px 0 16px 24px;">Similar Notes</h3>
+        <div class="similar-notes-scroll" id="similarNotes"></div>
+    </section>
+    <script src="env.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+    <script>
+        // Helper: Get query param
+        function getQueryParam(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        // Fetch notes details
+        async function fetchNotesDetails(id) {
+            try {
+                const response = await fetch(`/api/notes/${id}`);
+                if (!response.ok) throw new Error('Notes not found');
+                return await response.json();
+            } catch (err) {
+                return null;
+            }
+        }
+
+        // Render notes details
+        async function renderNotes() {
+            const id = getQueryParam('id');
+            if (!id) {
+                document.getElementById('notesSection').innerHTML = '<p>Notes not found.</p>';
+                return;
+            }
+            const notes = await fetchNotesDetails(id);
+            if (!notes) {
+                document.getElementById('notesSection').innerHTML = '<p>Notes not found.</p>';
+                return;
+            }
+            document.title = notes.title + ' | StudXchange';
+            document.getElementById('notesSection').innerHTML = `
+                <div class="notes-left">
+                    <div class="notes-images">
+                        <img src="${notes.images?.[0] || notes.image || 'placeholder.jpg'}" alt="Notes Image" />
+                        <div class="notes-secondary-imgs">
+                            ${(notes.images || []).slice(1, 4).map(img => `<img src="${img}" alt="Notes Image" onclick="document.querySelector('.notes-images img').src='${img}'">`).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="notes-right">
+                    <div class="notes-title">${notes.title}</div>
+                    <div class="notes-price">₹${notes.price}</div>
+                    <div class="notes-description">${notes.description || ''}</div>
+                    <ul class="notes-details-list">
+                        <li><strong>Subject:</strong> ${notes.subject || 'N/A'}</li>
+                        <li><strong>Course:</strong> ${notes.course || 'N/A'}</li>
+                        <li><strong>Posted:</strong> ${notes.createdAt ? new Date(notes.createdAt).toLocaleDateString() : 'N/A'}</li>
+                        <li><strong>Seller:</strong> ${notes.sellerName || 'N/A'}</li>
+                    </ul>
+                    <div class="action-buttons">
+                        <button class="btn btn-success" onclick="downloadPDF()">Buy Now</button>
+                        <button class="btn btn-outline-secondary" onclick="addToWishlist()">Add to Wishlist</button>
+                    </div>
+                </div>
+            `;
+        }
+        // Download PDF function
+        function downloadPDF() {
+            if(window.currentNotesPDF) {
+                const link = document.createElement('a');
+                link.href = window.currentNotesPDF;
+                link.download = '';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                alert('PDF not available.');
+            }
+        }
+        // Add to Wishlist function
+        function addToWishlist() {
+            alert('Added to wishlist!'); // Replace with real logic if needed
+        }
+        // Fetch similar notes (same subject, excluding current)
+        async function fetchSimilarNotes(notes) {
+            try {
+                const res = await fetch(`/api/notes?subject=${encodeURIComponent(notes.subject)}&exclude=${notes._id || notes.id}`);
+                if (!res.ok) return [];
+                let data = await res.json();
+                // Exclude the current note
+                data = data.filter(n => (n._id || n.id) !== (notes._id || notes.id));
+                return data.slice(0, 8);
+            } catch {
+                return [];
+            }
+        }
+        // Render similar notes horizontally
+        async function renderSimilarNotes(notes) {
+            const similar = await fetchSimilarNotes(notes);
+            const container = document.getElementById('similarNotes');
+            if (!container) return;
+            if (!similar.length) {
+                container.innerHTML = '<div style="color:#888;padding:24px;">No similar notes found.</div>';
+                return;
+            }
+            container.innerHTML = similar.map(sn => `
+                <div class="similar-notes-card">
+                    <img src="${sn.images?.[0] || sn.image || 'placeholder.jpg'}" alt="Similar Notes" />
+                    <div class="similar-notes-title">${sn.title}</div>
+                    <div class="similar-notes-price">₹${sn.price}</div>
+                    <a href="notes_interface.html?id=${sn._id || sn.id}" class="similar-notes-link">View Details</a>
+                </div>
+            `).join('');
+        }
+        renderNotes = async function() {
+            const id = getQueryParam('id');
+            if (!id) {
+                document.getElementById('notesSection').innerHTML = '<p>Notes not found.</p>';
+                return;
+            }
+            const notes = await fetchNotesDetails(id);
+            if (!notes) {
+                document.getElementById('notesSection').innerHTML = '<p>Notes not found.</p>';
+                return;
+            }
+            document.title = notes.title + ' | StudXchange';
+            document.getElementById('notesSection').innerHTML = `
+                <div class="notes-left">
+                    <div class="notes-images">
+                        <img src="${notes.images?.[0] || notes.image || 'placeholder.jpg'}" alt="Notes Image" />
+                        <div class="notes-secondary-imgs">
+                            ${(notes.images || []).slice(1, 4).map(img => `<img src="${img}" alt="Notes Image" onclick="document.querySelector('.notes-images img').src='${img}'">`).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="notes-right">
+                    <div class="notes-title">${notes.title}</div>
+                    <div class="notes-price">₹${notes.price}</div>
+                    <div class="notes-description">${notes.description || ''}</div>
+                    <ul class="notes-details-list">
+                        <li><strong>Subject:</strong> ${notes.subject || 'N/A'}</li>
+                        <li><strong>Course:</strong> ${notes.course || 'N/A'}</li>
+                        <li><strong>Posted:</strong> ${notes.createdAt ? new Date(notes.createdAt).toLocaleDateString() : 'N/A'}</li>
+                        <li><strong>Seller:</strong> ${notes.sellerName || 'N/A'}</li>
+                    </ul>
+                    <div class="action-buttons">
+                        <button class="btn btn-success" onclick="downloadPDF()">Buy Now</button>
+                        <button class="btn btn-outline-secondary" onclick="addToWishlist()">Add to Wishlist</button>
+                    </div>
+                </div>
+            `;
+            window.currentNotesPDF = notes.pdfUrl || notes.pdf_url || notes.pdf || '';
+            renderSimilarNotes(notes);
+        }
+        // Download PDF function
+        function downloadPDF() {
+            if(window.currentNotesPDF) {
+                const link = document.createElement('a');
+                link.href = window.currentNotesPDF;
+                link.download = '';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                alert('PDF not available.');
+            }
+        }
+        // Add to Wishlist function
+        function addToWishlist() {
+            alert('Added to wishlist!'); // Replace with real logic if needed
+        }
+        renderNotes();
+    </script>
+</body>
+</html>

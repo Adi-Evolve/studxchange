@@ -6,7 +6,8 @@
   <title>Product List - StudXchange</title>
   <link rel="stylesheet" href="style5.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
-  <script src="js/db-config.js"></script>
+  <script src="js/env.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
   <style>
     /* Global Styles (matching search-results style) */
     .far.fa-heart {
@@ -503,17 +504,25 @@
 
 .centered-card { display: flex; justify-content: center; align-items: center; margin: 32px 0; }
 .notes-card {
+/* previous forced sizing removed for .notes-card, now handled by .notes-mini */
+  width: 10px !important;
+  height: 10px !important;
+  min-width: 10px !important;
+  min-height: 10px !important;
+  padding: 1px !important;
+  box-sizing: border-box !important;
+
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(42,61,86,0.10);
-  width: 200px;
-  height: 200px;
-  margin: 14px;
-  padding: 18px 12px 18px 12px;
+  border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(42,61,86,0.08);
+  width: 10px;
+  height: 10px;
+  margin: 2px;
+  padding: 1px;
   text-align: center;
   transition: transform 0.3s, box-shadow 0.3s;
   position: relative;
@@ -530,11 +539,20 @@
   margin-bottom: 8px;
 }
 .notes-image {
-  max-width: 90px;
-  max-height: 90px;
-  border-radius: 10px;
-  border: 2px solid #e1e7f0;
-  box-shadow: 0 2px 8px rgba(42,61,86,0.06);
+/* previous forced sizing removed for .notes-image, now handled by .notes-mini img */
+  max-width: 8px !important;
+  max-height: 8px !important;
+  min-width: 8px !important;
+  min-height: 8px !important;
+  width: 8px !important;
+  height: 8px !important;
+  box-sizing: border-box !important;
+
+  max-width: 8px;
+  max-height: 8px;
+  border-radius: 2px;
+  border: 1px solid #e1e7f0;
+  box-shadow: 0 1px 2px rgba(42,61,86,0.04);
   object-fit: cover;
 }
 .notes-title {
@@ -596,6 +614,14 @@
     grid-template-columns: repeat(2, 1fr);
   }
   .notes-card {
+/* previous forced sizing removed for .notes-card, now handled by .notes-mini */
+  width: 10px !important;
+  height: 10px !important;
+  min-width: 10px !important;
+  min-height: 10px !important;
+  padding: 1px !important;
+  box-sizing: border-box !important;
+
     width: 98vw;
     max-width: 98vw;
     height: auto;
@@ -726,6 +752,14 @@
     grid-template-columns: 1fr;
   }
   .product-card, .room-card, .notes-card {
+/* previous forced sizing removed for .notes-card, now handled by .notes-mini */
+  width: 10px !important;
+  height: 10px !important;
+  min-width: 10px !important;
+  min-height: 10px !important;
+  padding: 1px !important;
+  box-sizing: border-box !important;
+
     width: 98vw;
     max-width: 98vw;
     height: auto;
@@ -736,7 +770,61 @@
     grid-template-columns: 1fr;
   }
 }
-  </style>
+  .notes-mini {
+  width: 320px !important;
+  height: 350px !important;
+  min-width: 320px !important;
+  min-height: 350px !important;
+  max-width: 320px !important;
+  max-height: 350px !important;
+  padding: 13px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+.notes-mini img {
+  width: 220px !important;
+  height: 220px !important;
+  min-width: 220px !important;
+  min-height: 220px !important;
+  max-width: 220px !important;
+  max-height: 220px !important;
+  object-fit: cover !important;
+  border-radius: 12px !important;
+  margin: 0 auto 22px auto !important;
+  display: block !important;
+}
+.notes-mini .notes-title-centered {
+  width: 100%;
+  text-align: center;
+  font-size: 1.18rem;
+  font-weight: bold;
+  margin: 0 0 14px 0;
+  color: #1a2233;
+  word-break: break-word;
+}
+.notes-mini .notes-buynow-btn {
+  margin-top: 10px;
+  width: 90%;
+  background: #1a75ff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(26,117,255,0.10);
+  display: block;
+  text-align: center;
+}
+.notes-mini .notes-buynow-btn:hover {
+  background: #1558b0;
+}
+</style>
   
 </head>
 <body>
@@ -816,20 +904,23 @@ async function getLocation() {
   });
 } 
 
-    // Fetch all products, notes, rooms and merge for category section
-    async function fetchAllCategoryItems() {
-        const [productsRes, notesRes, roomsRes] = await Promise.all([
-            fetch('/api/products'),
-            fetch('/api/notes'),
-            fetch('/api/rooms')
-        ]);
-        const [products, notes, rooms] = await Promise.all([
-            productsRes.json(),
-            notesRes.json(),
-            roomsRes.json()
-        ]);
-        return [...products, ...notes, ...rooms];
+    // Fetch all products, notes, and rooms directly from Supabase and merge for category section
+async function fetchAllCategoryItems() {
+    // Ensure supabase is initialized
+    if (typeof supabase === 'undefined') {
+        window.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     }
+    const [productsRes, notesRes, roomsRes] = await Promise.all([
+        supabase.from('products').select('*'),
+        supabase.from('notes').select('*'),
+        supabase.from('rooms').select('*')
+    ]);
+    const products = productsRes.data || [];
+    const notes = notesRes.data || [];
+    const rooms = roomsRes.data || [];
+    return [...products, ...notes, ...rooms];
+}
+
     async function loadCategoryProducts() {
         try {
             const urlParams = new URLSearchParams(window.location.search);
@@ -837,11 +928,13 @@ async function getLocation() {
             const allItems = await fetchAllCategoryItems();
             const productList = document.getElementById('productList');
             productList.innerHTML = '';
+
             let filtered = allItems;
             if (categoryParam !== 'all') {
                 filtered = allItems.filter(p => p.category?.toLowerCase() === categoryParam);
             }
             if (!filtered || filtered.length === 0) {
+                if (notesGrid) notesGrid.innerHTML = '<p>No notes found.</p>';
                 productList.innerHTML = '<p>No products found.</p>';
                 return;
             }
@@ -850,59 +943,97 @@ async function getLocation() {
             let hasRooms = filtered.some(p => p.category && p.category.toLowerCase() === 'rooms');
             let hasProducts = filtered.some(p => !['notes','rooms'].includes(p.category?.toLowerCase()));
             let gridClass = '';
-            if (hasNotes && !hasRooms && !hasProducts) gridClass = 'notes-grid';
-            else if (hasRooms && !hasNotes && !hasProducts) gridClass = 'rooms-grid';
+            if (hasRooms && !hasNotes && !hasProducts) gridClass = 'rooms-grid';
             else if (hasProducts && !hasNotes && !hasRooms) gridClass = 'products-grid';
             else gridClass = '';
             productList.className = 'container ' + gridClass;
             filtered.forEach(product => {
                 let cat = product.category?.toLowerCase();
                 if (cat === 'notes') {
-                    const noteDiv = document.createElement('div');
-                    noteDiv.className = 'notes-card';
-                    noteDiv.innerHTML = `
-                        <div class="notes-image-container">
-                            <img class="notes-image" src="${product.images?.[0] || product.image || 'placeholder.jpg'}" alt="${product.title}" />
+                    const notesDiv = document.createElement('div');
+                    notesDiv.className = 'product-card modern-premium notes-mini';
+                    notesDiv.style.display = 'flex';
+                    notesDiv.style.flexDirection = 'column';
+                    notesDiv.style.alignItems = 'center';
+                    notesDiv.style.justifyContent = 'flex-start';
+                    notesDiv.style.height = '350px';
+                    notesDiv.style.margin = '18px';
+                    notesDiv.style.boxSizing = 'border-box';
+                    notesDiv.style.gap = '0';
+                    notesDiv.innerHTML = `
+                        <img class="product-image-large" src="${product.images?.[0] || product.image || 'https://via.placeholder.com/85x85?text=No+Image'}" alt="${product.title || 'Untitled'}" style="width:85px;height:85px;object-fit:cover;border-radius:7px;margin-bottom:2px;box-shadow:0 2px 8px rgba(42,61,86,0.08);background:#f9f9fb;display:block;" />
+                        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;width:100%;">
+                            <div class="notes-title-centered" style="margin-bottom:3px;font-size:0.8rem;font-weight:600;line-height:1.1;text-align:center;width:100%;">${product.title || 'Untitled'}</div>
+                            <div class="product-price large-price" style="font-size:0.75rem;text-align:center;margin-bottom:2px;">₹${product.price || 'N/A'}</div>
                         </div>
-                        <div class="notes-title">${product.title}</div>
-                        <div class="notes-price">₹${product.price || ''}</div>
-                        <button class="notes-buynow-btn" onclick="event.stopPropagation(); window.open('${product.pdfUrl || '#'}','_blank')">Buy Now</button>
                     `;
-                    noteDiv.onclick = () => {
+                    const buyNowBtn = document.createElement('button');
+                    buyNowBtn.className = 'notes-buynow-btn';
+                    buyNowBtn.textContent = 'Buy Now';
+                    buyNowBtn.style.width = '80%';
+                    buyNowBtn.style.fontSize = '0.85rem';
+                    buyNowBtn.style.height = '32px';
+buyNowBtn.style.height = '32px';
+                    buyNowBtn.onclick = (event) => {
+                        event.stopPropagation();
+                        window.open(product.pdfUrl || '#', '_blank');
+                    };
+                    notesDiv.appendChild(buyNowBtn);
+                    notesDiv.onclick = () => {
                         window.location.href = `productinterface.html?id=${product._id || product.id || ''}&type=notes`;
                     };
-                    productList.appendChild(noteDiv);
-                } else if (cat === 'rooms') {
+                    productList.appendChild(notesDiv);
+buyNowBtn.onclick = (event) => {
+    event.stopPropagation();
+    window.open(product.pdfUrl || '#', '_blank');
+};
+notesDiv.appendChild(buyNowBtn);
+notesDiv.onclick = () => {
+    window.location.href = `productinterface.html?id=${product._id || product.id || ''}&type=notes`;
+};
+productList.appendChild(notesDiv);
+                } else if (cat === 'rooms' || cat === 'rooms_hostels') {
                     const roomDiv = document.createElement('div');
-                    roomDiv.className = 'room-card';
+                    roomDiv.className = 'room-card redesigned';
+                    const amenities = (product.amenities || []).map(function(a) { return `<span class='badge badge-amenity'>${a.replace(/_/g, ' ')}</span>`; }).join(' ');
                     roomDiv.innerHTML = `
                         <div class="room-image-container">
-                            <img class="room-image" src="${product.images?.[0] || product.image || 'placeholder.jpg'}" alt="${product.title}" />
+                            <img class="room-image" src="${product.images?.[0] || product.image || 'https://via.placeholder.com/320x200?text=No+Image'}" alt="${product.roomName || product.title || 'Room/Hostel'}" />
                         </div>
-                        <div class="room-title">${product.title}</div>
-                        <div class="room-price">₹${product.price || ''}</div>
-                        <div class="room-info">${product.description ? product.description.slice(0, 90) + (product.description.length > 90 ? '...' : '') : 'No details.'}</div>
-                        <div class="room-info">Location: ${product.location || 'N/A'}</div>
-                        <button class="room-buynow-btn" onclick="event.stopPropagation(); window.location.href='product_interface.html?id=${product._id || product.id || ''}&type=rooms'">View Room</button>
+                        <div class="room-title">${product.roomName || product.title || 'Room/Hostel'}</div>
+                        <div class="room-price">₹${product.fees || product.price || 'N/A'}${product.feesIncludeMess ? ' <span class=\'badge badge-mess\'>Mess Included</span>' : ''}</div>
+                        <div class="room-info">
+                            ${product.college ? `<span><i class='fa fa-university'></i> ${product.college}</span><br>` : ''}
+                            ${product.occupancy ? `<span><i class='fa fa-users'></i> ${product.occupancy} Occupancy</span><br>` : ''}
+                            ${product.location ? `<span><i class='fa fa-map-marker-alt'></i> ${typeof product.location === 'string' ? product.location : (product.location.display_name || product.location.address || 'N/A')}</span><br>` : ''}
+                            ${product.messType ? `<span><i class='fa fa-utensils'></i> ${product.messType}</span><br>` : ''}
+                        </div>
+                        <div class="room-amenities">${amenities}</div>
+                        <button class="room-buynow-btn" onclick="event.stopPropagation(); window.location.href='productinterface.html?id=${product._id || product.id || ''}&type=rooms_hostels'">View Room</button>
                     `;
                     roomDiv.onclick = () => {
-                        window.location.href = `product_interface.html?id=${product._id || product.id || ''}&type=rooms`;
+                        window.location.href = `productinterface.html?id=${product._id || product.id || ''}&type=rooms_hostels`;
                     };
                     productList.appendChild(roomDiv);
                 } else {
                     const prodDiv = document.createElement('div');
-                    prodDiv.className = 'product-card';
+                    prodDiv.className = 'product-card modern-premium';
                     prodDiv.innerHTML = `
-                        <div class="product-image-container">
-                            <img class="product-image" src="${product.images?.[0] || product.image || 'placeholder.jpg'}" alt="${product.title}" />
+                        <div class="product-card-horizontal">
+                            <div class="product-image-section">
+                                <img class="product-image-large" src="${product.images?.[0] || product.image || 'https://via.placeholder.com/600x400?text=No+Image'}" alt="${product.title || 'Untitled'}" />
+                                <div class="wishlist-icon horizontal-wishlist" title="Add to Wishlist" onclick="event.stopPropagation(); toggleWishlist(event, ${JSON.stringify(product).replace(/\"/g, '&quot;')})"><i class="far fa-heart"></i></div>
+                            </div>
+                            <div class="product-info-section">
+                                <div class="product-title large-title">${product.title || 'Untitled'}</div>
+                                <div class="product-condition">${product.condition ? `<i class='fa fa-star'></i> ${product.condition}` : ''}</div>
+                                <div class="product-price large-price">₹${product.price || 'N/A'}</div>
+                                <button class="product-buynow-btn large-btn" onclick="event.stopPropagation(); window.location.href='productinterface.html?id=${product._id || product.id || ''}'">Buy Now</button>
+                            </div>
                         </div>
-                        <div class="product-title">${product.title}</div>
-                        <div class="product-price">₹${product.price || ''}</div>
-                        <div class="product-info">Condition: ${product.condition || 'N/A'}</div>
-                        <button class="product-buynow-btn" onclick="window.location.href='product_interface.html?id=${product._id || product.id || ''}&type=${encodeURIComponent(product.category ? product.category.toLowerCase() : '')}'">View Product</button>
                     `;
                     prodDiv.onclick = () => {
-                        window.location.href = `product_interface.html?id=${product._id || product.id || ''}&type=${encodeURIComponent(product.category ? product.category.toLowerCase() : '')}`;
+                        window.location.href = `productinterface.html?id=${product._id || product.id || ''}`;
                     };
                     productList.appendChild(prodDiv);
                 }

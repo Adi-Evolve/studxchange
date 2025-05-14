@@ -1,13 +1,4 @@
-// This file is used as an alternative entry point for Vercel
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-<<<<<<< HEAD
-const app = require('../server-app.js');
-=======
-const app = require('../server');
->>>>>>> 15472af (Debug: log index.html path for Vercel)
-
+// Deprecated: This file is no longer used. Backend has migrated to Supabase.
 // Export the Express API for Vercel serverless functions
 // This helps mitigate cold start issues and MongoDB connection problems
 module.exports = async (req, res) => {

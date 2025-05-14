@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Profile - StudXchange</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" />
-  <script src="js/db-config.js"></script>
+  <script src="env.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
   <style>
     /* Global Styles */
     * {
@@ -511,9 +512,9 @@ button, select {
     </div>
   </div>
 
-  <script src="js/navbar.js"></script>
   <script>
-    // When the page loads, load user data from localStorage and display profile info.
+    const supabase = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+    // Fetch and display profile logic here
     document.addEventListener('DOMContentLoaded', () => {
         // Check if user is logged in
         const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';

@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Search Results - StudXchange</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
-  <script src="js/db-config.js"></script>
+  <script src="env.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
   <style>
     /* Global Styles */
     * {
@@ -478,7 +479,8 @@
     <p>For any help, contact us at: Studxchange05@gmail.com | Phone: 8857053541</p>
   </footer>
 
-  <script src="/js/db-config.js"></script>
+  <script src="env.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
   <script src="js/navbar.js"></script>
   <script>
     let userLocation = JSON.parse(localStorage.getItem('userLocation')) || null;
@@ -565,16 +567,14 @@ async function getLocation() {
   });
 }
 
+    // Initialize Supabase
+    const supabase = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+
     async function fetchAllSearchItems() {
-        const [productsRes, notesRes, roomsRes] = await Promise.all([
-            fetch('/api/products'),
-            fetch('/api/notes'),
-            fetch('/api/rooms')
-        ]);
-        const [products, notes, rooms] = await Promise.all([
-            productsRes.json(),
-            notesRes.json(),
-            roomsRes.json()
+        const [{ data: products = [] }, { data: notes = [] }, { data: rooms = [] }] = await Promise.all([
+            supabase.from('products').select('*'),
+            supabase.from('notes').select('*'),
+            supabase.from('rooms').select('*')
         ]);
         return [...products, ...notes, ...rooms];
     }

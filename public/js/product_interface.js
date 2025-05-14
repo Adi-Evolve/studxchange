@@ -48,7 +48,14 @@ function renderDetail(item) {
         imagesHtml = `<div class="main-image-wrapper"><img id="mainProductImage" src="${placeholderImg}" alt="No Image" class="main-product-image"></div>`;
     }
     let mapHtml = '';
-    if (item.location && item.location.lat && item.location.lon) {
+    // Support both object and string for location
+    let locObj = item.location;
+    if (typeof locObj === 'string') {
+        try {
+            locObj = JSON.parse(locObj);
+        } catch (e) { locObj = null; }
+    }
+    if (locObj && typeof locObj.lat === 'number' && typeof locObj.lon === 'number') {
         mapHtml = `<div id="productMap" class="map-container"></div>`;
     }
     // Render logic by type
@@ -132,7 +139,7 @@ function renderDetail(item) {
         </div>
     `;
     if (mapHtml) {
-        setTimeout(() => renderMap(item.location), 100);
+        setTimeout(() => renderMap(locObj), 100);
     }
 }
 
