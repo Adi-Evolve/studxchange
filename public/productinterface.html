@@ -94,9 +94,17 @@
         <div class="similar-products-scroll" id="similarProducts"></div>
     </section>
     <script src="env.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
-<script>
-const supabase = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+    <script src="js/db-config.js"></script>
+    <!-- All custom scripts must come after Supabase CDN -->
+    <script>
+    if (!window.supabaseClient) {
+        window.supabaseClient = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+    }
+    // ... rest of your custom JS ...
+
+// Use window.supabaseClient everywhere below
+
 
         // Helper: Get query param
         function getQueryParam(name) {
@@ -106,22 +114,31 @@ const supabase = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON
 
         // Fetch product details from Supabase
         async function fetchProductDetails(id) {
-            const { data: product, error } = await supabase
+            const { data: product, error } = await window.supabaseClient
                 .from('products')
-                .select('*, profiles(name, email, phone)')
+                .select('*')
                 .eq('id', id)
                 .single();
             if (error || !product) return null;
-            // Flatten seller info for convenience
-            product.sellerName = product.profiles?.name || '';
-            product.sellerEmail = product.profiles?.email || '';
-            product.sellerPhone = product.profiles?.phone || '';
+            // Fetch seller info from users table using owner_id
+            if (product.owner_id) {
+                const { data: user, error: userErr } = await window.supabaseClient
+                    .from('users')
+                    .select('name, email, phone')
+                    .eq('id', product.owner_id)
+                    .single();
+                if (!userErr && user) {
+                    product.sellerName = user.name || '';
+                    product.sellerEmail = user.email || '';
+                    product.sellerPhone = user.phone || '';
+                }
+            }
             return product;
         }
 
         // Fetch similar products (same category, excluding current)
         async function fetchSimilarProducts(product) {
-            const { data, error } = await supabase
+            const { data, error } = await window.supabaseClient
                 .from('products')
                 .select('*')
                 .eq('category', product.category)
@@ -169,12 +186,15 @@ const supabase = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON
             window.productDetails = product;
             document.getElementById('productSection').innerHTML = `
                 <div class="product-left">
-                    <div class="product-images">
-                        <img src="${product.images?.[0] || product.image || 'placeholder.jpg'}" alt="Product Image" />
-                        <div class="product-secondary-imgs">
-                            ${(product.images || []).slice(1, 4).map(img => `<img src="${img}" alt="Product Image" onclick="document.querySelector('.product-images img').src='${img}'">`).join('')}
-                        </div>
-                    </div>
+                     <div class="product-images">
+                         <img src="${product.images?.[0] || product.image || 'placeholder.jpg'}" alt="Product Image" />
+                         <div class="product-secondary-imgs">
+                             ${(product.images || []).slice(1, 4).map(img => `<img src="${img}" alt="Product Image" onclick="document.querySelector('.product-images img').src='${img}'">`).join('')}
+                         </div>
+                         <div id="productMapContainer" style="margin-top:16px; width:100%; height:220px; border-radius:10px; overflow:hidden; background:#e6eaf0; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                             <div id="productMap" style="width:100%; height:100%;"></div>
+                         </div>
+                     </div>
                 </div>
                 <div class="product-right">
                     <div class="product-title">${product.title}</div>
@@ -237,23 +257,41 @@ const supabase = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON
                 </div>
             `).join('') || '<div>No similar products found.</div>';
             // Wire up action buttons
-            wireProductActionButtons();
+            wireProductActionButtons(product);
         }
 
         // Wire up action buttons after each product render
-        function wireProductActionButtons() {
-            // Contact Seller
-            const contactBtn = document.querySelector('.contact-seller-btn');
-            if (contactBtn) {
-                contactBtn.addEventListener('click', function() {
-                    const sellerPhone = (window.productDetails && window.productDetails.sellerPhone) ? window.productDetails.sellerPhone : '';
-                    const productTitle = window.productDetails ? window.productDetails.title : '';
-                    if (!sellerPhone) {
-                        alert('Seller phone number not available.');
-                        return;
-                    }
-                    const msg = encodeURIComponent(`Hi, I am interested in buying the ${productTitle} listed on StudXchange.`);
-                    window.open(`https://wa.me/${sellerPhone}?text=${msg}`, '_blank');
+function wireProductActionButtons(product) {
+    // Contact Seller
+    const contactBtn = document.querySelector('.contact-seller-btn');
+    if (contactBtn) {
+        contactBtn.addEventListener('click', async function() {
+            // Always fetch seller phone from users table using owner_id
+            let phone = '';
+            if (product.owner_id) {
+                const { data: user, error: userErr } = await window.supabaseClient
+                    .from('users')
+                    .select('phone')
+                    .eq('id', product.owner_id)
+                    .single();
+                if (!userErr && user && user.phone) {
+                    phone = user.phone;
+                }
+            }
+            if (!phone) {
+                alert('Seller phone number not available.');
+                return;
+            }
+            const phoneNum = phone.replace(/\D/g, '');
+            const msg = encodeURIComponent(`Hi, I am interested in buying the ${product.title} listed on StudXchange.`);
+            window.open(`https://wa.me/${phoneNum}?text=${msg}`, '_blank');
+        });
+    }
+            // Wishlist
+            const wishlistBtn = document.querySelector('.wishlist-btn');
+            if (wishlistBtn) {
+                wishlistBtn.addEventListener('click', function() {
+                    // TO DO: Implement wishlist logic
                 });
             }
             // Compare
@@ -296,17 +334,33 @@ const supabase = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON
                 sellerInfoBtn.addEventListener('click', async function() {
                     document.getElementById('sellerInfoModal').style.display = 'flex';
                     const p = window.productDetails || {};
+                    // Fetch seller info from users table using owner_id
+                    let sellerInfo = { name: 'N/A', email: 'N/A', phone: 'N/A' };
+                    if (p.owner_id) {
+                        const { data: user, error: userErr } = await window.supabaseClient
+                            .from('users')
+                            .select('name, email, phone')
+                            .eq('id', p.owner_id)
+                            .single();
+                        if (!userErr && user) {
+                            sellerInfo = {
+                                name: user.name || 'N/A',
+                                email: user.email || 'N/A',
+                                phone: user.phone || 'N/A'
+                            };
+                        }
+                    }
                     document.getElementById('sellerInfoDetails').innerHTML = `
-                        <div><b>Name:</b> ${p.sellerName || 'N/A'}</div>
-                        <div><b>Email:</b> ${p.sellerEmail || 'N/A'}</div>
-                        <div><b>Phone:</b> ${p.sellerPhone || 'N/A'}</div>
+                        <div><b>Name:</b> ${sellerInfo.name}</div>
+                        <div><b>Email:</b> ${sellerInfo.email}</div>
+                        <div><b>Phone:</b> ${sellerInfo.phone}</div>
                     `;
                     let items = [];
                     try {
-                        const { data: itemsData, error } = await supabase
+                        const { data: itemsData, error } = await window.supabaseClient
                             .from('products')
                             .select('*')
-                            .eq('seller_id', p.seller_id)
+                            .eq('owner_id', p.owner_id)
                             .eq('is_sold', true);
                         items = error || !itemsData ? [] : itemsData;
                     } catch { items = []; }
@@ -352,6 +406,79 @@ const supabase = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON
 
         // Call renderProduct after DOM is ready
         document.addEventListener('DOMContentLoaded', renderProduct);
+
+        // Responsive tweaks for mobile/tablet (do not affect desktop)
+        const style = document.createElement('style');
+        style.innerHTML = `
+        @media (max-width: 700px) {
+            .product-main-section { flex-direction: column !important; padding: 8px 2vw !important; gap: 10px !important; }
+            .product-left, .product-right { max-width: 100% !important; min-width: 0 !important; }
+            .product-title { font-size: 1.2rem !important; }
+            .product-price { font-size: 1rem !important; }
+            .product-description, .product-details-list { font-size: 0.93rem !important; }
+            .action-buttons { flex-direction: column !important; gap: 8px !important; }
+            .product-images img { max-height: 210px !important; object-fit: cover; }
+            #productMapContainer { height: 160px !important; }
+        }
+        @media (max-width: 400px) {
+            .product-main-section { padding: 2px 0 !important; }
+            .product-title { font-size: 1rem !important; }
+            .product-images img { max-height: 140px !important; }
+            #productMapContainer { height: 100px !important; }
+        }
+        `;
+        document.head.appendChild(style);
+
+        // --- MAP RENDERING LOGIC ---
+        function renderProductMap(locationStr) {
+            const mapDiv = document.getElementById('productMap');
+            if (!mapDiv) return;
+            mapDiv.innerHTML = '';
+            let coords = null;
+            let locName = '';
+            try {
+                let raw = locationStr;
+                if (typeof locationStr === 'string') {
+                    raw = JSON.parse(locationStr);
+                }
+                if (typeof raw === 'object' && raw.lat && raw.lon) {
+                    coords = { lat: Number(raw.lat), lon: Number(raw.lon) };
+                    locName = raw.name || '';
+                }
+            } catch (err) {
+                mapDiv.innerHTML = '<div style="color:#888;text-align:center;">Location unavailable</div>';
+                return;
+            }
+            if (!coords || isNaN(coords.lat) || isNaN(coords.lon)) {
+                mapDiv.innerHTML = '<div style="color:#888;text-align:center;">Location unavailable</div>';
+                return;
+            }
+            // OSM embed with marker
+            const marker = coords.lat + ',' + coords.lon;
+            const iframeUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${coords.lon-0.01}%2C${coords.lat-0.01}%2C${coords.lon+0.01}%2C${coords.lat+0.01}&layer=mapnik&marker=${coords.lat}%2C${coords.lon}`;
+            mapDiv.innerHTML = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="${iframeUrl}" style="border-radius:10px;"></iframe>`;
+            if (locName) {
+                let nameDiv = document.getElementById('productMapName');
+                if (!nameDiv) {
+                    nameDiv = document.createElement('div');
+                    nameDiv.id = 'productMapName';
+                    nameDiv.style = 'font-size:0.97rem;margin-top:3px;color:#2a3d56;text-align:center;';
+                    mapDiv.parentNode.appendChild(nameDiv);
+                }
+                nameDiv.textContent = locName;
+            }
+        }
+        // Patch renderProduct to call map
+        const origRenderProduct = renderProduct;
+        renderProduct = async function() {
+            await origRenderProduct();
+            const prod = window.productDetails;
+            if (prod && prod.location) {
+                renderProductMap(prod.location);
+            } else {
+                console.warn('[Map] No location in product');
+            }
+        }
     </script>
 </body>
 </html>

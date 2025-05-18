@@ -9,6 +9,8 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <!-- JWT Decode for parsing Google tokens -->
   <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
+  <script src="env.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
   <script src="js/db-config.js"></script>
   
   <style>
@@ -370,7 +372,9 @@
     <p>The ultimate college marketplace for students to buy, sell, and find accommodations. Join our community with a simple Google login.</p>
     
     <div class="google-signin-container">
-      <div id="googleSignInButton"></div>
+      <button id="supabaseGoogleSignInBtn" style="padding:12px 24px;font-size:1.1rem;border-radius:8px;background:#4285F4;color:#fff;border:none;cursor:pointer;display:flex;align-items:center;gap:8px;">
+        <i class="fab fa-google"></i> Sign in with Google
+      </button>
     </div>
     
     <div id="formError" class="error"></div>
@@ -411,157 +415,24 @@
    
 
   <script>
-    // Google Sign-In Initialization
-    function initGoogleSignIn() {
-      console.log("Initializing Google Sign-In...");
-      
-      if (typeof google === 'undefined' || !google.accounts) {
-        console.error("Google Identity Services not loaded yet. Will retry in 1 second.");
-        setTimeout(initGoogleSignIn, 1000);
-        return;
-      }
-      
-      try {
-        google.accounts.id.initialize({
-          client_id: '26642122071-ekdopa6ljd6orkti9j8jadaf30bqmnv2.apps.googleusercontent.com',
-          callback: handleCredentialResponse,
-          auto_select: false,
-          cancel_on_tap_outside: true,
-          ux_mode: 'popup',
-          context: 'signin'
-        });
-        
-        const buttonElement = document.getElementById('googleSignInButton');
-        if (buttonElement) {
-          google.accounts.id.renderButton(
-            buttonElement, 
-            { 
-              type: 'standard',
-              theme: 'outline', 
-              size: 'large',
-              text: 'signin_with',
-              shape: 'rectangular',
-              logo_alignment: 'left',
-              width: 250
-            }
-          );
-          console.log("Google Sign-In button rendered successfully");
-        } else {
-          console.error("Google Sign-In button element not found");
-        }
-      } catch (error) {
-        console.error("Error initializing Google Sign-In:", error);
-      }
-    }
-
-    // Handle Google Sign-In Response
-    function handleCredentialResponse(response) {
-      console.log("Google Sign-In response received:", response);
-      
-      try {
-        // Decode the JWT token to get user information
-        const responsePayload = jwt_decode(response.credential);
-        console.log("Decoded JWT payload:", responsePayload);
-        
-        // Extract user details from the response
-        const userData = {
-          name: responsePayload.name,
-          email: responsePayload.email,
-          googleId: responsePayload.sub, // Important: This is the Google ID
-          picture: responsePayload.picture
-        };
-        
-        // Call your server API to login or register the user
-        loginWithGoogle(userData);
-      } catch (error) {
-        console.error("Error processing Google Sign-In response:", error);
-        showMessage("Error processing Google Sign-In. Please try again.", "error");
-      }
-    }
-    
-    // Function to handle Google login
-    function loginWithGoogle(userData) {
-      console.log("Sending user data to server:", userData);
-      
-      // Show loading indicator
-      showMessage('Signing in with Google...', 'info');
-      
-      // Send the user data to your server
-      fetch('/api/auth/google', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(userData)
-      })
-      .then(response => {
-        if (!response.ok) {
-          return response.json().then(errorData => {
-            throw new Error(errorData.message || 'Google authentication failed');
-          });
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log("Server response:", data);
-        
-        // Store user data in localStorage
-        const userToStore = {
-          name: userData.name,
-          email: userData.email,
-          googleId: userData.googleId,
-          picture: userData.picture,
-          phone: data.phone || '',
-          token: data.token
-        };
-        
-        localStorage.setItem('currentUser', JSON.stringify(userToStore));
-        localStorage.setItem('isLoggedIn', 'true');
-        
-        // Update status and redirect
-        showMessage('Sign-in successful! Redirecting...', 'success');
-        
-        // Redirect to home page
-        setTimeout(() => {
-          window.location.href = 'index.html';
-        }, 1000);
-      })
-      .catch(error => {
-        console.error('Google authentication error:', error);
-        showMessage(`Authentication failed: ${error.message}`, 'error');
-      });
-    }
-    
-    // Helper function to show messages
-    function showMessage(message, type) {
-      const statusElement = document.getElementById('loginStatus');
-      statusElement.textContent = message;
-      statusElement.style.display = 'block';
-      
-      // Set color based on message type
-      if (type === 'error') {
-        statusElement.style.color = 'red';
-      } else if (type === 'success') {
-        statusElement.style.color = 'green';
-      } else {
-        statusElement.style.color = 'black';
-      }
-    }
-    
-    // Initialize Google Sign-In when the page loads
+    // Supabase Google OAuth login
     document.addEventListener('DOMContentLoaded', function() {
-      console.log("DOM content loaded, initializing Google Sign-In...");
-      // Try to initialize immediately
-      initGoogleSignIn();
-      
-      // Also set a backup timer in case the Google API is slow to load
-      setTimeout(function() {
-        const buttonElement = document.getElementById('googleSignInButton');
-        if (buttonElement && buttonElement.childElementCount === 0) {
-          console.log("Google Sign-In button not rendered after 1 second, retrying...");
-          initGoogleSignIn();
-        }
-      }, 1000);
+      const btn = document.getElementById('supabaseGoogleSignInBtn');
+      if (btn) {
+        btn.addEventListener('click', async function() {
+          btn.disabled = true;
+          btn.textContent = 'Redirecting...';
+          if (!window.supabaseClient) {
+            window.supabaseClient = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+          }
+          await window.supabaseClient.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+              redirectTo: window.location.origin + '/index.html'
+            }
+          });
+        });
+      }
     });
   </script>
 </body>

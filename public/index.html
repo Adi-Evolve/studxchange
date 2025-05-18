@@ -6,8 +6,21 @@
     <title>StudXchange</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 1. Load env.js FIRST (defines window.SUPABASE_URL, window.SUPABASE_ANON_KEY, window.API_ENDPOINTS) -->
+    <script src="js/env.js"></script>
+    <!-- 2. Load Supabase library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <!-- 3. Load db-config.js (uses env.js and supabase) -->
     <script src="js/db-config.js"></script>
+    <!-- 4. Other scripts -->
     <script src="js/locationUtils.js"></script>
+    <script>
+      // Fallback warning if API_ENDPOINTS is not defined
+      if (typeof window.API_ENDPOINTS === 'undefined') {
+        console.error('API_ENDPOINTS is not defined! Make sure env.js is loaded before any other scripts.');
+        document.body.insertAdjacentHTML('afterbegin', '<div style="background:#ffcccc;color:#800;padding:10px;text-align:center;">API_ENDPOINTS is not defined! Please check env.js and script order.</div>');
+      }
+    </script>
    <style>
         /* ===== Original Global Styles ===== */
          /* ===== Original Desktop Styles ===== */
@@ -648,11 +661,37 @@
             </button>
             <span id="locationStatus" class="location-status"></span>
             <div class="button-container">
-                <a class="nav-button wishlist-button me-2" href="wishlist.html">
-                    <i class="far fa-heart"></i>
-                </a>
-                <a class="nav-button sell-button" href="sell.html">Sell/Donate</a>
+                <a class="nav-button wishlist-button me-2" id="wishlistBtn" tabindex="0"><i class="far fa-heart"></i></a>
+                <a class="nav-button sell-button" id="sellBtn" tabindex="0">Sell/Donate</a>
                 <div id="authButtonContainer"></div>
+                <script>
+                document.addEventListener('DOMContentLoaded', async function() {
+                  const authButtonContainer = document.getElementById('authButtonContainer');
+                  if (!window.supabaseClient) {
+                    const supabaseLib = window.supabase || (typeof globalThis !== 'undefined' ? globalThis.supabase : undefined);
+                    if (supabaseLib && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+                      window.supabaseClient = supabaseLib.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+                    }
+                  }
+                  const supabase = window.supabaseClient;
+                  let { data: { user } } = await supabase.auth.getUser();
+                  if (user) {
+                    // Fetch user profile from 'users' table
+                    let { data: profile, error } = await supabase
+                      .from('users')
+                      .select('name, email')
+                      .eq('id', user.id)
+                      .single();
+                    // Store in localStorage for PROFILE_FINAL.html
+                    if (profile) {
+                      localStorage.setItem('currentUser', JSON.stringify(profile));
+                    }
+                    authButtonContainer.innerHTML = `<a class=\"nav-button profile-button\" id=\"profileBtn\" tabindex=\"0\">Profile</a>`;
+                  } else {
+                    authButtonContainer.innerHTML = `<a class=\"nav-button signup-button\" id=\"loginBtn\" tabindex=\"0\">Login</a>`;
+                  }
+                });
+                </script>
             </div>
         </div>
     </header>
@@ -661,7 +700,7 @@
     <div class="hero-section">
       <div class="box">
           <div class="box-content">
-             <a href="category.html?category=laptop" style="color: black;">
+             <a href="javascript:void(0)" class="category-link" data-href="category.html?category=laptop" style="color: black;">
   <h5>Laptop</h5>
   <div class="box1-img" style="background-image: url('laptop.jpg');"></div>
   <p>Explore</p>
@@ -681,7 +720,7 @@
       </div>
       <div class="box">
           <div class="box-content">
-              <a href="category.html?category=project%20equipments" style="color: black;">
+              <a href="javascript:void(0)" style="color: black;">
                   <h5>Project Equipments</h5>
                   <div class="box1-img" style="background-image: url('kit.jpg');"></div>
                   <p>Explore</p>
@@ -691,7 +730,7 @@
       </div>
       <div class="box">
           <div class="box-content">
-              <a href="category.html?category=books" style="color: black;">
+              <a href="javascript:void(0)" style="color: black;">
                   <h5>Books</h5>
                   <div class="box1-img" style="background-image: url('Books.webp');"></div>
                   <p>Explore</p>
@@ -701,7 +740,7 @@
       </div>
       <div class="box">
           <div class="box-content">
-              <a href="category.html?category=room" style="color: black;">
+              <a href="javascript:void(0)" style="color: black;">
                   <h5>Rooms</h5>
                   <div class="box1-img" style="background-image: url('rooms.jpg');"></div>
                   <p>Explore</p>
@@ -710,7 +749,7 @@
       </div>
       <div class="box">
           <div class="box-content">
-              <a href="category.html?category=electronics" style="color: black;">
+              <a href="javascript:void(0)" style="color: black;">
                   <h5>Electronics</h5>
                   <div class="box1-img" style="background-image: url('mobile.jpg');"></div>
                   <p>Explore</p>
@@ -719,7 +758,7 @@
       </div>
       <div class="box">
           <div class="box-content">
-              <a href="category.html?category=hostel%20equipments" style="color: black;">
+              <a href="javascript:void(0)" style="color: black;">
                   <h5>Hostel Equipments</h5>
                   <div class="box1-img" style="background-image: url('kettle.jpg');"></div>
                   <p>Explore</p>
@@ -729,7 +768,7 @@
       </div>
       <div class="box">
           <div class="box-content">
-              <a href="category.html?category=others" style="color: black;">
+              <a href="javascript:void(0)" style="color: black;">
                   <h5>Other</h5>
                   <div class="box1-img" style="background-image: url('Bag.webp');"></div>
                   <p>Explore</p>
@@ -754,6 +793,49 @@
         <div class="Footpanel2">Contact: studxchange@example.com</div>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // Navigation wiring for all buttons/boxes
+      function setupNavigation() {
+        // Sell/Donate
+        const sellBtn = document.getElementById('sellBtn');
+        if (sellBtn) {
+          sellBtn.addEventListener('click', () => window.location.href = 'sell.html');
+          sellBtn.addEventListener('keydown', e => { if (e.key === 'Enter') window.location.href = 'sell.html'; });
+        }
+        // Wishlist
+        const wishlistBtn = document.getElementById('wishlistBtn');
+        if (wishlistBtn) {
+          wishlistBtn.addEventListener('click', () => window.location.href = 'wishlist.html');
+          wishlistBtn.addEventListener('keydown', e => { if (e.key === 'Enter') window.location.href = 'wishlist.html'; });
+        }
+        // Profile/Login
+        document.addEventListener('click', function(e) {
+          if (e.target && e.target.id === 'profileBtn') {
+            window.location.href = 'PROFILE_FINAL.html';
+          }
+          if (e.target && e.target.id === 'loginBtn') {
+            window.location.href = 'login.html';
+          }
+        });
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' && e.target && e.target.id === 'profileBtn') {
+            window.location.href = 'PROFILE_FINAL.html';
+          }
+          if (e.key === 'Enter' && e.target && e.target.id === 'loginBtn') {
+            window.location.href = 'login.html';
+          }
+        });
+        // Category boxes
+        document.querySelectorAll('.category-link').forEach(link => {
+          const target = link.getAttribute('data-href');
+          if (target) {
+            link.addEventListener('click', () => window.location.href = target);
+            link.addEventListener('keydown', e => { if (e.key === 'Enter') window.location.href = target; });
+          }
+        });
+      }
+      document.addEventListener('DOMContentLoaded', setupNavigation);
+    </script>
     <script>
         let currentSlide = 0;
         let totalSlides = 0;
@@ -841,25 +923,13 @@ async function handleLocation() {
 
     async function fetchProducts() {
     try {
-        console.log('Fetching products from:', API_ENDPOINTS.GET_PRODUCTS);
-        const response = await fetch(API_ENDPOINTS.GET_PRODUCTS);
-        console.log('Products response status:', response.status);
-        
-        if (!response.ok) {
-            let errorMessage = `HTTP error! status: ${response.status}`;
-            try {
-                const errorData = await response.json();
-                errorMessage = errorData.message || errorMessage;
-                console.error('API error details:', errorData);
-            } catch (e) {
-                console.error('Could not parse error response:', e);
-            }
-            throw new Error(errorMessage);
-        }
-        
-        const data = await response.json();
-        console.log('Products data received:', data.length, 'items');
-        return data;
+        const supabase = window.supabaseClient;
+        if (!supabase) throw new Error('Supabase client not initialized');
+        // Fetch all products from Supabase
+        const { data: products, error } = await supabase.from('products').select('*');
+        if (error) throw new Error('Failed to fetch products: ' + error.message);
+        console.log('Products data received:', products.length, 'items');
+        return products || [];
     } catch (error) {
         console.error('Failed to load products:', error);
         return [];
@@ -867,58 +937,32 @@ async function handleLocation() {
 }
 
     async function fetchRooms() {
-        try {
-            console.log('Fetching rooms from:', API_ENDPOINTS.GET_ROOMS);
-            const response = await fetch(API_ENDPOINTS.GET_ROOMS);
-            console.log('Rooms response status:', response.status);
-            
-            if (!response.ok) {
-                let errorMessage = `HTTP error! status: ${response.status}`;
-                try {
-                    const errorData = await response.json();
-                    errorMessage = errorData.message || errorMessage;
-                    console.error('API error details:', errorData);
-                } catch (e) {
-                    console.error('Could not parse error response:', e);
-                }
-                throw new Error(errorMessage);
-            }
-            
-            const data = await response.json();
-            console.log('Rooms data received:', data.length, 'items');
-            return data;
-        } catch (error) {
-            console.error('Failed to load rooms:', error);
-            return [];
-        }
+    try {
+        const supabase = window.supabaseClient;
+        if (!supabase) throw new Error('Supabase client not initialized');
+        const { data: rooms, error } = await supabase.from('rooms').select('*');
+        if (error) throw new Error('Failed to fetch rooms: ' + error.message);
+        console.log('Rooms data received:', rooms.length, 'items');
+        return rooms || [];
+    } catch (error) {
+        console.error('Failed to load rooms:', error);
+        return [];
     }
+}
 
     async function fetchNotes() {
-        try {
-            console.log('Fetching notes from:', API_ENDPOINTS.GET_NOTES);
-            const response = await fetch(API_ENDPOINTS.GET_NOTES);
-            console.log('Notes response status:', response.status);
-            
-            if (!response.ok) {
-                let errorMessage = `HTTP error! status: ${response.status}`;
-                try {
-                    const errorData = await response.json();
-                    errorMessage = errorData.message || errorMessage;
-                    console.error('API error details:', errorData);
-                } catch (e) {
-                    console.error('Could not parse error response:', e);
-                }
-                throw new Error(errorMessage);
-            }
-            
-            const data = await response.json();
-            console.log('Notes data received:', data.length, 'items');
-            return data;
-        } catch (error) {
-            console.error('Failed to load notes:', error);
-            return [];
-        }
+    try {
+        const supabase = window.supabaseClient;
+        if (!supabase) throw new Error('Supabase client not initialized');
+        const { data: notes, error } = await supabase.from('notes').select('*');
+        if (error) throw new Error('Failed to fetch notes: ' + error.message);
+        console.log('Notes data received:', notes.length, 'items');
+        return notes || [];
+    } catch (error) {
+        console.error('Failed to load notes:', error);
+        return [];
     }
+}
 
         async function loadFeaturedProducts() {
             try {
@@ -969,11 +1013,11 @@ async function handleLocation() {
                     // Determine link based on type
 let categoryType = (item.category || '').toLowerCase();
 if (categoryType === 'rooms' || categoryType === 'room' || categoryType === 'rooms_hostels') {
-    productCard.href = `room_interface.html?id=${item._id || item.id || ''}`;
+    productCard.href = `javascript:void(0)`;
 } else if (categoryType === 'notes' || categoryType === 'note') {
-    productCard.href = `notes_interface.html?id=${item._id || item.id || ''}`;
+    productCard.href = `javascript:void(0)`;
 } else {
-    productCard.href = `productinterface.html?id=${item._id || item.id || ''}`;
+    productCard.href = `javascript:void(0)`;
 }
                     
                     const featuredImage = item.images?.[0] || item.image || 'placeholder.jpg';
@@ -1018,8 +1062,8 @@ if (categoryType === 'rooms' || categoryType === 'room' || categoryType === 'roo
             const currentUser = localStorage.getItem('currentUser');
             const authContainer = document.getElementById('authButtonContainer');
             authContainer.innerHTML = currentUser ? 
-                `<a class="nav-button profile-button" href="PROFILE_FINAL.html">Profile</a>` :
-                `<a class="nav-button signup-button" href="login.html">Login</a>`;
+                `<a class="nav-button profile-button" href="javascript:void(0)">Profile</a>` :
+                `<a class="nav-button signup-button" href="javascript:void(0)">Login</a>`;
         }
         document.getElementById('locationButton')?.addEventListener('click', handleLocation);
         document.addEventListener('DOMContentLoaded', () => {

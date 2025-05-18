@@ -1,6 +1,4 @@
-// Fetch and display product/room/note details from MongoDB for StudXchange
-// Assumes API endpoints are available for /products, /rooms, /notes
-
+// Fetch and display product/room/note details from Supabase for StudXchange
 
 // Helper: Get query param
 function getQueryParam(name) {
@@ -8,13 +6,18 @@ function getQueryParam(name) {
     return urlParams.get(name);
 }
 
-// Fetch all collections in parallel
+// Fetch all collections in parallel from Supabase
 async function fetchAllData() {
-    const [products, rooms, notes] = await Promise.all([
-        fetch(`${API_BASE_URL}/products`).then(r => r.json()),
-        fetch(`${API_BASE_URL}/rooms`).then(r => r.json()),
-        fetch(`${API_BASE_URL}/notes`).then(r => r.json())
+    const supabase = window.supabaseClient;
+    if (!supabase) throw new Error('Supabase client not initialized');
+    const [{ data: products, error: prodErr }, { data: rooms, error: roomErr }, { data: notes, error: noteErr }] = await Promise.all([
+        supabase.from('products').select('*'),
+        supabase.from('rooms').select('*'),
+        supabase.from('notes').select('*')
     ]);
+    if (prodErr || roomErr || noteErr) {
+        throw new Error('Failed to fetch data from Supabase');
+    }
     return { products, rooms, notes };
 }
 

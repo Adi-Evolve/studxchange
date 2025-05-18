@@ -1,20 +1,35 @@
 require('dotenv').config();
-const mongoose = require('mongoose');
+const { createClient } = require('@supabase/supabase-js');
 
-async function testConnection() {
-  console.log('Testing MongoDB connection...');
-  console.log('Connection string starts with:', process.env.MONGODB_URI.substring(0, 20) + '...');
-  
-  try {
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 30000,
-      connectTimeoutMS: 30000,
-      socketTimeoutMS: 45000,
-      family: 4
-    console.error('Failed to connect to MongoDB:', error);
+async function testSupabaseConnection() {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY/SUPABASE_ANON_KEY in .env');
+    return;
   }
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  console.log('Testing Supabase connection...');
+  // Insert a test row
+  const { data: insertData, error: insertError } = await supabase
+    .from('test_table')
+    .insert([{ test_col: 'Hello from Supabase!' }])
+    .select();
+  if (insertError) {
+    console.error('Insert error:', insertError);
+    return;
+  }
+  console.log('Inserted row:', insertData);
+  // Fetch the row
+  const { data: fetchData, error: fetchError } = await supabase
+    .from('test_table')
+    .select('*')
+    .limit(1);
+  if (fetchError) {
+    console.error('Fetch error:', fetchError);
+    return;
+  }
+  console.log('Fetched row:', fetchData);
 }
 
-testConnection();
+testSupabaseConnection();

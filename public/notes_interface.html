@@ -96,6 +96,12 @@
     <script src="env.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
     <script>
+        // Initialize Supabase client
+        const supabase = window.supabaseClient = window.supabaseClient || createSupabaseClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+        function createSupabaseClient(url, key) {
+            if (!url || !key) throw new Error('Supabase credentials missing');
+            return window.supabase ? window.supabase.createClient(url, key) : window.supabaseClient;
+        }
         // Helper: Get query param
         function getQueryParam(name) {
             const urlParams = new URLSearchParams(window.location.search);
@@ -104,13 +110,13 @@
 
         // Fetch notes details
         async function fetchNotesDetails(id) {
-            try {
-                const response = await fetch(`/api/notes/${id}`);
-                if (!response.ok) throw new Error('Notes not found');
-                return await response.json();
-            } catch (err) {
-                return null;
-            }
+            const { data: notes, error } = await supabase
+                .from('notes')
+                .select('*')
+                .eq('id', id)
+                .single();
+            if (error || !notes) return null;
+            return notes;
         }
 
         // Render notes details
@@ -171,16 +177,14 @@
         }
         // Fetch similar notes (same subject, excluding current)
         async function fetchSimilarNotes(notes) {
-            try {
-                const res = await fetch(`/api/notes?subject=${encodeURIComponent(notes.subject)}&exclude=${notes._id || notes.id}`);
-                if (!res.ok) return [];
-                let data = await res.json();
-                // Exclude the current note
-                data = data.filter(n => (n._id || n.id) !== (notes._id || notes.id));
-                return data.slice(0, 8);
-            } catch {
-                return [];
-            }
+            const { data, error } = await supabase
+                .from('notes')
+                .select('*')
+                .eq('subject', notes.subject)
+                .neq('id', notes.id)
+                .limit(8);
+            if (error || !data) return [];
+            return data;
         }
         // Render similar notes horizontally
         async function renderSimilarNotes(notes) {

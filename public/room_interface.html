@@ -107,13 +107,13 @@
 
         // Fetch room details
         async function fetchRoomDetails(id) {
-            try {
-                const response = await fetch(`/api/rooms/${id}`);
-                if (!response.ok) throw new Error('Room not found');
-                return await response.json();
-            } catch (err) {
-                return null;
-            }
+            const { data: room, error } = await supabase
+                .from('rooms')
+                .select('*')
+                .eq('id', id)
+                .single();
+            if (error || !room) return null;
+            return room;
         }
 
         // Render room details
@@ -201,22 +201,14 @@
         }
         // Fetch similar rooms (same location or type, excluding current)
         async function fetchSimilarRooms(room) {
-            try {
-                let query = '';
-                if (room.location) {
-                    query = `location=${encodeURIComponent(room.location)}`;
-                } else if (room.type) {
-                    query = `type=${encodeURIComponent(room.type)}`;
-                }
-                const res = await fetch(`/api/rooms?${query}&exclude=${room._id || room.id}`);
-                if (!res.ok) return [];
-                let data = await res.json();
-                // Exclude the current room
-                data = data.filter(r => (r._id || r.id) !== (room._id || room.id));
-                return data;
-            } catch (e) {
-                return [];
-            }
+            const { data, error } = await supabase
+                .from('rooms')
+                .select('*')
+                .eq('roomType', room.roomType)
+                .neq('id', room.id)
+                .limit(8);
+            if (error || !data) return [];
+            return data;
         }
             // Render similar rooms horizontally
             async function renderSimilarRooms(room) {

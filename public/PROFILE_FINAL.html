@@ -430,11 +430,9 @@ button, select {
                 <i class="far fa-heart"></i>
             </a>
             <a class="nav-button sell-button" href="sell.html">Sell/Donate</a>
-            <!-- <div id="authButtonContainer"></div> -->
-
         </div>
     </div>
-</header>
+  </header>
 
   <div class="account-container">
       <header class="account-header">
@@ -444,9 +442,7 @@ button, select {
               <button onclick="logout()">Logout</button>
           </div>
       </header>
-
       <div class="account-details">
-          <!-- Profile Information Section -->
           <div class="profile-info">
               <h2>Profile Information</h2>
               <div class="profile-item">
@@ -461,29 +457,16 @@ button, select {
                   <button id="addPhoneBtn" class="phone-button" onclick="openPhoneModal()">Add Phone Number</button>
               </div>
           </div>
-
-          <!-- Listed Items Section -->
           <div class="listed-items">
               <h2>My Listed Items</h2>
               <ul id="listedItemsList"></ul>
           </div>
-
-          <!-- Order History Section -->
-          <div class="order-history">
-              <h2>Last Orders</h2>
-              <ul id="orderList"></ul>
-          </div>
-
-          <!-- Sold Items Section -->
+          
           <div class="sold-items">
               <h2>Sold Items</h2>
               <ul id="soldItemsList"></ul>
           </div>
-
-          <!-- Account Settings Section -->
-          <div class="settings">
-              <h2>Account Settings</h2>
-          </div>
+          
       </div>
   </div>
 
@@ -513,188 +496,154 @@ button, select {
   </div>
 
   <script>
-    const supabase = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-    // Fetch and display profile logic here
-    document.addEventListener('DOMContentLoaded', () => {
-        // Check if user is logged in
-        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        if (!isLoggedIn) {
-            console.log('User not logged in, redirecting to login page');
-            window.location.href = 'login.html';
-            return;
-        }
-        
-        const user = JSON.parse(localStorage.getItem('currentUser'));
-        if (user) {
-            console.log('User data found in localStorage:', user.email);
-            document.getElementById('userName').textContent = user.name || 'User';
-            document.getElementById('profileName').textContent = user.name || 'Not provided';
-            document.getElementById('profileEmail').textContent = user.email || 'Not provided';
-            
-            if (user.phone) {
-                document.getElementById('profilePhone').textContent = user.phone;
-                document.getElementById('addPhoneBtn').style.display = 'none';
-            } else {
-                document.getElementById('profilePhone').textContent = 'Not provided';
-                document.getElementById('addPhoneBtn').style.display = 'inline-block';
-            }
-            
-            // Load user's items
-            loadListedItems();
-            loadSoldItems();
-        } else {
-            console.error('No user data found despite being logged in');
-            localStorage.removeItem('isLoggedIn');
-            window.location.href = 'login.html';
-        }
+    document.addEventListener('DOMContentLoaded', async function() {
+      // Wait for Supabase and env.js to be loaded
+      function waitForSupabase() {
+        return new Promise(resolve => {
+          if (window.supabaseClient) return resolve(window.supabaseClient);
+          const check = () => {
+            if (window.supabaseClient) return resolve(window.supabaseClient);
+            setTimeout(check, 100);
+          };
+          check();
+        });
+      }
+      const supabase = await waitForSupabase();
+
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !session.user) {
+        localStorage.removeItem('isLoggedIn');
+        showLoginRequiredDialog();
+        return;
+      }
+      const user = session.user;
+      // Fetch name/email directly from auth user
+      let name = user.user_metadata && user.user_metadata.name ? user.user_metadata.name : 'User';
+      let email = user.email || 'Not provided';
+      let phone = '';
+
+      // Try to fetch phone from users table (optional)
+      let { data: profile } = await supabase
+        .from('users')
+        .select('phone')
+        .eq('id', user.id)
+        .single();
+      if (profile && profile.phone) {
+        phone = profile.phone;
+      }
+      localStorage.setItem('currentUser', JSON.stringify({ name, email, phone, id: user.id }));
+
+      // Update DOM
+      document.getElementById('userName').textContent = name;
+      document.getElementById('profileName').textContent = name;
+      document.getElementById('profileEmail').textContent = email;
+      if (phone) {
+        document.getElementById('profilePhone').textContent = phone;
+        document.getElementById('addPhoneBtn').style.display = 'none';
+      } else {
+        document.getElementById('profilePhone').textContent = 'Not provided';
+        document.getElementById('addPhoneBtn').style.display = 'inline-block';
+      }
+      if (typeof loadListedItems === 'function') loadListedItems();
+      if (typeof loadSoldItems === 'function') loadSoldItems();
     });
 
-    // Phone Modal functions
-    function openPhoneModal() {
-        document.getElementById('phoneModal').style.display = 'block';
-    }
-    
-    function closePhoneModal() {
-        document.getElementById('phoneModal').style.display = 'none';
-    }
 
-    async function savePhone() {
-        const newPhone = document.getElementById('newPhone').value.trim();
-        if (!newPhone.match(/^\d{10}$/)) {
-            alert('Please enter a valid 10-digit phone number');
-            return;
-        }
-        try {
-            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-            currentUser.phone = newPhone;
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            
-            // Update user in MongoDB
-            const response = await fetch(API_ENDPOINTS.UPDATE_USER, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    email: currentUser.email,
-                    phone: newPhone
-                })
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to update phone number');
-            }
-            
-            document.getElementById('profilePhone').textContent = newPhone;
-            document.getElementById('addPhoneBtn').style.display = 'none';
-            closePhoneModal();
-        } catch (error) {
-            console.error('Error saving phone:', error);
-            alert('Failed to save phone number');
-        }
-    }
-
+    // Fetch and display products listed by the logged-in user
+    // Fetch and display products listed by the logged-in user
     async function loadListedItems() {
-        try {
-            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-            if (!currentUser || !currentUser.email) {
-                console.error('No user email found in localStorage');
-                document.getElementById('listedItemsList').innerHTML = '<p>Please log in to view your listed items.</p>';
-                return;
-            }
-            document.getElementById('listedItemsList').innerHTML = '<p>Loading your items...</p>';
-            // Fetch all products, notes, and rooms listed by the user
-            const [productsRes, notesRes, roomsRes] = await Promise.all([
-                fetch(`/api/products?user=${encodeURIComponent(currentUser.email)}`),
-                fetch(`/api/notes?user=${encodeURIComponent(currentUser.email)}`),
-                fetch(`/api/rooms?user=${encodeURIComponent(currentUser.email)}`)
-            ]);
-            const [products, notes, rooms] = await Promise.all([
-                productsRes.json(),
-                notesRes.json(),
-                roomsRes.json()
-            ]);
-            const allItems = [...products, ...notes, ...rooms];
-            if (allItems.length === 0) {
-                document.getElementById('listedItemsList').innerHTML = '<p>No items listed yet.</p>';
-                return;
-            }
-            document.getElementById('listedItemsList').innerHTML = '';
-            allItems.forEach(item => {
-                document.getElementById('listedItemsList').innerHTML += `
-                    <li class="listed-item">
-                        <img src="${item.image || 'placeholder.jpg'}" class="item-image" alt="${item.title || 'Product'}">
-                        <div class="item-details">
-                            <h3>${item.title || 'Untitled Product'}</h3>
-                            <p>₹${item.price || '0'}</p>
-                        </div>
-                        <div class="item-actions">
-                            <button class="sold-btn" onclick="handleSold('${item._id}')">Mark Sold</button>
-                            <button class="delete-btn" onclick="deleteItem('${item._id}')">Remove</button>
-                        </div>
-                    </li>
-                `;
-            });
-        } catch (error) {
-            console.error('Error loading items:', error);
-            document.getElementById('listedItemsList').innerHTML = `<p>Failed to load your listed items: ${error.message}</p>`;
+      try {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser || !currentUser.id) {
+          document.getElementById('listedItemsList').innerHTML = '<li>Please log in to view your listed items.</li>';
+          return;
         }
+        document.getElementById('listedItemsList').innerHTML = '<li>Loading your items...</li>';
+        // Fetch products where owner_id = current user id
+        const { data: products, error } = await window.supabaseClient
+          .from('products')
+          .select('*')
+          .eq('owner_id', currentUser.id);
+        if (error) throw new Error(error.message);
+        if (!products || products.length === 0) {
+          document.getElementById('listedItemsList').innerHTML = '<li>No items found.</li>';
+          return;
+        }
+        // Render products with Remove and Mark as Sold buttons
+        document.getElementById('listedItemsList').innerHTML = products.map(product => {
+          const isSold = product.is_sold;
+          return `
+            <li class="listed-item${isSold ? ' sold-effect' : ''}">
+              <img src="${product.images?.[0] || product.image || 'placeholder.jpg'}" class="item-image" alt="${product.title || 'Product'}">
+              <div class="item-details">
+                <h3>${product.title || product.name || 'Untitled'}</h3>
+                <p>₹${product.price || '0'}</p>
+                <p>${product.description || ''}</p>
+              </div>
+              <div class="item-actions">
+                ${isSold ? '<span class="sold-label">SOLD</span>' : `
+                  <button class="btn btn-danger" onclick="deleteItem('${product.id}')">Remove</button>
+                  <button class="btn btn-success" onclick="handleSold('${product.id}')">Mark as Sold</button>
+                `}
+              </div>
+            </li>
+          `;
+        }).join('');
+      } catch (error) {
+        console.error('Error loading listed items:', error);
+        document.getElementById('listedItemsList').innerHTML = `<li>Failed to load your listed items: ${error.message}</li>`;
+      }
     }
 
+    // Fetch and display sold items for the logged-in user (Supabase version)
     async function loadSoldItems() {
-        try {
-            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-            if (!currentUser || !currentUser.email) {
-                console.error('No user email found in localStorage');
-                document.getElementById('soldItemsList').innerHTML = '<p>Please log in to view your sold items.</p>';
-                return;
-            }
-            document.getElementById('soldItemsList').innerHTML = '<p>Loading your sold items...</p>';
-            // Fetch only sold products for the user
-            const response = await fetch(`${API_ENDPOINTS.GET_SOLD_ITEMS}?sellerEmail=${encodeURIComponent(currentUser.email)}`);
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                console.error('Failed to fetch sold items:', response.status, errorData);
-                throw new Error(errorData.message || 'Failed to fetch sold items');
-            }
-            const soldItems = await response.json();
-            const soldItemsList = document.getElementById('soldItemsList');
-            soldItemsList.innerHTML = '';
-            if (soldItems.length === 0) {
-                soldItemsList.innerHTML = '<p>You have no sold items.</p>';
-                return;
-            }
-            soldItems.forEach(item => {
-                soldItemsList.innerHTML += `
-                    <li class="listed-item sold-effect">
-                        <img src="${item.images?.[0] || item.image || 'placeholder.jpg'}" class="item-image" alt="${item.title || 'Product'}">
-                        <div class="item-details">
-                            <h3>${item.title || 'Untitled Product'}</h3>
-                            <p>₹${item.price || '0'}</p>
-                        </div>
-                        <div class="item-actions">
-                            <span class="sold-label">SOLD</span>
-                        </div>
-                    </li>
-                `;
-            });
-        } catch (error) {
-            console.error('Error loading sold items:', error);
-            document.getElementById('soldItemsList').innerHTML = `<p>Failed to load your sold items: ${error.message}</p>`;
+      try {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser || !currentUser.id) {
+          document.getElementById('soldItemsList').innerHTML = '<li>Please log in to view your sold items.</li>';
+          return;
         }
+        document.getElementById('soldItemsList').innerHTML = '<li>Loading your sold items...</li>';
+        // Fetch only sold products for the user from Supabase (using owner_id and is_sold)
+        const { data: soldItems, error } = await window.supabaseClient
+          .from('products')
+          .select('*')
+          .eq('owner_id', currentUser.id)
+          .eq('is_sold', true);
+        if (error) throw new Error(error.message);
+        if (!soldItems || soldItems.length === 0) {
+          document.getElementById('soldItemsList').innerHTML = '<li>You have no sold items.</li>';
+          return;
+        }
+        document.getElementById('soldItemsList').innerHTML = soldItems.map(item =>
+          `<li class="listed-item sold-effect">
+            <img src="${item.images?.[0] || item.image || 'placeholder.jpg'}" class="item-image" alt="${item.title || 'Product'}">
+            <div class="item-details">
+              <h3>${item.title || 'Untitled Product'}</h3>
+              <p>₹${item.price || '0'}</p>
+            </div>
+            <div class="item-actions">
+              <span class="sold-label">SOLD</span>
+            </div>
+          </li>`
+        ).join('');
+      } catch (error) {
+        console.error('Error loading sold items:', error);
+        document.getElementById('soldItemsList').innerHTML = `<li>Failed to load your sold items: ${error.message}</li>`;
+      }
     }
+
+
 
     async function deleteItem(productId) {
         if (!confirm('Are you sure you want to delete this item?')) return;
         try {
-            const response = await fetch(`${API_ENDPOINTS.DELETE_PRODUCT(productId)}`, {
-                method: 'DELETE'
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to delete item');
-            }
-            
+            const { error } = await window.supabaseClient
+                .from('products')
+                .delete()
+                .eq('id', productId);
+            if (error) throw new Error(error.message);
             await loadListedItems();
             alert('Item deleted successfully!');
         } catch (error) {
@@ -706,18 +655,11 @@ button, select {
     async function handleSold(productId) {
         if (!confirm('Mark this item as sold?')) return;
         try {
-            const response = await fetch(`${API_ENDPOINTS.MARK_SOLD}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ productId })
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to mark item as sold');
-            }
-            
+            const { error } = await window.supabaseClient
+                .from('products')
+                .update({ is_sold: true })
+                .eq('id', productId);
+            if (error) throw new Error(error.message);
             await loadListedItems();
             await loadSoldItems();
             alert('Item marked as sold!');
@@ -736,44 +678,166 @@ button, select {
     function closeEditProfileModal() {
       document.getElementById('editProfileModal').style.display = 'none';
     }
-    document.getElementById('editProfileForm').onsubmit = async function(e) {
-      e.preventDefault();
-      const newName = document.getElementById('editName').value.trim();
-      const newPhone = document.getElementById('editPhone').value.trim();
-      if (!newName || !/^\d{10}$/.test(newPhone)) {
-        alert('Please enter a valid name and 10-digit phone number');
+
+    // Open and close phone modal
+    function openPhoneModal() {
+      document.getElementById('phoneModal').style.display = 'block';
+      document.getElementById('newPhone').value = '';
+    }
+    function closePhoneModal() {
+      document.getElementById('phoneModal').style.display = 'none';
+    }
+
+    // Save phone number to users table in Supabase
+    async function savePhone() {
+      // Determine which modal is open
+      const phoneModal = document.getElementById('phoneModal');
+      const editProfileModal = document.getElementById('editProfileModal');
+      let newPhone = '';
+      let isPhoneModal = false;
+      if (phoneModal && phoneModal.style.display === 'block') {
+        newPhone = document.getElementById('newPhone').value.trim();
+        isPhoneModal = true;
+      } else if (editProfileModal && editProfileModal.style.display === 'block') {
+        newPhone = document.getElementById('editPhone').value.trim();
+      }
+      if (!newPhone.match(/^\d{10}$/)) {
+        alert('Please enter a valid 10-digit phone number');
         return;
       }
       try {
         const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-        // Update in MongoDB
-        const response = await fetch(API_ENDPOINTS.UPDATE_USER, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: currentUser.email, name: newName, phone: newPhone })
-        });
-        if (!response.ok) throw new Error('Failed to update profile');
-        // Update localStorage
-        currentUser.name = newName;
+        // Update user in Supabase users table
+        const { data, error } = await window.supabaseClient
+          .from('users')
+          .update({ phone: newPhone })
+          .eq('id', currentUser.id);
+        if (error) throw new Error('Failed to update phone: ' + error.message);
+        // Update localStorage and UI
         currentUser.phone = newPhone;
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        // Update UI
-        document.getElementById('userName').textContent = newName;
-        document.getElementById('profileName').textContent = newName;
         document.getElementById('profilePhone').textContent = newPhone;
         document.getElementById('addPhoneBtn').style.display = 'none';
-        closeEditProfileModal();
-        alert('Profile updated successfully!');
-      } catch (err) {
-        alert('Failed to update profile: ' + err.message);
+        if (isPhoneModal) {
+          closePhoneModal();
+        } else {
+          closeEditProfileModal();
+        }
+        alert('Phone number updated!');
+      } catch (error) {
+        console.error('Error saving phone:', error);
+        alert('Failed to save phone number');
       }
+    }
+
+    document.getElementById('editProfileForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const newName = document.getElementById('editName').value.trim();
+      await savePhone();
+      // Update name in UI
+      document.getElementById('profileName').textContent = newName;
+      closeEditProfileModal();
+      alert('Profile updated successfully!');
     };
 
     // Other account actions
     function logout() {
         localStorage.removeItem('currentUser');
-        window.location.href = 'login.html';
+        showLoginRequiredDialog();
     }
+    function showLoginRequiredDialog() {
+  // Create modal overlay
+  const overlay = document.createElement('div');
+  overlay.style.position = 'fixed';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100vw';
+  overlay.style.height = '100vh';
+  overlay.style.background = 'rgba(0,0,0,0.4)';
+  overlay.style.display = 'flex';
+  overlay.style.alignItems = 'center';
+  overlay.style.justifyContent = 'center';
+  overlay.style.zIndex = '9999';
+
+  // Create dialog box
+  const dialog = document.createElement('div');
+  dialog.style.background = '#fff';
+  dialog.style.padding = '32px 24px';
+  dialog.style.borderRadius = '12px';
+  dialog.style.boxShadow = '0 4px 24px rgba(0,0,0,0.15)';
+  dialog.style.textAlign = 'center';
+  dialog.innerHTML = `<div style="font-size:1.2rem;margin-bottom:12px;">You must be logged in to access this page.</div><button id="closeProfileLoginDialog" style="padding:8px 20px;background:#2a3d56;color:#fff;border:none;border-radius:6px;font-size:1rem;cursor:pointer;">Close</button>`;
+
+  overlay.appendChild(dialog);
+  document.body.appendChild(overlay);
+  document.getElementById('closeProfileLoginDialog').onclick = function() {
+    document.body.removeChild(overlay);
+  };
+}
+// Sync login state for sell.html if redirected
+    document.addEventListener('DOMContentLoaded', async function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromSell = urlParams.get('from') === 'sell';
+      let userData = null;
+      let session = null;
+      try {
+        userData = JSON.parse(localStorage.getItem('currentUser'));
+      } catch {}
+      if ((!userData || !userData.id) && window.supabaseClient) {
+        const { data } = await window.supabaseClient.auth.getSession();
+        session = data.session;
+        if (session && session.user) { 
+          userData = { id: session.user.id, email: session.user.email, ...session.user.user_metadata };
+          localStorage.setItem('currentUser', JSON.stringify(userData));
+        }
+      }
+      if (fromSell) {
+        if (userData && userData.id) {
+          // If coming from sell.html, sync state and go back
+          window.location.href = 'sell.html';
+          return;
+        } else {
+          // Show message and redirect to login
+          document.body.innerHTML = '<div style="padding:40px;text-align:center;font-size:1.3rem;color:#b00;">You must be logged in to sell. Redirecting to login...</div>';
+          setTimeout(function() { window.location.href = "login.html"; }, 2000);
+          return;
+        }
+      }
+      {
+        let userData = null;
+        try {
+          userData = JSON.parse(localStorage.getItem('currentUser'));
+        } catch (e) {}
+        if (userData && userData.name && userData.email) {
+          document.getElementById('userName').innerText = userData.name;
+          document.getElementById('profileName').innerText = userData.name;
+          document.getElementById('profileEmail').innerText = userData.email;
+        } else {
+          // fallback: fetch from Supabase if logged in
+          if (!window.supabaseClient) {
+            const supabaseLib = window.supabase || (typeof globalThis !== 'undefined' ? globalThis.supabase : undefined);
+            if (supabaseLib && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+              window.supabaseClient = supabaseLib.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+            }
+          }
+          const supabase = window.supabaseClient;
+          let { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            let { data: profile, error } = await supabase
+              .from('users')
+              .select('name, email')
+              .eq('id', user.id)
+              .single();
+            if (profile) {
+              document.getElementById('userName').innerText = profile.name;
+              document.getElementById('profileName').innerText = profile.name;
+              document.getElementById('profileEmail').innerText = profile.email;
+              localStorage.setItem('currentUser', JSON.stringify(profile));
+            }
+          }
+        }
+      }
+    });
   </script>
 </body>
 </html>

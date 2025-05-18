@@ -2,18 +2,17 @@
 class ProductService {
     static async fetchProducts(options = {}) {
         try {
+            const supabase = window.supabaseClient;
+            if (!supabase) throw new Error('Supabase client not initialized');
             const { category = 'all', query = '', college = 'all' } = options;
-            let url = `${API_BASE_URL}/products?`;
-            
-            if (category !== 'all') url += `category=${encodeURIComponent(category)}&`;
-            if (query) url += `query=${encodeURIComponent(query)}&`;
-            if (college !== 'all') url += `college=${encodeURIComponent(college)}`;
-            
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('Failed to fetch products');
-            
-            const data = await response.json();
-            return data.products;
+            let queryBuilder = supabase.from('products').select('*');
+            if (category !== 'all') queryBuilder = queryBuilder.eq('category', category);
+            if (college !== 'all') queryBuilder = queryBuilder.eq('college', college);
+            // For search queries, use ilike for case-insensitive partial match
+            if (query) queryBuilder = queryBuilder.ilike('title', `%${query}%`);
+            const { data: products, error } = await queryBuilder.order('createdAt', { ascending: false });
+            if (error) throw new Error('Failed to fetch products: ' + error.message);
+            return products || [];
         } catch (error) {
             console.error('Error fetching products:', error);
             throw error;
@@ -22,11 +21,16 @@ class ProductService {
 
     static async fetchFeaturedProducts() {
         try {
-            const response = await fetch(`${API_BASE_URL}/featured-products`);
-            if (!response.ok) throw new Error('Failed to fetch featured products');
-            
-            const data = await response.json();
-            return data.products;
+            const supabase = window.supabaseClient;
+            if (!supabase) throw new Error('Supabase client not initialized');
+            // Fetch featured products (assuming a 'featured' boolean column or similar logic)
+            const { data: products, error } = await supabase
+                .from('products')
+                .select('*')
+                .eq('featured', true)
+                .order('createdAt', { ascending: false });
+            if (error) throw new Error('Failed to fetch featured products: ' + error.message);
+            return products || [];
         } catch (error) {
             console.error('Error fetching featured products:', error);
             throw error;
@@ -37,23 +41,23 @@ class ProductService {
         const isNote = product.category && product.category.toLowerCase() === 'notes';
         const isRoom = product.category && (product.category.toLowerCase().includes('room') || product.category.toLowerCase().includes('hostel'));
         const handleClick = isNote
-            ? `sessionStorage.setItem('selectedNote', JSON.stringify(${JSON.stringify(product)})); window.location.href='productinterface.html';`
-            : `window.location.href='productinterface.html?id=${product._id || product.id || ''}'`;
+            ? `window.location.href='notes_interface.html?id=${product._id || product.id || ''}';`
+            : `window.location.href='productinterface.html?id=${product._id || product.id || ''}';`;
         const imgUrl = (product.images && product.images[0]) ? product.images[0] : 'https://via.placeholder.com/320x200?text=No+Image';
         if (isNote) {
-            // Notes Card
-            return `
-            <div class="notes-card" onclick="${handleClick}">
-                <div class="notes-image-container">
-                    <img class="notes-image" src="${imgUrl}" alt="Notes Image" onerror="this.onerror=null;this.src='https://via.placeholder.com/90x90?text=No+Image';">
-                </div>
-                <div class="notes-title">${product.title || 'Untitled Note'}</div>
-                <div class="notes-price">₹${product.price || 'Free'}</div>
-                <div class="notes-info">${product.college ? `<span><i class='fa fa-university'></i> ${product.college}</span><br>` : ''}${product.subject ? `<span><i class='fa fa-book'></i> ${product.subject}</span><br>` : ''}${product.description ? `<span>${product.description.substring(0, 60)}...</span>` : ''}</div>
-                <button class="notes-buynow-btn">Buy Now</button>
-            </div>
-            `;
-        } else if (isRoom) {
+    // Notes Card - always clickable, opens noteinterface.html
+    return `
+    <div class="notes-card" onclick="${handleClick}">
+        <div class="notes-image-container">
+            <img class="notes-image" src="${imgUrl}" alt="Notes Image" onerror="this.onerror=null;this.src='https://via.placeholder.com/90x90?text=No+Image';">
+        </div>
+        <div class="notes-title">${product.title || 'Untitled Note'}</div>
+        <div class="notes-price">₹${product.price || 'Free'}</div>
+        <div class="notes-info">${product.college ? `<span><i class='fa fa-university'></i> ${product.college}</span><br>` : ''}${product.subject ? `<span><i class='fa fa-book'></i> ${product.subject}</span><br>` : ''}${product.description ? `<span>${product.description.substring(0, 60)}...</span>` : ''}</div>
+        <button class="notes-buynow-btn" onclick="event.stopPropagation();window.location.href='notes_interface.html?id=${product._id || product.id || ''}';">Buy Now</button>
+    </div>
+    `;
+} else if (isRoom) {
             // Room Card
             return `
             <div class="room-card" onclick="${handleClick}">

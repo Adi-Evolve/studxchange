@@ -6,8 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         featuredContainer.innerHTML = '<div class="loading">Loading featured products...</div>';
 
         const products = await ProductService.fetchFeaturedProducts();
-        
-        if (products.length === 0) {
+        if (!products || products.length === 0) {
             featuredContainer.innerHTML = '<p>No featured products available.</p>';
             return;
         }

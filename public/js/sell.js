@@ -33,10 +33,57 @@ let mapLocation = null;
 categorySelect.addEventListener('change', handleCategoryChange);
 sellForm.addEventListener('submit', handleSellSubmit);
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  let currentUser = null;
+  try {
+    currentUser = JSON.parse(localStorage.getItem('currentUser'));
+  } catch {}
+  if (!currentUser || !currentUser.id) {
+    // Try to get from Supabase session
+    const { data: { session } } = await window.supabaseClient.auth.getSession();
+    if (session && session.user) {
+      // Set currentUser in localStorage for future checks
+      currentUser = { id: session.user.id, email: session.user.email, ...session.user.user_metadata };
+      localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    } else {
+      // Show dialog and prevent further actions
+      showLoginRequiredDialog();
+      return;
+    }
+  }
   handleCategoryChange();
   setupMapModal();
 });
+
+function showLoginRequiredDialog() {
+  // Create modal overlay
+  const overlay = document.createElement('div');
+  overlay.style.position = 'fixed';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100vw';
+  overlay.style.height = '100vh';
+  overlay.style.background = 'rgba(0,0,0,0.4)';
+  overlay.style.display = 'flex';
+  overlay.style.alignItems = 'center';
+  overlay.style.justifyContent = 'center';
+  overlay.style.zIndex = '9999';
+
+  // Create dialog box
+  const dialog = document.createElement('div');
+  dialog.style.background = '#fff';
+  dialog.style.padding = '32px 24px';
+  dialog.style.borderRadius = '12px';
+  dialog.style.boxShadow = '0 4px 24px rgba(0,0,0,0.15)';
+  dialog.style.textAlign = 'center';
+  dialog.innerHTML = `<div style="font-size:1.2rem;margin-bottom:12px;">You must be logged in to sell.</div><button id="closeLoginDialog" style="padding:8px 20px;background:#2a3d56;color:#fff;border:none;border-radius:6px;font-size:1rem;cursor:pointer;">Close</button>`;
+
+  overlay.appendChild(dialog);
+  document.body.appendChild(overlay);
+  document.getElementById('closeLoginDialog').onclick = function() {
+    document.body.removeChild(overlay);
+  };
+}
 
 function handleCategoryChange() {
   const cat = categorySelect.value;
@@ -190,7 +237,8 @@ async function getCurrentLocation() {
     async (position) => {
       currentLocation = {
         lat: position.coords.latitude,
-        lon: position.coords.longitude
+        lon: position.coords.longitude,
+        name: ''
       };
       // Use reverse geocoding to get location name (improved logic)
       try {
@@ -200,8 +248,12 @@ async function getCurrentLocation() {
       } catch (err) {
         currentLocation.name = `Lat: ${currentLocation.lat.toFixed(4)}, Lon: ${currentLocation.lon.toFixed(4)}`;
       }
-      // Always store as string
-      document.getElementById('location').value = JSON.stringify(currentLocation);
+      // Always store as stringified object with only lat, lon, name
+      document.getElementById('location').value = JSON.stringify({
+        lat: currentLocation.lat,
+        lon: currentLocation.lon,
+        name: currentLocation.name
+      });
       alert('Location set: ' + currentLocation.name);
     },
     (error) => {
@@ -223,8 +275,12 @@ function setupMapModal() {
   closeModal.onclick = () => { modal.style.display = 'none'; };
   confirmBtn.onclick = () => {
     if (mapLocation) {
-      // Always store as string
-      document.getElementById('location').value = JSON.stringify(mapLocation);
+      // Always store as stringified object with only lat, lon, name
+      document.getElementById('location').value = JSON.stringify({
+        lat: mapLocation.lat,
+        lon: mapLocation.lon,
+        name: mapLocation.name
+      });
       modal.style.display = 'none';
       alert('Location set from map!');
     } else {
@@ -366,7 +422,7 @@ async function uploadPdfToSupabase(file) {
   // Upload
   let uploadResponse;
   try {
-    uploadResponse = await supabase.storage.from('notes').upload(fileName, file, {
+    uploadResponse = await supabase.storage.from('product-pdfs').upload(fileName, file, {
       cacheControl: '3600',
       upsert: false
     });
@@ -380,7 +436,7 @@ async function uploadPdfToSupabase(file) {
   if (!data || !data.path) throw new Error('PDF upload failed: No data/path returned from Supabase.');
 
   // Get public URL (handle all property names)
-  const publicUrlResult = supabase.storage.from('notes').getPublicUrl(data.path);
+  const publicUrlResult = supabase.storage.from('product-pdfs').getPublicUrl(data.path);
   console.log('[Supabase] getPublicUrl result:', publicUrlResult);
 
   // Try all possible property names
@@ -398,6 +454,7 @@ async function uploadPdfToSupabase(file) {
 // --- Form Submission ---
 async function handleSellSubmit(e) {
   e.preventDefault();
+  showLoading();
   const cat = categorySelect.value;
   const formData = new FormData(sellForm);
   let payload = {};
@@ -409,6 +466,7 @@ async function handleSellSubmit(e) {
       payload = {
         college: formData.get('college'),
         roomName: formData.get('roomName'),
+        title: formData.get('roomName'), // Ensure title is set for DB
         roomType: formData.get('roomType'),
         fees: formData.get('fees'),
         feesIncludeMess: document.getElementById('feesIncludeMess').checked,
@@ -429,8 +487,31 @@ async function handleSellSubmit(e) {
         if (file && file.size > 0) imageUrls.push(await uploadImageToImgbb(file));
       }
       payload.images = imageUrls;
+      // Attach seller_id from localStorage (assumes currentUser is stored as JSON with id)
+      try {
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
+        if (user && user.id) {
+          payload.seller_id = user.id;
+          console.log('[SELL DEBUG] Using seller_id:', user.id);
+          const upsertResult = await window.supabaseClient.from('users').upsert([
+            {
+              id: user.id,
+              email: user.email,
+              name: user.user_metadata?.name || ''
+            }
+          ], { onConflict: ['id'] });
+          console.log('[SELL DEBUG] Upsert result:', upsertResult);
+        }
+      } catch (err) {
+        console.error('[SELL DEBUG] Could not get Supabase Auth user:', err);
+      }
+      console.log('[SELL DEBUG] Payload to insert:', payload);
       // Submit to backend
-      await apiRequest(API_ENDPOINTS.ADD_ROOM, 'POST', payload);
+      // Add room to Supabase
+      const { error: roomError } = await supabase
+        .from('rooms')
+        .insert([payload]);
+      if (roomError) throw new Error(roomError.message);
       alert('Room/Hostel listed successfully!');
       sellForm.reset();
       handleCategoryChange();
@@ -448,6 +529,25 @@ async function handleSellSubmit(e) {
         if (file && file.size > 0) imageUrls.push(await uploadImageToImgbb(file));
       }
       payload.images = imageUrls;
+      // Attach seller_id from localStorage (assumes currentUser is stored as JSON with id)
+      try {
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
+        if (user && user.id) {
+          payload.seller_id = user.id;
+          console.log('[SELL DEBUG] Using seller_id:', user.id);
+          const upsertResult = await window.supabaseClient.from('users').upsert([
+            {
+              id: user.id,
+              email: user.email,
+              name: user.user_metadata?.name || ''
+            }
+          ], { onConflict: ['id'] });
+          console.log('[SELL DEBUG] Upsert result:', upsertResult);
+        }
+      } catch (err) {
+        console.error('[SELL DEBUG] Could not get Supabase Auth user:', err);
+      }
+      console.log('[SELL DEBUG] Payload to insert:', payload);
       // Upload PDF
       const pdfFile = formData.get('pdf');
       if (pdfFile && pdfFile.size > 0) {
@@ -465,7 +565,12 @@ async function handleSellSubmit(e) {
         payload.pdfUrl = '';
       }
       // Submit to backend
-      await apiRequest(API_ENDPOINTS.ADD_NOTES, 'POST', payload);
+console.log('[SELL DEBUG] seller_id to be inserted:', payload.seller_id, 'type:', typeof payload.seller_id);
+      // Add notes to Supabase
+      const { error: notesError } = await supabase
+        .from('notes')
+        .insert([payload]);
+      if (notesError) throw new Error(notesError.message);
       alert('Notes listed successfully!');
       sellForm.reset();
       handleCategoryChange();
@@ -486,8 +591,31 @@ async function handleSellSubmit(e) {
         if (file && file.size > 0) imageUrls.push(await uploadImageToImgbb(file));
       }
       payload.images = imageUrls;
+      // Attach seller_id from localStorage (assumes currentUser is stored as JSON with id)
+      try {
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
+        if (user && user.id) {
+          payload.seller_id = user.id;
+          console.log('[SELL DEBUG] Using seller_id:', user.id);
+          const upsertResult = await window.supabaseClient.from('users').upsert([
+            {
+              id: user.id,
+              email: user.email,
+              name: user.user_metadata?.name || ''
+            }
+          ], { onConflict: ['id'] });
+          console.log('[SELL DEBUG] Upsert result:', upsertResult);
+        }
+      } catch (err) {
+        console.error('[SELL DEBUG] Could not get Supabase Auth user:', err);
+      }
+      console.log('[SELL DEBUG] Payload to insert:', payload);
       // Submit to backend
-      await apiRequest(API_ENDPOINTS.ADD_PRODUCT, 'POST', payload);
+      // Add product to Supabase
+      const { error: productError } = await supabase
+        .from('products')
+        .insert([payload]);
+      if (productError) throw new Error(productError.message);
       alert('Product listed successfully!');
       sellForm.reset();
       handleCategoryChange();
@@ -495,5 +623,29 @@ async function handleSellSubmit(e) {
   } catch (err) {
     alert('Error: ' + err.message);
     console.error(err);
+  } finally {
+    hideLoading();
   }
+}
+
+function showLoading() {
+  if (document.getElementById('sellLoadingOverlay')) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'sellLoadingOverlay';
+  overlay.style.position = 'fixed';
+  overlay.style.top = 0;
+  overlay.style.left = 0;
+  overlay.style.width = '100vw';
+  overlay.style.height = '100vh';
+  overlay.style.background = 'rgba(0,0,0,0.4)';
+  overlay.style.display = 'flex';
+  overlay.style.alignItems = 'center';
+  overlay.style.justifyContent = 'center';
+  overlay.style.zIndex = '9999';
+  overlay.innerHTML = '<div style="background:#fff;padding:32px 24px;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,0.15);text-align:center;"><div class="spinner" style="margin-bottom:12px;font-size:2rem;">⏳</div><div style="font-size:1.1rem;">Uploading, please wait...</div></div>';
+  document.body.appendChild(overlay);
+}
+function hideLoading() {
+  const overlay = document.getElementById('sellLoadingOverlay');
+  if (overlay) overlay.remove();
 }
