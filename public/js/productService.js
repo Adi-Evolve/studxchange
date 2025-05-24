@@ -38,29 +38,41 @@ class ProductService {
     }
 
     static renderProductCard(product) {
-        const isNote = product.category && product.category.toLowerCase() === 'notes';
-        const isRoom = product.category && (product.category.toLowerCase().includes('room') || product.category.toLowerCase().includes('hostel'));
-        const handleClick = isNote
-            ? `window.location.href='notes_interface.html?id=${product._id || product.id || ''}';`
-            : `window.location.href='productinterface.html?id=${product._id || product.id || ''}';`;
+        // Determine source table if available, otherwise fall back to category logic
+        let source = product.source || '';
+        if (!source) {
+            if (product.category && product.category.toLowerCase() === 'notes') source = 'notes';
+            else if (product.category && (product.category.toLowerCase().includes('room') || product.category.toLowerCase().includes('hostel'))) source = 'rooms';
+            else source = 'products';
+        }
+        let handleClick = '';
+        if (source === 'products') {
+            handleClick = `window.location.href='productinterface.html?id=${product._id || product.id || ''}';`;
+        } else if (source === 'rooms') {
+            handleClick = `window.location.href='roominterface.html?id=${product._id || product.id || ''}';`;
+        } else if (source === 'notes') {
+            handleClick = `window.location.href='notes_interface.html?id=${product._id || product.id || ''}';`;
+        } else {
+            handleClick = `window.location.href='productinterface.html?id=${product._id || product.id || ''}';`;
+        }
         const imgUrl = (product.images && product.images[0]) ? product.images[0] : 'https://via.placeholder.com/320x200?text=No+Image';
         if (isNote) {
     // Notes Card - always clickable, opens noteinterface.html
     return `
-    <div class="notes-card" onclick="${handleClick}">
+    <div class="notes-card" data-id="${product._id || product.id || ''}" data-type="notes" onclick="${handleClick}">
         <div class="notes-image-container">
             <img class="notes-image" src="${imgUrl}" alt="Notes Image" onerror="this.onerror=null;this.src='https://via.placeholder.com/90x90?text=No+Image';">
         </div>
         <div class="notes-title">${product.title || 'Untitled Note'}</div>
         <div class="notes-price">₹${product.price || 'Free'}</div>
         <div class="notes-info">${product.college ? `<span><i class='fa fa-university'></i> ${product.college}</span><br>` : ''}${product.subject ? `<span><i class='fa fa-book'></i> ${product.subject}</span><br>` : ''}${product.description ? `<span>${product.description.substring(0, 60)}...</span>` : ''}</div>
-        <button class="notes-buynow-btn" onclick="event.stopPropagation();window.location.href='notes_interface.html?id=${product._id || product.id || ''}';">Buy Now</button>
+        <button class="notes-buynow-btn" onclick="event.stopPropagation();${handleClick}">Buy Now</button>
     </div>
     `;
 } else if (isRoom) {
             // Room Card
             return `
-            <div class="room-card" onclick="${handleClick}">
+            <div class="room-card" data-id="${product._id || product.id || ''}" data-type="rooms" onclick="${handleClick}">
                 <div class="room-image-container">
                     <img class="room-image" src="${imgUrl}" alt="Room Image" onerror="this.onerror=null;this.src='https://via.placeholder.com/90x90?text=No+Image';">
                 </div>
@@ -78,13 +90,13 @@ class ProductService {
                     ${product.accessibility ? product.accessibility.map(a => `<span title="${a}"><i class="fa fa-wheelchair"></i></span>`).join(' ') : ''}
                 </div>
                 ${product.distance ? `<div class="room-distance"><i class="fa fa-location-arrow"></i> ${product.distance.toFixed(1)} km away</div>` : ''}
-                <button class="room-buynow-btn">Contact</button>
+                <button class="room-buynow-btn" onclick="event.stopPropagation();${handleClick}">Contact</button>
             </div>
             `;
         } else {
             // Regular Product Card
             return `
-            <div class="product-card" onclick="${handleClick}">
+            <div class="product-card" data-id="${product._id || product.id || ''}" data-type="products" onclick="${handleClick}">
                 <div class="product-image-container">
                     <img class="product-image" src="${imgUrl}" alt="Product Image" onerror="this.onerror=null;this.src='https://via.placeholder.com/90x90?text=No+Image';">
                 </div>
@@ -97,7 +109,7 @@ class ProductService {
                     ${product.description ? `<span>${product.description.substring(0, 60)}...</span>` : ''}
                 </div>
                 ${product.distance ? `<div class="distance"><i class="fa fa-location-arrow"></i> ${product.distance.toFixed(1)} km away</div>` : ''}
-                <button class="product-buynow-btn">View</button>
+                <button class="product-buynow-btn" onclick="event.stopPropagation();${handleClick}">View</button>
             </div>
             `;
         }

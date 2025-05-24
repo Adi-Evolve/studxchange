@@ -135,7 +135,14 @@ function renderRegularProductForm() {
     <input type="hidden" id="location" name="location">
   `;
   document.getElementById('useCurrentLocation').onclick = getCurrentLocation;
-  document.getElementById('selectOnMap').onclick = openMapModal;
+  setTimeout(() => {
+    const selectOnMapBtn = document.getElementById('selectOnMap');
+    if (typeof window.openMapModal === 'function') {
+      selectOnMapBtn.onclick = window.openMapModal;
+    } else {
+      selectOnMapBtn.onclick = () => alert('Map modal is not ready yet. Please try again in a few seconds.');
+    }
+  }, 200);
   document.getElementById('images').onchange = (e) => limitFiles(e, 5);
 }
 
@@ -199,7 +206,7 @@ function renderRoomForm() {
     <input type="hidden" id="location" name="location">
   `;
   document.getElementById('useCurrentLocation').onclick = getCurrentLocation;
-  document.getElementById('selectOnMap').onclick = openMapModal;
+  document.getElementById('selectOnMap').onclick = openMapModal || function() { alert('Map modal not available.'); };
   document.getElementById('roomImages').onchange = (e) => limitFiles(e, 10);
 }
 
@@ -487,27 +494,55 @@ async function handleSellSubmit(e) {
         if (file && file.size > 0) imageUrls.push(await uploadImageToImgbb(file));
       }
       payload.images = imageUrls;
-      // Attach seller_id from localStorage (assumes currentUser is stored as JSON with id)
+      // Attach seller_id from Supabase Auth (must match users table id)
+      let sellerId = null;
       try {
         const { data: { user } } = await window.supabaseClient.auth.getUser();
         if (user && user.id) {
-          payload.seller_id = user.id;
-          console.log('[SELL DEBUG] Using seller_id:', user.id);
+          sellerId = user.id;
+          payload.seller_id = sellerId;
+          console.log('[SELL DEBUG] Using seller_id:', sellerId);
+          // Ensure user exists in users table
           const upsertResult = await window.supabaseClient.from('users').upsert([
             {
-              id: user.id,
+              id: sellerId,
               email: user.email,
               name: user.user_metadata?.name || ''
             }
           ], { onConflict: ['id'] });
           console.log('[SELL DEBUG] Upsert result:', upsertResult);
+          if (upsertResult.error) {
+            hideLoading();
+            alert('Could not create user in users table: ' + upsertResult.error.message);
+            return;
+          }
+          // Optionally: confirm user exists by selecting
+          const { data: userRows, error: userSelectError } = await window.supabaseClient.from('users').select('id').eq('id', sellerId);
+          if (userSelectError || !userRows || userRows.length === 0) {
+            hideLoading();
+            alert('User does not exist in users table after upsert. Please contact support.');
+            return;
+          }
         }
       } catch (err) {
         console.error('[SELL DEBUG] Could not get Supabase Auth user:', err);
       }
+      // Validate seller_id before insert
+      console.log('[SELL DEBUG] seller_id:', payload.seller_id, 'type:', typeof payload.seller_id);
+      if (
+        !payload.seller_id ||
+        typeof payload.seller_id !== 'string' ||
+        payload.seller_id.length < 20 ||
+        payload.seller_id === '1' ||
+        typeof payload.seller_id === 'number'
+      ) {
+        hideLoading();
+        alert('Invalid seller_id (must be a valid UUID from Supabase Auth, never 1 or a number). Please log out and log in again.');
+        return;
+      }
       console.log('[SELL DEBUG] Payload to insert:', payload);
       // Submit to backend
-      // Add room to Supabase
+      const supabase = window.supabaseClient;
       const { error: roomError } = await supabase
         .from('rooms')
         .insert([payload]);

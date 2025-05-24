@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Product List - StudXchange</title>
-  <link rel="stylesheet" href="style5.css">
+  <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
   <script src="js/env.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
@@ -930,10 +930,18 @@ async function fetchAllCategoryItems() {
 
             let filtered = allItems;
             if (categoryParam !== 'all') {
-                filtered = allItems.filter(p => p.category?.toLowerCase() === categoryParam);
+                if (categoryParam === 'rooms_hostels' || categoryParam === 'rooms') {
+                    filtered = allItems.filter(p => {
+                        const cat = p.category?.toLowerCase();
+                        return cat === 'rooms_hostels' || cat === 'rooms';
+                    });
+                } else {
+                    filtered = allItems.filter(p => p.category?.toLowerCase() === categoryParam);
+                }
             }
+            console.log('[DEBUG] Filtered items:', filtered.map(x => ({category: x.category, id: x.id || x._id, title: x.title || x.roomName})));
             if (!filtered || filtered.length === 0) {
-                if (notesGrid) notesGrid.innerHTML = '<p>No notes found.</p>';
+                // notesGrid is not defined; show only productList message.
                 productList.innerHTML = '<p>No products found.</p>';
                 return;
             }
@@ -994,24 +1002,64 @@ productList.appendChild(notesDiv);
                 } else if (cat === 'rooms' || cat === 'rooms_hostels') {
                     const roomDiv = document.createElement('div');
                     roomDiv.className = 'room-card redesigned';
-                    const amenities = (product.amenities || []).map(function(a) { return `<span class='badge badge-amenity'>${a.replace(/_/g, ' ')}</span>`; }).join(' ');
+                    // Show amenity icons only for available amenities
+                    const amenityIcons = {
+                        wifi: {icon: 'fa-wifi', label: 'WiFi'},
+                        ac: {icon: 'fa-snowflake', label: 'AC'},
+                        attached_bathroom: {icon: 'fa-bath', label: 'Attached Bathroom'},
+                        mess: {icon: 'fa-utensils', label: 'Mess'},
+                        parking: {icon: 'fa-car', label: 'Parking'},
+                        laundry: {icon: 'fa-tshirt', label: 'Laundry'}
+                    };
+                    const presentAmenities = (product.amenities || []).filter(function(a) { return Object.keys(amenityIcons).includes(a.toLowerCase()); });
+                    let amenityIconsHtml = '';
+                    presentAmenities.forEach(function(a) {
+                        var key = a.toLowerCase();
+                        var icon = amenityIcons[key].icon;
+                        var label = amenityIcons[key].label;
+                        amenityIconsHtml += `<i class='fa ${icon}' title='${label}' style='margin-right:8px;font-size:1.15em;'></i>`;
+                    });
                     roomDiv.innerHTML = `
-                        <div class="room-image-container">
-                            <img class="room-image" src="${product.images?.[0] || product.image || 'https://via.placeholder.com/320x200?text=No+Image'}" alt="${product.roomName || product.title || 'Room/Hostel'}" />
+                        <div class="room-card-horizontal" style="display:flex;flex-direction:row;align-items:stretch;min-height:340px;">
+                            <div class="room-image-section" style="flex:1;min-width:210px;max-width:300px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:18px 0 0 18px;overflow:hidden;">
+    <div style="width:320px;height:320px;display:flex;align-items:center;justify-content:center;">
+        <img class="room-image" src="${product.images?.[0] || product.image || 'https://via.placeholder.com/320x200?text=No+Image'}" alt="${product.roomName || product.title || 'Room/Hostel'}" style="width:100%;height:100%;object-fit:cover;border-radius:18px;" />
+    </div>
+</div>
+                            <div class="room-info-section" style="flex:2;padding:28px 28px 18px 28px;display:flex;flex-direction:column;justify-content:space-between;">
+                                <div>
+                                    <div class="room-title" style="font-size:1.35rem;font-weight:700;margin-bottom:9px;color:#1a2233;">${product.roomName || product.title || 'Room/Hostel'}</div>
+                                    <div class="room-meta" style="margin-bottom:10px;">
+                                        ${product.college ? `<span style='font-size:1rem;color:#3a4d6d;'><i class='fa fa-university'></i> ${product.college}</span>` : ''}
+                                        ${product.occupancy ? `<span style='margin-left:18px;font-size:1rem;color:#3a4d6d;'><i class='fa fa-users'></i> ${product.occupancy} Occupancy</span>` : ''}
+                                    </div>
+                                    <div class="room-price" style="font-size:1.15rem;font-weight:600;color:#0b948f;margin-bottom:8px;">₹${product.fees || product.price || 'N/A'}${product.feesIncludeMess ? ' <span class="badge badge-mess" style="margin-left:12px;">Mess Included</span>' : ''}</div>
+                                </div>
+                                <div class="room-amenities" style="margin-top:12px;font-size:1.35rem;">
+                                    ${(() => {
+                                        const iconMap = {
+                                            wifi: {icon: 'fa-wifi', label: 'WiFi'},
+                                            ac: {icon: 'fa-wind', label: 'AC'},
+                                            attached_bathroom: {icon: 'fa-shower', label: 'Bathroom'},
+                                            mess: {icon: 'fa-bowl-food', label: 'Mess'},
+                                            parking: {icon: 'fa-square-parking', label: 'Parking'},
+                                            laundry: {icon: 'fa-shirt', label: 'Laundry'}
+                                        };
+                                        return (product.amenities || []).map(function(a) {
+                                            var key = a.toLowerCase();
+                                            if(iconMap[key]){
+                                                return `<i class='fa ${iconMap[key].icon}' title='${iconMap[key].label}' style='margin-right:16px;color:#2a3d56;'></i>`;
+                                            }
+                                            return '';
+                                        }).join('');
+                                    })()}
+                                </div>
+                                <button class="room-buynow-btn" style="margin-top:18px;width:160px;font-size:1.1rem;align-self:flex-end;" onclick="event.stopPropagation(); window.location.href='room_interface.html?id=${product._id || product.id || ''}'">View Room</button>
+                            </div>
                         </div>
-                        <div class="room-title">${product.roomName || product.title || 'Room/Hostel'}</div>
-                        <div class="room-price">₹${product.fees || product.price || 'N/A'}${product.feesIncludeMess ? ' <span class=\'badge badge-mess\'>Mess Included</span>' : ''}</div>
-                        <div class="room-info">
-                            ${product.college ? `<span><i class='fa fa-university'></i> ${product.college}</span><br>` : ''}
-                            ${product.occupancy ? `<span><i class='fa fa-users'></i> ${product.occupancy} Occupancy</span><br>` : ''}
-                            ${product.location ? `<span><i class='fa fa-map-marker-alt'></i> ${typeof product.location === 'string' ? product.location : (product.location.display_name || product.location.address || 'N/A')}</span><br>` : ''}
-                            ${product.messType ? `<span><i class='fa fa-utensils'></i> ${product.messType}</span><br>` : ''}
-                        </div>
-                        <div class="room-amenities">${amenities}</div>
-                        <button class="room-buynow-btn" onclick="event.stopPropagation(); window.location.href='productinterface.html?id=${product._id || product.id || ''}&type=rooms_hostels'">View Room</button>
                     `;
                     roomDiv.onclick = () => {
-                        window.location.href = `productinterface.html?id=${product._id || product.id || ''}&type=rooms_hostels`;
+                        window.location.href = `room_interface.html?id=${product._id || product.id || ''}`;
                     };
                     productList.appendChild(roomDiv);
                 } else {

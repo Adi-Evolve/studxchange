@@ -720,59 +720,59 @@
       </div>
       <div class="box">
           <div class="box-content">
-              <a href="javascript:void(0)" style="color: black;">
-                  <h5>Project Equipments</h5>
-                  <div class="box1-img" style="background-image: url('kit.jpg');"></div>
-                  <p>Explore</p>
-              </a>
+               <a href="javascript:void(0)" class="category-link" data-href="category.html?category=project%20equipments" style="color: black;">
+                   <h5>Project Equipments</h5>
+                   <div class="box1-img" style="background-image: url('kit.jpg');"></div>
+                   <p>Explore</p>
+               </a>
               
           </div>
       </div>
       <div class="box">
           <div class="box-content">
-              <a href="javascript:void(0)" style="color: black;">
-                  <h5>Books</h5>
-                  <div class="box1-img" style="background-image: url('Books.webp');"></div>
-                  <p>Explore</p>
-              </a>
+               <a href="javascript:void(0)" class="category-link" data-href="category.html?category=books" style="color: black;">
+                   <h5>Books</h5>
+                   <div class="box1-img" style="background-image: url('Books.webp');"></div>
+                   <p>Explore</p>
+               </a>
               
           </div>
       </div>
       <div class="box">
           <div class="box-content">
-              <a href="javascript:void(0)" style="color: black;">
-                  <h5>Rooms</h5>
-                  <div class="box1-img" style="background-image: url('rooms.jpg');"></div>
-                  <p>Explore</p>
-              </a>
+               <a href="javascript:void(0)" class="category-link" data-href="category.html?category=rooms_hostels" style="color: black;">
+                   <h5>Rooms</h5>
+                   <div class="box1-img" style="background-image: url('rooms.jpg');"></div>
+                   <p>Explore</p>
+               </a>
           </div>
       </div>
       <div class="box">
           <div class="box-content">
-              <a href="javascript:void(0)" style="color: black;">
-                  <h5>Electronics</h5>
-                  <div class="box1-img" style="background-image: url('mobile.jpg');"></div>
-                  <p>Explore</p>
-              </a>
+               <a href="javascript:void(0)" class="category-link" data-href="category.html?category=electronics" style="color: black;">
+                   <h5>Electronics</h5>
+                   <div class="box1-img" style="background-image: url('mobile.jpg');"></div>
+                   <p>Explore</p>
+               </a>
           </div>
       </div>
       <div class="box">
           <div class="box-content">
-              <a href="javascript:void(0)" style="color: black;">
-                  <h5>Hostel Equipments</h5>
-                  <div class="box1-img" style="background-image: url('kettle.jpg');"></div>
-                  <p>Explore</p>
-              </a>
+               <a href="javascript:void(0)" class="category-link" data-href="category.html?category=hostel%20equipments" style="color: black;">
+                   <h5>Hostel Equipments</h5>
+                   <div class="box1-img" style="background-image: url('kettle.jpg');"></div>
+                   <p>Explore</p>
+               </a>
               
           </div>
       </div>
       <div class="box">
           <div class="box-content">
-              <a href="javascript:void(0)" style="color: black;">
-                  <h5>Other</h5>
-                  <div class="box1-img" style="background-image: url('Bag.webp');"></div>
-                  <p>Explore</p>
-              </a>
+               <a href="javascript:void(0)" class="category-link" data-href="category.html?category=other" style="color: black;">
+                   <h5>Other</h5>
+                   <div class="box1-img" style="background-image: url('Bag.webp');"></div>
+                   <p>Explore</p>
+               </a>
           </div>
       </div>
   </div>
@@ -1009,19 +1009,26 @@ async function handleLocation() {
                 // Display items
                 reversedItems.forEach(item => {
                     const productCard = document.createElement('a');
-                    productCard.className = 'product-card';
-                    // Determine link based on type
-let categoryType = (item.category || '').toLowerCase();
-if (categoryType === 'rooms' || categoryType === 'room' || categoryType === 'rooms_hostels') {
-    productCard.href = `javascript:void(0)`;
-} else if (categoryType === 'notes' || categoryType === 'note') {
-    productCard.href = `javascript:void(0)`;
-} else {
-    productCard.href = `javascript:void(0)`;
-}
-                    
+                    let type = '';
+                    let categoryType = (item.category || '').toLowerCase();
+                    if (categoryType === 'rooms' || categoryType === 'room' || categoryType === 'rooms_hostels') {
+                        type = 'rooms';
+                    } else if (categoryType === 'notes' || categoryType === 'note') {
+                        type = 'notes';
+                    } else {
+                        type = 'products';
+                    }
+                    if(type === 'rooms') {
+                        productCard.className = 'room-card';
+                    } else if(type === 'notes') {
+                        productCard.className = 'notes-card';
+                    } else {
+                        productCard.className = 'product-card';
+                    }
+                    productCard.setAttribute('data-id', item._id || item.id || '');
+                    productCard.setAttribute('data-type', type);
+                    productCard.href = 'javascript:void(0)';
                     const featuredImage = item.images?.[0] || item.image || 'placeholder.jpg';
-                    
                     productCard.innerHTML = `
                 <div class="product-image" style="background-image: url('${featuredImage}')"></div>
                 <div class="product-info">
@@ -1031,6 +1038,14 @@ if (categoryType === 'rooms' || categoryType === 'room' || categoryType === 'roo
                 </div>
             `;
                     sliderTrack.appendChild(productCard);
+                });
+                // Delegated click handler for slider cards
+                sliderTrack.addEventListener('click', function(e) {
+                    let card = e.target.closest('.product-card, .room-card, .notes-card');
+                    if (!card) return;
+                    const id = card.getAttribute('data-id');
+                    // Always redirect to productinterface.html for all types
+                    window.location.href = `productinterface.html?id=${id}`;
                 });
 
                 totalSlides = Math.ceil(reversedItems.length / 5);
