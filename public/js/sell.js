@@ -242,26 +242,28 @@ async function getCurrentLocation() {
   }
   navigator.geolocation.getCurrentPosition(
     async (position) => {
-      currentLocation = {
-        lat: position.coords.latitude,
-        lon: position.coords.longitude,
-        name: ''
-      };
-      // Use reverse geocoding to get location name (improved logic)
       try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${currentLocation.lat}&lon=${currentLocation.lon}`);
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        // Reverse geocode using OpenStreetMap Nominatim
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
         const data = await response.json();
-        currentLocation.name = window.getBestLocationName(data.address);
+        let name = '';
+        if (data && data.address) {
+          name = window.getBestLocationName(data.address);
+        } else {
+          name = `Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}`;
+        }
+        // Store as stringified object with lat, lon, name
+        document.getElementById('location').value = JSON.stringify({
+          lat: lat,
+          lon: lon,
+          name: name
+        });
+        alert('Location set: ' + name);
       } catch (err) {
-        currentLocation.name = `Lat: ${currentLocation.lat.toFixed(4)}, Lon: ${currentLocation.lon.toFixed(4)}`;
+        alert('Failed to get location name. Please try again.');
       }
-      // Always store as stringified object with only lat, lon, name
-      document.getElementById('location').value = JSON.stringify({
-        lat: currentLocation.lat,
-        lon: currentLocation.lon,
-        name: currentLocation.name
-      });
-      alert('Location set: ' + currentLocation.name);
     },
     (error) => {
       alert('Unable to get location.');
@@ -486,8 +488,20 @@ async function handleSellSubmit(e) {
         contact2: formData.get('contact2'),
         amenities: Array.from(sellForm.querySelectorAll('input[name="amenities"]:checked')).map(cb => cb.value),
         messType: formData.get('messType'),
-        location: formData.get('location') || ''
+        createdAt: new Date().toISOString()
       };
+      // --- LOCATION PATCH: always parse and store lat/lon/name ---
+      const locationStr = formData.get('location');
+      if (locationStr) {
+        try {
+          const locObj = JSON.parse(locationStr);
+          if (locObj.lat && locObj.lon) {
+            payload.location_lat = locObj.lat;
+            payload.location_lng = locObj.lon;
+            payload.location_name = locObj.name || '';
+          }
+        } catch (err) { /* Ignore location parse errors */ }
+      }
       // Upload images
       const files = formData.getAll('roomImages');
       for (const file of files) {

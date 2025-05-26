@@ -1,5 +1,7 @@
 
 class ProductService {
+    // All featured cards now use only 'product-card' for sizing consistency.
+
     static async fetchProducts(options = {}) {
         try {
             const supabase = window.supabaseClient;
@@ -45,34 +47,33 @@ class ProductService {
             else if (product.category && (product.category.toLowerCase().includes('room') || product.category.toLowerCase().includes('hostel'))) source = 'rooms';
             else source = 'products';
         }
+        let cardClass = 'product-card'; // Use only 'product-card' for all featured cards
         let handleClick = '';
         if (source === 'products') {
             handleClick = `window.location.href='productinterface.html?id=${product._id || product.id || ''}';`;
-        } else if (source === 'rooms') {
-            handleClick = `window.location.href='roominterface.html?id=${product._id || product.id || ''}';`;
         } else if (source === 'notes') {
             handleClick = `window.location.href='notes_interface.html?id=${product._id || product.id || ''}';`;
         } else {
-            handleClick = `window.location.href='productinterface.html?id=${product._id || product.id || ''}';`;
+            handleClick = `window.location.href='roominterface.html?id=${product._id || product.id || ''}';`;
         }
         const imgUrl = (product.images && product.images[0]) ? product.images[0] : 'https://via.placeholder.com/320x200?text=No+Image';
         if (isNote) {
-    // Notes Card - always clickable, opens noteinterface.html
-    return `
-    <div class="notes-card" data-id="${product._id || product.id || ''}" data-type="notes" onclick="${handleClick}">
-        <div class="notes-image-container">
-            <img class="notes-image" src="${imgUrl}" alt="Notes Image" onerror="this.onerror=null;this.src='https://via.placeholder.com/90x90?text=No+Image';">
-        </div>
-        <div class="notes-title">${product.title || 'Untitled Note'}</div>
-        <div class="notes-price">₹${product.price || 'Free'}</div>
-        <div class="notes-info">${product.college ? `<span><i class='fa fa-university'></i> ${product.college}</span><br>` : ''}${product.subject ? `<span><i class='fa fa-book'></i> ${product.subject}</span><br>` : ''}${product.description ? `<span>${product.description.substring(0, 60)}...</span>` : ''}</div>
-        <button class="notes-buynow-btn" onclick="event.stopPropagation();${handleClick}">Buy Now</button>
-    </div>
-    `;
-} else if (isRoom) {
+            // Notes Card - always clickable, opens noteinterface.html
+            return `
+            <div class="${cardClass}" data-id="${product._id || product.id || ''}" data-type="notes" onclick="${handleClick}">
+                <div class="notes-image-container">
+                    <img class="notes-image" src="${imgUrl}" alt="Notes Image" onerror="this.onerror=null;this.src='https://via.placeholder.com/90x90?text=No+Image';">
+                </div>
+                <div class="notes-title">${product.title || 'Untitled Note'}</div>
+                <div class="notes-price">₹${product.price || 'Free'}</div>
+                <div class="notes-info">${product.college ? `<span><i class='fa fa-university'></i> ${product.college}</span><br>` : ''}${product.subject ? `<span><i class='fa fa-book'></i> ${product.subject}</span><br>` : ''}${product.description ? `<span>${product.description.substring(0, 60)}...</span>` : ''}</div>
+                <button class="notes-buynow-btn" onclick="event.stopPropagation();${handleClick}">Buy Now</button>
+            </div>
+            `;
+        } else if (isRoom) {
             // Room Card
             return `
-            <div class="room-card" data-id="${product._id || product.id || ''}" data-type="rooms" onclick="${handleClick}">
+            <div class="${cardClass}" data-id="${product._id || product.id || ''}" data-type="rooms" onclick="${handleClick}">
                 <div class="room-image-container">
                     <img class="room-image" src="${imgUrl}" alt="Room Image" onerror="this.onerror=null;this.src='https://via.placeholder.com/90x90?text=No+Image';">
                 </div>
