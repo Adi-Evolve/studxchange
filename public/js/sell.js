@@ -29,11 +29,31 @@ const sellForm = document.getElementById('sellForm');
 
 let currentLocation = null;
 let mapLocation = null;
+// Global variable to make the openMapModal function accessible
+window.openMapModal = null;
+
+// Ensure Select on Map button opens modal
+window.addEventListener('DOMContentLoaded', function() {
+    const selectOnMapBtn = document.getElementById('selectOnMapBtn');
+    if (selectOnMapBtn) {
+        selectOnMapBtn.onclick = function() {
+            if (typeof window.openMapModal === 'function') {
+                window.openMapModal();
+            } else {
+                // Wait and retry if map modal not ready yet
+                setTimeout(() => {
+                    if (typeof window.openMapModal === 'function') window.openMapModal();
+                }, 500);
+            }
+        };
+    }
+});
 
 categorySelect.addEventListener('change', handleCategoryChange);
 sellForm.addEventListener('submit', handleSellSubmit);
 
 document.addEventListener('DOMContentLoaded', async () => {
+  console.log('DOMContentLoaded: Setting up sell page');
   let currentUser = null;
   try {
     currentUser = JSON.parse(localStorage.getItem('currentUser'));
@@ -51,8 +71,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
   }
-  handleCategoryChange();
+  // Setup map modal first so it's available when category changes
   setupMapModal();
+  handleCategoryChange();
 });
 
 function showLoginRequiredDialog() {
@@ -135,14 +156,16 @@ function renderRegularProductForm() {
     <input type="hidden" id="location" name="location">
   `;
   document.getElementById('useCurrentLocation').onclick = getCurrentLocation;
-  setTimeout(() => {
-    const selectOnMapBtn = document.getElementById('selectOnMap');
+  const selectOnMapBtn = document.getElementById('selectOnMap');
+  selectOnMapBtn.onclick = function() {
+    console.log('Select on Map button clicked');
     if (typeof window.openMapModal === 'function') {
-      selectOnMapBtn.onclick = window.openMapModal;
+      window.openMapModal();
     } else {
-      selectOnMapBtn.onclick = () => alert('Map modal is not ready yet. Please try again in a few seconds.');
+      console.error('Map modal function not available');
+      alert('Map feature is not ready yet. Please try again in a few seconds.');
     }
-  }, 200);
+  };
   document.getElementById('images').onchange = (e) => limitFiles(e, 5);
 }
 
@@ -273,6 +296,7 @@ async function getCurrentLocation() {
 
 // --- MAP MODAL WITH LEAFLET ---
 function setupMapModal() {
+  console.log('Setting up map modal');
   const modal = document.getElementById('sell-map-modal');
   const closeModal = document.getElementById('closeMapModal');
   const confirmBtn = document.getElementById('confirmMapLocation');
@@ -280,9 +304,39 @@ function setupMapModal() {
   let leafletMarker = null;
   let geocoder = null;
 
-  if (!modal) return;
-  closeModal.onclick = () => { modal.style.display = 'none'; };
-  confirmBtn.onclick = () => {
+  if (!modal) {
+    console.error('Map modal not found in the DOM');
+    return;
+  }
+  
+  // Load Leaflet CSS and JS if not already loaded
+  if (!window.L) {
+    console.log('Loading Leaflet library');
+    const leafletCSS = document.createElement('link');
+    leafletCSS.rel = 'stylesheet';
+    leafletCSS.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(leafletCSS);
+    
+    const leafletJS = document.createElement('script');
+    leafletJS.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    document.head.appendChild(leafletJS);
+    
+    const geocoderJS = document.createElement('script');
+    geocoderJS.src = 'https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js';
+    document.head.appendChild(geocoderJS);
+    
+    const geocoderCSS = document.createElement('link');
+    geocoderCSS.rel = 'stylesheet';
+    geocoderCSS.href = 'https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css';
+    document.head.appendChild(geocoderCSS);
+  }
+  
+  closeModal.onclick = function() { 
+    modal.style.display = 'none'; 
+    console.log('Map modal closed');
+  };
+  
+  confirmBtn.onclick = function() {
     if (mapLocation) {
       // Always store as stringified object with only lat, lon, name
       document.getElementById('location').value = JSON.stringify({
@@ -291,7 +345,8 @@ function setupMapModal() {
         name: mapLocation.name
       });
       modal.style.display = 'none';
-      alert('Location set from map!');
+      alert('Location set from map: ' + mapLocation.name);
+      console.log('Location confirmed:', mapLocation);
     } else {
       alert('Please select a location on the map.');
     }
@@ -299,78 +354,123 @@ function setupMapModal() {
 
   // --- Map Modal Logic ---
   function openMap() {
+    console.log('Opening map');
+    // Make sure Leaflet is loaded
+    if (!window.L) {
+      console.error('Leaflet not loaded yet');
+      setTimeout(openMap, 500);
+      return;
+    }
+    
     // Remove any existing map instance to avoid blank map issues
     if (leafletMap) {
       leafletMap.remove();
       leafletMap = null;
     }
-    leafletMap = L.map('mapContainer').setView([19.7515, 75.7139], 6); // Center on Maharashtra by default
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: ' OpenStreetMap contributors'
-    }).addTo(leafletMap);
-    geocoder = L.Control.geocoder({ defaultMarkGeocode: false })
-      .on('markgeocode', function(e) {
-        const latlng = e.geocode.center;
-        if (leafletMarker) leafletMap.removeLayer(leafletMarker);
-        leafletMarker = L.marker(latlng).addTo(leafletMap);
-        mapLocation = {
-          lat: latlng.lat,
-          lon: latlng.lng,
-          name: e.geocode.name
-        };
-        leafletMap.setView(latlng, 15);
-      })
-      .addTo(leafletMap);
-    leafletMap.on('click', function(e) {
-      if (leafletMarker) leafletMap.removeLayer(leafletMarker);
-      leafletMarker = L.marker(e.latlng).addTo(leafletMap);
-      mapLocation = {
-        lat: e.latlng.lat,
-        lon: e.latlng.lng,
-        name: `Lat: ${e.latlng.lat.toFixed(4)}, Lon: ${e.latlng.lng.toFixed(4)}`
-      };
-      // Try reverse geocoding
-      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}`)
-        .then(resp => resp.json())
-        .then(data => {
-          if (data && data.display_name) {
-            mapLocation.name = data.display_name;
-          }
-        });
-    });
-    // --- Search bar logic ---
-    document.getElementById('mapSearchBtn').onclick = function() {
-      const query = document.getElementById('mapSearchInput').value.trim();
-      if (!query) return;
-      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
-        .then(resp => resp.json())
-        .then(results => {
-          if (results && results.length > 0) {
-            const place = results[0];
-            const latlng = [parseFloat(place.lat), parseFloat(place.lon)];
-            leafletMap.setView(latlng, 15);
-            if (leafletMarker) leafletMap.removeLayer(leafletMarker);
-            leafletMarker = L.marker(latlng).addTo(leafletMap);
-            mapLocation = {
-              lat: latlng[0],
-              lon: latlng[1],
-              name: place.display_name
-            };
-          } else {
-            alert('Place not found. Try another search.');
-          }
+    
+    try {
+      console.log('Initializing Leaflet map');
+      leafletMap = L.map('mapContainer').setView([19.7515, 75.7139], 6); // Center on Maharashtra by default
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(leafletMap);
+      
+      // Add geocoder if available
+      if (L.Control.Geocoder) {
+        geocoder = L.Control.Geocoder.nominatim();
+        L.Control.geocoder({
+          geocoder: geocoder,
+          defaultMarkGeocode: false
         })
-        .catch(() => alert('Error searching for place.'));
-    };
+        .on('markgeocode', function(e) {
+          const latlng = e.geocode.center;
+          if (leafletMarker) leafletMap.removeLayer(leafletMarker);
+          leafletMarker = L.marker(latlng).addTo(leafletMap);
+          mapLocation = {
+            lat: latlng.lat,
+            lon: latlng.lng,
+            name: e.geocode.name
+          };
+          leafletMap.setView(latlng, 15);
+        })
+        .addTo(leafletMap);
+      }
+      
+      // Click handler for map
+      leafletMap.on('click', function(e) {
+        console.log('Map clicked at:', e.latlng);
+        if (leafletMarker) leafletMap.removeLayer(leafletMarker);
+        leafletMarker = L.marker(e.latlng).addTo(leafletMap);
+        mapLocation = {
+          lat: e.latlng.lat,
+          lon: e.latlng.lng,
+          name: `Lat: ${e.latlng.lat.toFixed(4)}, Lon: ${e.latlng.lng.toFixed(4)}`
+        };
+        // Try reverse geocoding
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}`)
+          .then(resp => resp.json())
+          .then(data => {
+            if (data && data.display_name) {
+              mapLocation.name = data.display_name;
+              console.log('Reverse geocoded to:', data.display_name);
+            }
+          })
+          .catch(err => console.error('Reverse geocoding error:', err));
+      });
+      
+      // --- Search bar logic ---
+      document.getElementById('mapSearchBtn').onclick = function() {
+        const query = document.getElementById('mapSearchInput').value.trim();
+        if (!query) return;
+        console.log('Searching for location:', query);
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+          .then(resp => resp.json())
+          .then(results => {
+            console.log('Search results:', results);
+            if (results && results.length > 0) {
+              const place = results[0];
+              const latlng = [parseFloat(place.lat), parseFloat(place.lon)];
+              leafletMap.setView(latlng, 15);
+              if (leafletMarker) leafletMap.removeLayer(leafletMarker);
+              leafletMarker = L.marker(latlng).addTo(leafletMap);
+              mapLocation = {
+                lat: latlng[0],
+                lon: latlng[1],
+                name: place.display_name
+              };
+              console.log('Selected place:', place.display_name);
+            } else {
+              alert('Place not found. Try another search.');
+            }
+          })
+          .catch(err => {
+            console.error('Error searching for place:', err);
+            alert('Error searching for place.');
+          });
+      };
+      
+      // Handle Enter key in search input
+      document.getElementById('mapSearchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          document.getElementById('mapSearchBtn').click();
+        }
+      });
+      
+      console.log('Map initialized successfully');
+    } catch (err) {
+      console.error('Error initializing map:', err);
+    }
   }
 
-  // Open map when modal is displayed
-  const origOpen = window.openMapModal;
+  // Define global openMapModal function
   window.openMapModal = function() {
+    console.log('Opening map modal');
     modal.style.display = 'block';
-    setTimeout(openMap, 100); // Delay to ensure modal is visible and container has size
-    if (origOpen) origOpen();
+    setTimeout(openMap, 300); // Delay to ensure modal is visible and container has size
   };
+  
+  console.log('Map modal setup complete');
 }
 
 // --- Robust imgbb Upload Function ---

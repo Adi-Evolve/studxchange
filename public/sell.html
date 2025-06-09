@@ -662,5 +662,22 @@
         </div>
     </div>
     <!-- Removed footer from this page -->
+<script src="js/searchSupabase.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('form').forEach(form => {
+    const input = form.querySelector('input[name="query"]');
+    if (input) {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const query = input.value.trim();
+        if (query) {
+          window.location.href = 'search-results.html?query=' + encodeURIComponent(query);
+        }
+      });
+    }
+  });
+});
+</script>
 </body>
 </html>

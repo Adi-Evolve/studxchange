@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Profile - StudXchange</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" />
-  <script src="env.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+  <script src="js/env.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+  <script src="js/db-config.js"></script>
   <style>
     /* Global Styles */
     * {
@@ -104,28 +105,52 @@
     .listed-item {
       display: flex;
       align-items: center;
-      padding: 15px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      margin-bottom: 15px;
-      transition: transform 0.2s ease;
+      padding: 20px;
+      background: #f8f9fb;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      overflow: hidden;
     }
     .listed-item:hover {
-      transform: translateX(5px);
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
     }
     .item-image {
-      width: 100px;
-      height: 100px;
+      width: 120px;
+      height: 120px;
       object-fit: cover;
-      border-radius: 4px;
+      border-radius: 8px;
       margin-right: 20px;
+      transition: transform 0.5s ease;
+    }
+    .listed-item:hover .item-image {
+      transform: scale(1.05);
     }
     .item-details {
       flex-grow: 1;
+      padding-right: 15px;
+    }
+    .item-details h3 {
+      color: #2a3d56;
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+    .item-details p {
+      color: #666;
+      margin-bottom: 5px;
+    }
+    .item-details .price {
+      color: #1a75ff;
+      font-weight: bold;
+      font-size: 16px;
     }
     .item-actions {
       display: flex;
-      gap: 12px;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 120px;
     }
     .sold-btn, .delete-btn {
       padding: 8px 16px;
@@ -397,6 +422,30 @@ button, select {
       .item-details { width: 100%; }
       .item-actions { width: 100%; justify-content: flex-end; }
     }
+    .sold-label {
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: white;
+      border-radius: 20px;
+      font-weight: 500;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .sold-effect {
+      position: relative;
+      opacity: 0.85;
+    }
+    .sold-effect::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(40, 167, 69, 0.1);
+      border-radius: 12px;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -432,7 +481,6 @@ button, select {
             <a class="nav-button sell-button" href="sell.html">Sell/Donate</a>
         </div>
     </div>
-  </header>
 
   <div class="account-container">
       <header class="account-header">
@@ -444,29 +492,34 @@ button, select {
       </header>
       <div class="account-details">
           <div class="profile-info">
-              <h2>Profile Information</h2>
-              <div class="profile-item">
-                  <strong>Name:</strong> <span id="profileName"></span>
+              <h2 style="color: #000;">Profile Information</h2>
+              <div class="profile-item" style="color: #000;">
+                  <strong>Name:</strong> <span id="profileName" style="color: #000;"></span>
               </div>
-              <div class="profile-item">
-                  <strong>Email:</strong> <span id="profileEmail"></span>
+              <div class="profile-item" style="color: #000;">
+                  <strong>Email:</strong> <span id="profileEmail" style="color: #000;"></span>
               </div>
-              <div class="profile-item">
+              <div class="profile-item" style="color: #000;">
                   <strong>Phone:</strong> 
-                  <span id="profilePhone"></span>
+                  <span id="profilePhone" style="color: #000;"></span>
                   <button id="addPhoneBtn" class="phone-button" onclick="openPhoneModal()">Add Phone Number</button>
               </div>
           </div>
           <div class="listed-items">
               <h2>My Listed Items</h2>
               <ul id="listedItemsList"></ul>
+              
+              <h3>My Notes</h3>
+              <ul id="listedNotesList"></ul>
+              
+              <h3>My Room Listings</h3>
+              <ul id="listedRoomsList"></ul>
           </div>
           
           <div class="sold-items">
               <h2>Sold Items</h2>
               <ul id="soldItemsList"></ul>
           </div>
-          
       </div>
   </div>
 
@@ -497,6 +550,11 @@ button, select {
 
   <script>
     document.addEventListener('DOMContentLoaded', async function() {
+      // Load all types of listings
+      if (typeof loadListedItems === 'function') loadListedItems();
+      if (typeof loadSoldItems === 'function') loadSoldItems();
+      if (typeof loadNotes === 'function') loadNotes();
+      if (typeof loadRooms === 'function') loadRooms();
       // Wait for Supabase and env.js to be loaded
       function waitForSupabase() {
         return new Promise(resolve => {
@@ -517,121 +575,261 @@ button, select {
         showLoginRequiredDialog();
         return;
       }
+      
       const user = session.user;
-      // Fetch name/email directly from auth user
-      let name = user.user_metadata && user.user_metadata.name ? user.user_metadata.name : 'User';
-      let email = user.email || 'Not provided';
-      let phone = '';
-
-      // Try to fetch phone from users table (optional)
-      let { data: profile } = await supabase
-        .from('users')
-        .select('phone')
-        .eq('id', user.id)
-        .single();
-      if (profile && profile.phone) {
-        phone = profile.phone;
+      console.log('Auth user data:', user);
+      
+      // Set default values
+      let name = 'User';
+      let email = 'Not provided';
+      let phone = 'Not provided';
+      let userId = user.id;
+      
+      // Try to get email from auth
+      if (user.email) {
+        email = user.email;
       }
-      localStorage.setItem('currentUser', JSON.stringify({ name, email, phone, id: user.id }));
-
-      // Update DOM
-      document.getElementById('userName').textContent = name;
-      document.getElementById('profileName').textContent = name;
-      document.getElementById('profileEmail').textContent = email;
-      if (phone) {
-        document.getElementById('profilePhone').textContent = phone;
-        document.getElementById('addPhoneBtn').style.display = 'none';
-      } else {
-        document.getElementById('profilePhone').textContent = 'Not provided';
-        document.getElementById('addPhoneBtn').style.display = 'inline-block';
+      
+      // Try to get name from metadata
+      if (user.user_metadata && user.user_metadata.name) {
+        name = user.user_metadata.name;
+      } else if (user.user_metadata && user.user_metadata.full_name) {
+        name = user.user_metadata.full_name;
       }
-      if (typeof loadListedItems === 'function') loadListedItems();
-      if (typeof loadSoldItems === 'function') loadSoldItems();
+      
+      // Try to fetch additional info from users table
+      try {
+        const { data: profile, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', email)
+          .single();
+          
+        console.log('Found user profile:', profile, 'Error:', error);
+        
+        if (profile) {
+          // Update with database values if available
+          if (profile.name) name = profile.name;
+          if (profile.phone) phone = profile.phone;
+          if (profile.id) {
+            userId = profile.id;
+            console.log('Using database ID instead of auth ID:', userId);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching user profile:', err);
+      }
+      
+      // Store user data
+      const userData = { name, email, phone, id: userId };
+      localStorage.setItem('currentUser', JSON.stringify(userData));
+      window.userData = userData; // Make it globally available
+
+      // Update DOM with user information - with extra debug logging
+      console.log('Updating profile display with:', userData);
+      console.log('DOM elements:', {
+        userName: document.getElementById('userName'),
+        profileName: document.getElementById('profileName'),
+        profileEmail: document.getElementById('profileEmail'),
+        profilePhone: document.getElementById('profilePhone')
+      });
+      
+      // Force update the DOM elements with a slight delay to ensure they exist
+      setTimeout(() => {
+        const userNameEl = document.getElementById('userName');
+        const profileNameEl = document.getElementById('profileName');
+        const profileEmailEl = document.getElementById('profileEmail');
+        const profilePhoneEl = document.getElementById('profilePhone');
+        const addPhoneBtnEl = document.getElementById('addPhoneBtn');
+        
+        if (userNameEl) userNameEl.textContent = name;
+        if (profileNameEl) profileNameEl.textContent = name;
+        if (profileEmailEl) profileEmailEl.textContent = email;
+        if (profilePhoneEl) profilePhoneEl.textContent = phone;
+        
+        // Show/hide add phone button
+        if (addPhoneBtnEl) {
+          if (phone && phone !== 'Not provided') {
+            addPhoneBtnEl.style.display = 'none';
+          } else {
+            addPhoneBtnEl.style.display = 'inline-block';
+          }
+        }
+        
+        console.log('Profile information updated successfully');
+      }, 100);
+      // Listings are loaded in the main DOMContentLoaded event
     });
 
 
     // Fetch and display products listed by the logged-in user
-    // Fetch and display products listed by the logged-in user
     async function loadListedItems() {
       try {
-        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-        if (!currentUser || !currentUser.id) {
-          document.getElementById('listedItemsList').innerHTML = '<li>Please log in to view your listed items.</li>';
-          return;
-        }
         document.getElementById('listedItemsList').innerHTML = '<li>Loading your items...</li>';
-        // Fetch products where owner_id = current user id
-        const { data: products, error } = await window.supabaseClient
-          .from('products')
-          .select('*')
-          .eq('owner_id', currentUser.id);
-        if (error) throw new Error(error.message);
-        if (!products || products.length === 0) {
-          document.getElementById('listedItemsList').innerHTML = '<li>No items found.</li>';
-          return;
+        
+        // Make sure Supabase client is initialized
+        if (!window.supabaseClient) {
+          if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+            window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+            console.log('Supabase client initialized in loadListedItems');
+          } else {
+            throw new Error('Supabase client not available');
+          }
         }
-        // Render products with Remove and Mark as Sold buttons
-        document.getElementById('listedItemsList').innerHTML = products.map(product => {
-          const isSold = product.is_sold;
-          return `
-            <li class="listed-item${isSold ? ' sold-effect' : ''}">
-              <img src="${product.images?.[0] || product.image || 'placeholder.jpg'}" class="item-image" alt="${product.title || 'Product'}">
-              <div class="item-details">
-                <h3>${product.title || product.name || 'Untitled'}</h3>
-                <p>₹${product.price || '0'}</p>
-                <p>${product.description || ''}</p>
-              </div>
-              <div class="item-actions">
-                ${isSold ? '<span class="sold-label">SOLD</span>' : `
-                  <button class="btn btn-danger" onclick="deleteItem('${product.id}')">Remove</button>
-                  <button class="btn btn-success" onclick="handleSold('${product.id}')">Mark as Sold</button>
-                `}
-              </div>
-            </li>
-          `;
-        }).join('');
+        
+        console.log('Fetching all products from database...');
+        
+        // Simple approach: just fetch all products
+        const { data: allProducts, error: fetchError } = await window.supabaseClient
+          .from('products')
+          .select('*');
+          
+        if (fetchError) {
+          console.error('Error fetching products:', fetchError);
+          throw new Error(fetchError.message);
+        }
+        
+        console.log('Total products in database:', allProducts?.length || 0);
+        
+        if (allProducts && allProducts.length > 0) {
+          // Log the first product to see its structure
+          console.log('Sample product:', allProducts[0]);
+          
+          // Filter for unsold products only
+          const listedProducts = allProducts.filter(product => !product.is_sold);
+          console.log('Unsold products:', listedProducts.length);
+          
+          if (listedProducts.length > 0) {
+            renderListedItems(listedProducts);
+            return;
+          }
+        }
+        
+        document.getElementById('listedItemsList').innerHTML = '<li>No items found in the database.</li>';
       } catch (error) {
         console.error('Error loading listed items:', error);
         document.getElementById('listedItemsList').innerHTML = `<li>Failed to load your listed items: ${error.message}</li>`;
       }
     }
+    
+    // Helper function to render listed items
+    function renderListedItems(products) {
+      if (!products || products.length === 0) {
+        document.getElementById('listedItemsList').innerHTML = '<li>No products found.</li>';
+        return;
+      }
+      
+      // Remove duplicates based on id
+      const uniqueProducts = [];
+      const ids = new Set();
+      
+      for (const product of products) {
+        if (!ids.has(product.id)) {
+          ids.add(product.id);
+          uniqueProducts.push(product);
+        }
+      }
+      
+      console.log('Rendering unique products:', uniqueProducts.length);
+        
+      document.getElementById('listedItemsList').innerHTML = uniqueProducts.map(product => {
+        return `
+          <li class="listed-item" onclick="window.location.href='product-details.html?id=${product.id}'" style="cursor: pointer;">
+            <img src="${product.images?.[0] || product.image || 'placeholder.jpg'}" class="item-image" alt="${product.title || 'Product'}">
+            <div class="item-details">
+              <h3>${product.title || product.name || 'Untitled'}</h3>
+              <p class="price">₹${product.price || '0'}</p>
+              <p><small>Category: ${product.category || 'General'}</small></p>
+            </div>
+            <div class="item-actions" onclick="event.stopPropagation();">
+              <button class="delete-btn" onclick="deleteItem('${product.id}')">Remove</button>
+              <button class="sold-btn" onclick="handleSold('${product.id}')">Mark as Sold</button>
+            </div>
+          </li>
+        `;
+      }).join('');
+    }
 
     // Fetch and display sold items for the logged-in user (Supabase version)
     async function loadSoldItems() {
       try {
-        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-        if (!currentUser || !currentUser.id) {
-          document.getElementById('soldItemsList').innerHTML = '<li>Please log in to view your sold items.</li>';
-          return;
-        }
         document.getElementById('soldItemsList').innerHTML = '<li>Loading your sold items...</li>';
-        // Fetch only sold products for the user from Supabase (using owner_id and is_sold)
-        const { data: soldItems, error } = await window.supabaseClient
-          .from('products')
-          .select('*')
-          .eq('owner_id', currentUser.id)
-          .eq('is_sold', true);
-        if (error) throw new Error(error.message);
-        if (!soldItems || soldItems.length === 0) {
-          document.getElementById('soldItemsList').innerHTML = '<li>You have no sold items.</li>';
-          return;
+        
+        // Make sure Supabase client is initialized
+        if (!window.supabaseClient) {
+          if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+            window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+            console.log('Supabase client initialized in loadSoldItems');
+          } else {
+            throw new Error('Supabase client not available');
+          }
         }
-        document.getElementById('soldItemsList').innerHTML = soldItems.map(item =>
-          `<li class="listed-item sold-effect">
-            <img src="${item.images?.[0] || item.image || 'placeholder.jpg'}" class="item-image" alt="${item.title || 'Product'}">
-            <div class="item-details">
-              <h3>${item.title || 'Untitled Product'}</h3>
-              <p>₹${item.price || '0'}</p>
-            </div>
-            <div class="item-actions">
-              <span class="sold-label">SOLD</span>
-            </div>
-          </li>`
-        ).join('');
+        
+        console.log('Fetching all products from database for sold items...');
+        
+        // Simple approach: just fetch all products
+        const { data: allProducts, error: fetchError } = await window.supabaseClient
+          .from('products')
+          .select('*');
+          
+        if (fetchError) {
+          console.error('Error fetching products for sold items:', fetchError);
+          throw new Error(fetchError.message);
+        }
+        
+        console.log('Total products in database:', allProducts?.length || 0);
+        
+        if (allProducts && allProducts.length > 0) {
+          // Filter for sold products only
+          const soldProducts = allProducts.filter(product => product.is_sold === true);
+          console.log('Sold products:', soldProducts.length);
+          
+          if (soldProducts.length > 0) {
+            renderSoldItems(soldProducts);
+            return;
+          }
+        }
+        
+        document.getElementById('soldItemsList').innerHTML = '<li>No sold items found in the database.</li>';
       } catch (error) {
         console.error('Error loading sold items:', error);
         document.getElementById('soldItemsList').innerHTML = `<li>Failed to load your sold items: ${error.message}</li>`;
       }
+    }
+    
+    // Helper function to render sold items
+    function renderSoldItems(soldItems) {
+      if (!soldItems || soldItems.length === 0) {
+        document.getElementById('soldItemsList').innerHTML = '<li>No sold items found.</li>';
+        return;
+      }
+      
+      // Remove duplicates based on id
+      const uniqueSoldItems = [];
+      const ids = new Set();
+      
+      for (const item of soldItems) {
+        if (!ids.has(item.id)) {
+          ids.add(item.id);
+          uniqueSoldItems.push(item);
+        }
+      }
+      
+      console.log('Rendering unique sold items:', uniqueSoldItems.length);
+        
+      document.getElementById('soldItemsList').innerHTML = uniqueSoldItems.map(item =>
+        `<li class="listed-item sold-effect" onclick="window.location.href='product-details.html?id=${item.id}'" style="cursor: pointer;">
+          <img src="${item.images?.[0] || item.image || 'placeholder.jpg'}" class="item-image" alt="${item.title || 'Product'}">
+          <div class="item-details">
+            <h3>${item.title || item.name || 'Untitled Product'}</h3>
+            <p class="price">₹${item.price || '0'}</p>
+            <p><small>Category: ${item.category || 'General'}</small></p>
+          </div>
+          <div class="item-actions">
+            <span class="sold-label">SOLD</span>
+          </div>
+        </li>`
+      ).join('');
     }
 
 
@@ -639,33 +837,307 @@ button, select {
     async function deleteItem(productId) {
         if (!confirm('Are you sure you want to delete this item?')) return;
         try {
+            // Make sure Supabase client is initialized
+            if (!window.supabaseClient) {
+                if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+                    window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+                    console.log('Supabase client initialized in deleteItem');
+                } else {
+                    throw new Error('Supabase client not available');
+                }
+            }
+            
+            console.log('Deleting product with ID:', productId);
             const { error } = await window.supabaseClient
                 .from('products')
                 .delete()
                 .eq('id', productId);
-            if (error) throw new Error(error.message);
+                
+            if (error) {
+                console.error('Error deleting product:', error);
+                throw new Error(error.message);
+            }
+            
+            console.log('Product deleted successfully');
             await loadListedItems();
             alert('Item deleted successfully!');
         } catch (error) {
             console.error('Delete error:', error);
-            alert('Failed to delete item');
+            alert('Failed to delete item: ' + error.message);
         }
     }
 
     async function handleSold(productId) {
         if (!confirm('Mark this item as sold?')) return;
         try {
+            // Make sure Supabase client is initialized
+            if (!window.supabaseClient) {
+                if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+                    window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+                    console.log('Supabase client initialized in handleSold');
+                } else {
+                    throw new Error('Supabase client not available');
+                }
+            }
+            
+            console.log('Marking product as sold with ID:', productId);
+            
+            // First, get the current product to preserve all its data
+            const { data: product, error: fetchError } = await window.supabaseClient
+                .from('products')
+                .select('*')
+                .eq('id', productId)
+                .single();
+                
+            if (fetchError) {
+                console.error('Error fetching product:', fetchError);
+                throw new Error(fetchError.message);
+            }
+            
+            if (!product) {
+                throw new Error('Product not found');
+            }
+            
+            console.log('Found product to mark as sold:', product);
+            
+            // Update the product with is_sold = true
             const { error } = await window.supabaseClient
                 .from('products')
                 .update({ is_sold: true })
                 .eq('id', productId);
-            if (error) throw new Error(error.message);
+                
+            if (error) {
+                console.error('Error marking product as sold:', error);
+                throw new Error(error.message);
+            }
+            
+            console.log('Product marked as sold successfully');
             await loadListedItems();
             await loadSoldItems();
             alert('Item marked as sold!');
         } catch (error) {
             console.error('Error marking as sold:', error);
-            alert('Failed to mark item as sold');
+            alert('Failed to mark item as sold: ' + error.message);
+        }
+    }
+    
+    // Load notes from the database
+    async function loadNotes() {
+      try {
+        document.getElementById('listedNotesList').innerHTML = '<li>Loading your notes...</li>';
+        
+        // Make sure Supabase client is initialized
+        if (!window.supabaseClient) {
+          if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+            window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+            console.log('Supabase client initialized in loadNotes');
+          } else {
+            throw new Error('Supabase client not available');
+          }
+        }
+        
+        console.log('Fetching all notes from database...');
+        
+        // Fetch all notes
+        const { data: allNotes, error: fetchError } = await window.supabaseClient
+          .from('notes')
+          .select('*');
+          
+        if (fetchError) {
+          console.error('Error fetching notes:', fetchError);
+          throw new Error(fetchError.message);
+        }
+        
+        console.log('Total notes in database:', allNotes?.length || 0);
+        
+        if (allNotes && allNotes.length > 0) {
+          renderNotes(allNotes);
+        } else {
+          document.getElementById('listedNotesList').innerHTML = '<li>No notes found in the database.</li>';
+        }
+      } catch (error) {
+        console.error('Error loading notes:', error);
+        document.getElementById('listedNotesList').innerHTML = `<li>Failed to load your notes: ${error.message}</li>`;
+      }
+    }
+    
+    // Helper function to render notes
+    function renderNotes(notes) {
+      if (!notes || notes.length === 0) {
+        document.getElementById('listedNotesList').innerHTML = '<li>No notes found.</li>';
+        return;
+      }
+      
+      // Remove duplicates based on id
+      const uniqueNotes = [];
+      const ids = new Set();
+      
+      for (const note of notes) {
+        if (!ids.has(note.id)) {
+          ids.add(note.id);
+          uniqueNotes.push(note);
+        }
+      }
+      
+      console.log('Rendering unique notes:', uniqueNotes.length);
+        
+      document.getElementById('listedNotesList').innerHTML = uniqueNotes.map(note => {
+        return `
+          <li class="listed-item" onclick="window.location.href='notes_interface.html?id=${note.id}'" style="cursor: pointer;">
+            <img src="${note.image || 'note-placeholder.jpg'}" class="item-image" alt="${note.title || 'Note'}">
+            <div class="item-details">
+              <h3>${note.title || 'Untitled Note'}</h3>
+              <p><small>Subject: ${note.subject || 'General'}</small></p>
+            </div>
+            <div class="item-actions" onclick="event.stopPropagation();">
+              <button class="delete-btn" onclick="deleteNote('${note.id}')">Remove</button>
+            </div>
+          </li>
+        `;
+      }).join('');
+    }
+    
+    // Delete a note
+    async function deleteNote(noteId) {
+        if (!confirm('Are you sure you want to delete this note?')) return;
+        try {
+            // Make sure Supabase client is initialized
+            if (!window.supabaseClient) {
+                if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+                    window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+                    console.log('Supabase client initialized in deleteNote');
+                } else {
+                    throw new Error('Supabase client not available');
+                }
+            }
+            
+            console.log('Deleting note with ID:', noteId);
+            const { error } = await window.supabaseClient
+                .from('notes')
+                .delete()
+                .eq('id', noteId);
+                
+            if (error) {
+                console.error('Error deleting note:', error);
+                throw new Error(error.message);
+            }
+            
+            console.log('Note deleted successfully');
+            await loadNotes();
+            alert('Note deleted successfully!');
+        } catch (error) {
+            console.error('Delete error:', error);
+            alert('Failed to delete note: ' + error.message);
+        }
+    }
+    
+    // Load rooms from the database
+    async function loadRooms() {
+      try {
+        document.getElementById('listedRoomsList').innerHTML = '<li>Loading your room listings...</li>';
+        
+        // Make sure Supabase client is initialized
+        if (!window.supabaseClient) {
+          if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+            window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+            console.log('Supabase client initialized in loadRooms');
+          } else {
+            throw new Error('Supabase client not available');
+          }
+        }
+        
+        console.log('Fetching all rooms from database...');
+        
+        // Fetch all rooms
+        const { data: allRooms, error: fetchError } = await window.supabaseClient
+          .from('rooms')
+          .select('*');
+          
+        if (fetchError) {
+          console.error('Error fetching rooms:', fetchError);
+          throw new Error(fetchError.message);
+        }
+        
+        console.log('Total rooms in database:', allRooms?.length || 0);
+        
+        if (allRooms && allRooms.length > 0) {
+          renderRooms(allRooms);
+        } else {
+          document.getElementById('listedRoomsList').innerHTML = '<li>No room listings found in the database.</li>';
+        }
+      } catch (error) {
+        console.error('Error loading rooms:', error);
+        document.getElementById('listedRoomsList').innerHTML = `<li>Failed to load your room listings: ${error.message}</li>`;
+      }
+    }
+    
+    // Helper function to render rooms
+    function renderRooms(rooms) {
+      if (!rooms || rooms.length === 0) {
+        document.getElementById('listedRoomsList').innerHTML = '<li>No room listings found.</li>';
+        return;
+      }
+      
+      // Remove duplicates based on id
+      const uniqueRooms = [];
+      const ids = new Set();
+      
+      for (const room of rooms) {
+        if (!ids.has(room.id)) {
+          ids.add(room.id);
+          uniqueRooms.push(room);
+        }
+      }
+      
+      console.log('Rendering unique rooms:', uniqueRooms.length);
+        
+      document.getElementById('listedRoomsList').innerHTML = uniqueRooms.map(room => {
+        return `
+          <li class="listed-item" onclick="window.location.href='room-details.html?id=${room.id}'" style="cursor: pointer;">
+            <img src="${room.images?.[0] || room.image || 'room-placeholder.jpg'}" class="item-image" alt="${room.title || 'Room'}">
+            <div class="item-details">
+              <h3>${room.title || 'Room for Rent'}</h3>
+              <p class="price">₹${room.rent || room.price || '0'}/month</p>
+            </div>
+            <div class="item-actions" onclick="event.stopPropagation();">
+              <button class="delete-btn" onclick="deleteRoom('${room.id}')">Remove</button>
+            </div>
+          </li>
+        `;
+      }).join('');
+    }
+    
+    // Delete a room listing
+    async function deleteRoom(roomId) {
+        if (!confirm('Are you sure you want to delete this room listing?')) return;
+        try {
+            // Make sure Supabase client is initialized
+            if (!window.supabaseClient) {
+                if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+                    window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+                    console.log('Supabase client initialized in deleteRoom');
+                } else {
+                    throw new Error('Supabase client not available');
+                }
+            }
+            
+            console.log('Deleting room with ID:', roomId);
+            const { error } = await window.supabaseClient
+                .from('rooms')
+                .delete()
+                .eq('id', roomId);
+                
+            if (error) {
+                console.error('Error deleting room:', error);
+                throw new Error(error.message);
+            }
+            
+            console.log('Room listing deleted successfully');
+            await loadRooms();
+            alert('Room listing deleted successfully!');
+        } catch (error) {
+            console.error('Delete error:', error);
+            alert('Failed to delete room listing: ' + error.message);
         }
     }
 
@@ -776,6 +1248,11 @@ button, select {
 }
 // Sync login state for sell.html if redirected
     document.addEventListener('DOMContentLoaded', async function() {
+      // Load all types of listings
+      if (typeof loadListedItems === 'function') loadListedItems();
+      if (typeof loadSoldItems === 'function') loadSoldItems();
+      if (typeof loadNotes === 'function') loadNotes();
+      if (typeof loadRooms === 'function') loadRooms();
       const urlParams = new URLSearchParams(window.location.search);
       const fromSell = urlParams.get('from') === 'sell';
       let userData = null;
@@ -786,7 +1263,7 @@ button, select {
       if ((!userData || !userData.id) && window.supabaseClient) {
         const { data } = await window.supabaseClient.auth.getSession();
         session = data.session;
-        if (session && session.user) { 
+        if (session && session.user) {  
           userData = { id: session.user.id, email: session.user.email, ...session.user.user_metadata };
           localStorage.setItem('currentUser', JSON.stringify(userData));
         }

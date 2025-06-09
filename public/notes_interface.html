@@ -699,7 +699,7 @@
     <header>
         <div class="navbar">
             <div class="navlogo">
-                <img src="Logo1.png" alt="StudXchange">
+                <a href="index.html"><img src="Logo1.png" alt="StudXchange"></a>
             </div>
             <div class="search-container">
                 <form class="searchbar" action="search-results.html" method="GET">
@@ -721,8 +721,8 @@
             </button>
             <span id="locationStatus" class="location-status"></span>
             <div class="button-container">
-                <a class="nav-button wishlist-button me-2" id="wishlistBtn" tabindex="0"><i class="far fa-heart"></i></a>
-                <a class="nav-button sell-button" id="sellBtn" tabindex="0">Sell/Donate</a>
+                <a href="wishlist.html" class="nav-button wishlist-button me-2" id="wishlistBtn" tabindex="0"><i class="far fa-heart"></i></a>
+                <a href="sell.html" class="nav-button sell-button" id="sellBtn" tabindex="0">Sell/Donate</a>
                 <div id="authButtonContainer"></div>
                 <script>
                 document.addEventListener('DOMContentLoaded', async function() {
@@ -746,9 +746,9 @@
                     if (profile) {
                       localStorage.setItem('currentUser', JSON.stringify(profile));
                     }
-                    authButtonContainer.innerHTML = `<a class=\"nav-button profile-button\" id=\"profileBtn\" tabindex=\"0\">Profile</a>`;
+                    authButtonContainer.innerHTML = `<a href=\"PROFILE_FINAL.html\" class=\"nav-button profile-button\" id=\"profileBtn\" tabindex=\"0\">Profile</a>`;
                   } else {
-                    authButtonContainer.innerHTML = `<a class=\"nav-button signup-button\" id=\"loginBtn\" tabindex=\"0\">Login</a>`;
+                    authButtonContainer.innerHTML = `<a href=\"login.html\" class=\"nav-button signup-button\" id=\"loginBtn\" tabindex=\"0\">Login</a>`;
                   }
                 });
                 </script>
@@ -772,6 +772,23 @@
             if (!url || !key) throw new Error('Supabase credentials missing');
             return window.supabase ? window.supabase.createClient(url, key) : window.supabaseClient;
         }
+        document.addEventListener('DOMContentLoaded', function() {
+            // Make sure navbar buttons have proper links
+            document.querySelectorAll('.nav-button').forEach(button => {
+                if (button.id === 'wishlistBtn' && !button.getAttribute('href')) {
+                    button.setAttribute('href', 'wishlist.html');
+                }
+                if (button.id === 'sellBtn' && !button.getAttribute('href')) {
+                    button.setAttribute('href', 'sell.html');
+                }
+                if (button.id === 'profileBtn' && !button.getAttribute('href')) {
+                    button.setAttribute('href', 'PROFILE_FINAL.html');
+                }
+                if (button.id === 'loginBtn' && !button.getAttribute('href')) {
+                    button.setAttribute('href', 'login.html');
+                }
+            });
+        });
         // Helper: Get query param
         function getQueryParam(name) {
             const urlParams = new URLSearchParams(window.location.search);
@@ -842,8 +859,10 @@
             }
         }
         // Add to Wishlist function
-        function addToWishlist() {
-            alert('Added to wishlist!'); // Replace with real logic if needed
+        function addToWishlist(note) {
+            let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+            wishlist.push(note);
+            localStorage.setItem('wishlist', JSON.stringify(wishlist));
         }
         // Fetch similar notes (same subject, excluding current)
         async function fetchSimilarNotes(notes) {
@@ -873,63 +892,6 @@
                     <a href="notes_interface.html?id=${sn._id || sn.id}" class="similar-notes-link">View Details</a>
                 </div>
             `).join('');
-        }
-        renderNotes = async function() {
-            const id = getQueryParam('id');
-            if (!id) {
-                document.getElementById('notesSection').innerHTML = '<p>Notes not found.</p>';
-                return;
-            }
-            const notes = await fetchNotesDetails(id);
-            if (!notes) {
-                document.getElementById('notesSection').innerHTML = '<p>Notes not found.</p>';
-                return;
-            }
-            document.title = notes.title + ' | StudXchange';
-            document.getElementById('notesSection').innerHTML = `
-                <div class="notes-left">
-                    <div class="notes-images">
-                        <img src="${notes.images?.[0] || notes.image || 'placeholder.jpg'}" alt="Notes Image" />
-                        <div class="notes-secondary-imgs">
-                            ${(notes.images || []).slice(1, 4).map(img => `<img src="${img}" alt="Notes Image" onclick="document.querySelector('.notes-images img').src='${img}'">`).join('')}
-                        </div>
-                    </div>
-                </div>
-                <div class="notes-right">
-                    <div class="notes-title">${notes.title}</div>
-                    <div class="notes-price">₹${notes.price}</div>
-                    <div class="notes-description">${notes.description || ''}</div>
-                    <ul class="notes-details-list">
-                        <li><strong>Subject:</strong> ${notes.subject || 'N/A'}</li>
-                        <li><strong>Course:</strong> ${notes.course || 'N/A'}</li>
-                        <li><strong>Posted:</strong> ${notes.createdAt ? new Date(notes.createdAt).toLocaleDateString() : 'N/A'}</li>
-                        <li><strong>Seller:</strong> ${notes.sellerName || 'N/A'}</li>
-                    </ul>
-                    <div class="action-buttons">
-                        <button class="btn btn-success" onclick="downloadPDF()">Buy Now</button>
-                        <button class="btn btn-outline-secondary" onclick="addToWishlist()">Add to Wishlist</button>
-                    </div>
-                </div>
-            `;
-            window.currentNotesPDF = notes.pdfUrl || notes.pdf_url || notes.pdf || '';
-            renderSimilarNotes(notes);
-        }
-        // Download PDF function
-        function downloadPDF() {
-            if(window.currentNotesPDF) {
-                const link = document.createElement('a');
-                link.href = window.currentNotesPDF;
-                link.download = '';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            } else {
-                alert('PDF not available.');
-            }
-        }
-        // Add to Wishlist function
-        function addToWishlist() {
-            alert('Added to wishlist!'); // Replace with real logic if needed
         }
         renderNotes();
     </script>

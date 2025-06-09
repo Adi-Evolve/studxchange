@@ -6,45 +6,37 @@
     <title>Room Details | StudXchange</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="js/locationUtils.js"></script>
-    <!-- Leaflet.js for map rendering -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         body { background-color: #f4f6f9; color: #333; }
-        .room-main-section { display: flex; flex-wrap: wrap; background: #fff; border-radius: 18px; box-shadow: 0 4px 16px rgba(44, 62, 80, 0.07); margin: 40px auto; max-width: 1100px; padding: 32px 24px; gap: 32px; }
-        .room-left { flex: 1 1 340px; min-width: 300px; max-width: 420px; }
-        .room-images img { width: 100%; border-radius: 10px; margin-bottom: 10px; }
-        .room-secondary-imgs { display: flex; gap: 8px; margin-top: 8px; }
-        .room-secondary-imgs img { width: 60px; height: 48px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid #eee; }
-        .room-right { flex: 2 1 400px; min-width: 320px; }
-        .room-title { font-size: 2rem; font-weight: 600; margin-bottom: 8px; }
-        .room-price { font-size: 1.4rem; color: #2a3d56; margin-bottom: 8px; }
-        .room-amenities { margin: 14px 0; }
-        .room-amenities span { display: inline-block; background: #e9f5ff; color: #186fa7; border-radius: 16px; padding: 6px 14px; margin: 4px 8px 4px 0; font-size: 0.97rem; }
-        .room-description { margin: 18px 0; font-size: 1.05rem; }
-        .room-details-list { margin: 18px 0; }
-        .room-details-list li { background: #f5f7fa; border-radius: 10px; padding: 8px 16px; margin-bottom: 8px; }
+        .product-main-section { display: flex; flex-wrap: wrap; background: #fff; border-radius: 18px; box-shadow: 0 4px 16px rgba(44, 62, 80, 0.07); margin: 40px auto; max-width: 1100px; padding: 32px 24px; gap: 32px; }
+        .product-left { flex: 1 1 340px; min-width: 300px; max-width: 420px; }
+        .product-images img { width: 100%; border-radius: 10px; margin-bottom: 10px; }
+        .product-secondary-imgs { display: flex; gap: 8px; margin-top: 8px; }
+        .product-secondary-imgs img { width: 60px; height: 48px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid #eee; }
+        .product-right { flex: 2 1 400px; min-width: 320px; }
+        .product-title { font-size: 2rem; font-weight: 600; margin-bottom: 8px; }
+        .product-price { font-size: 1.4rem; color: #2a3d56; margin-bottom: 8px; }
+        .product-description { margin: 18px 0; font-size: 1.05rem; }
+        .product-details-list { margin: 18px 0; }
+        .product-details-list li { background: #f5f7fa; border-radius: 10px; padding: 8px 16px; margin-bottom: 8px; }
         .action-buttons { margin-top: 24px; display: flex; gap: 14px; }
         .btn-primary { background: #2a3d56; border: none; }
         .btn-primary:hover { background: #1a2336; }
-        .back-link { margin: 24px 0 0 24px; display: inline-block; color: #2a3d56; text-decoration: none; font-weight: 500; }
-        .back-link:hover { text-decoration: underline; }
         @media (max-width: 900px) {
-            .room-main-section { flex-direction: column; padding: 20px 10px; }
-            .room-left, .room-right { min-width: 0; max-width: 100%; }
+            .product-main-section { flex-direction: column; padding: 20px 10px; }
+            .product-left, .product-right { min-width: 0; max-width: 100%; }
         }
-        .similar-rooms-section {
+        .similar-products-section {
             margin: 0 0 32px 0;
         }
-        .similar-rooms-scroll {
+        .similar-products-scroll {
             display: flex;
             overflow-x: auto;
             gap: 18px;
             padding: 12px 24px 18px 24px;
             scrollbar-width: thin;
         }
-        .similar-room-card {
+        .similar-product-card {
             flex: 0 0 210px;
             background: #fff;
             border-radius: 12px;
@@ -56,18 +48,18 @@
             text-align: center;
             transition: box-shadow 0.2s, transform 0.2s;
         }
-        .similar-room-card:hover {
+        .similar-product-card:hover {
             box-shadow: 0 6px 18px rgba(44,62,80,0.18);
             transform: translateY(-4px) scale(1.03);
         }
-        .similar-room-card img {
+        .similar-product-card img {
             width: 120px;
             height: 120px;
             object-fit: cover;
             border-radius: 8px;
             margin-bottom: 10px;
         }
-        .similar-room-title {
+        .similar-product-title {
             font-size: 1.07rem;
             font-weight: 500;
             color: #2a3d56;
@@ -77,19 +69,19 @@
             text-overflow: ellipsis;
             max-width: 180px;
         }
-        .similar-room-price {
+        .similar-product-price {
             color: #1a75ff;
             font-weight: bold;
             margin-bottom: 8px;
         }
-        .similar-room-link {
+        .similar-product-link {
             text-decoration: none;
             color: #2a3d56;
             font-size: 0.97rem;
             font-weight: 600;
         }
     </style>
-    <style>
+     <style>
         /* ===== Original Global Styles ===== */
          /* ===== Original Desktop Styles ===== */
          * {
@@ -727,8 +719,8 @@
             </button>
             <span id="locationStatus" class="location-status"></span>
             <div class="button-container">
-                <a class="nav-button wishlist-button me-2" id="wishlistBtn" tabindex="0"><i class="far fa-heart"></i></a>
-                <a class="nav-button sell-button" id="sellBtn" tabindex="0">Sell/Donate</a>
+                <a href="wishlist.html" class="nav-button wishlist-button me-2" id="wishlistBtn"><i class="far fa-heart"></i></a>
+                <a href="sell.html" class="nav-button sell-button" id="sellBtn">Sell/Donate</a>
                 <div id="authButtonContainer"></div>
                 <script>
                 document.addEventListener('DOMContentLoaded', async function() {
@@ -752,565 +744,88 @@
                     if (profile) {
                       localStorage.setItem('currentUser', JSON.stringify(profile));
                     }
-                    authButtonContainer.innerHTML = `<a class=\"nav-button profile-button\" id=\"profileBtn\" tabindex=\"0\">Profile</a>`;
+                    authButtonContainer.innerHTML = `<a href=\"PROFILE_FINAL.html\" class=\"nav-button profile-button\" id=\"profileBtn\">Profile</a>`;
                   } else {
-                    authButtonContainer.innerHTML = `<a class=\"nav-button signup-button\" id=\"loginBtn\" tabindex=\"0\">Login</a>`;
+                    authButtonContainer.innerHTML = `<a href=\"login.html\" class=\"nav-button signup-button\" id=\"loginBtn\">Login</a>`;
                   }
                 });
                 </script>
             </div>
         </div>
     </header>
-    <!-- <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Home</a> -->
-    <section class="room-main-section" id="roomSection">
-        <!-- Room details will be loaded here -->
-    </section>
-    <section class="similar-rooms-section" id="similarRoomsSection">
-        <h4 style="margin:24px 0 10px 18px;color:#2a3d56;">Similar Rooms</h4>
-        <div class="similar-rooms-scroll" id="similarRooms"></div>
-    </section>
-    <script src="env.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
-    <script>
-        async function fetchRoomDetails(id) {
-            if (!window.supabaseClient && window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
-                window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-            }
-            const supabase = window.supabaseClient;
-            if (!supabase) throw new Error('Supabase client not initialized');
-            const { data: room, error } = await supabase
-                .from('rooms')
-                .select('*')
-                .eq('id', id)
-                .single();
-            if (error || !room) return null;
-            return room;
-        }
-        async function renderRoom() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const id = urlParams.get('id');
-            if (!id) {
-                document.getElementById('roomSection').innerHTML = '<p>Room not found.</p>';
-                return;
-            }
-            const room = await fetchRoomDetails(id);
-            if (!room) {
-                document.getElementById('roomSection').innerHTML = '<p>Room not found.</p>';
-                return;
-            }
-            document.title = room.title + ' | StudXchange';
-            document.getElementById('roomSection').innerHTML = `
-                <div class="room-left">
-                    <div class="room-images">
-                        <img src="${room.images?.[0] || room.image || 'placeholder.jpg'}" alt="Room Image" />
-                        <div class="room-secondary-imgs">
-                            ${(room.images || []).slice(1, 4).map(img => `<img src="${img}" alt="Room Image" onclick="document.querySelector('.room-images img').src='${img}'">`).join('')}
-                        </div>
-                    </div>
-                    <div class="room-reviews-section" style="margin-top:28px; background:#f8fafc; border-radius:12px; box-shadow:0 2px 8px rgba(44,62,80,0.07); padding:18px 14px;">
-                        <h5 style="margin-bottom:12px; color:#2a3d56;">Reviews & Comments</h5>
-                        <div id="reviewsList"></div>
-                        <form id="reviewForm" style="margin-top:16px;">
-                            <div class="mb-2">
-                                <label for="reviewRating" class="form-label">Rating:</label>
-                                <select id="reviewRating" class="form-select" style="width:auto; display:inline-block;">
-                                    <option value="5">5 ★</option>
-                                    <option value="4">4 ★</option>
-                                    <option value="3">3 ★</option>
-                                    <option value="2">2 ★</option>
-                                    <option value="1">1 ★</option>
-                                </select>
-                            </div>
-                            <div class="mb-2">
-                                <textarea id="reviewComment" class="form-control" rows="2" placeholder="Write your review..." required></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-sm">Submit Review</button>
-                        </form>
-                    </div>
-                </div>
-                <div class="room-right">
-                    <div class="room-title">${room.title}</div>
-                    <div class="room-price">₹${room.price}</div>
-                    <div class="room-amenities">
-                        ${(room.amenities||[]).map(a => `<span>${a}</span>`).join('')}
-                    </div>
-                    <div class="room-description">${room.description || ''}</div>
-                    <ul class="room-details-list">
-                        <li><strong>Occupancy:</strong> ${room.occupancy || 'N/A'}</li>
-                        <li><strong>Location:</strong> 
-            <div id="roomMap" style="width:100%;height:220px;margin:8px 0;border-radius:12px;overflow:hidden;"></div>
-<div id="roomMapDebug" style="font-size:0.95em;color:#c00;margin-top:2px;"></div>
-        </li>
-                        <li><strong>Posted:</strong> ${room.createdAt ? new Date(room.createdAt).toLocaleDateString() : 'N/A'}</li>
-                        <li><strong>Owner:</strong> ${room.ownerName || 'N/A'}</li>
-                    </ul>
-                    <div class="action-buttons">
-                        <button class="btn btn-primary" id="contactOwnerBtn">Contact Owner</button>
-                        <button class="btn btn-outline-secondary" id="addToWishlistBtn">Add to Wishlist</button>
-                        <button class="btn btn-outline-info" id="addToCompareBtn">Compare</button>
-                    </div>
-                </div>
-            `;
-            // Attach event listeners to action buttons after rendering
-            const contactBtn = document.getElementById('contactOwnerBtn');
-            const wishlistBtn = document.getElementById('addToWishlistBtn');
-            const compareBtn = document.getElementById('addToCompareBtn');
-            if (contactBtn) contactBtn.onclick = () => contactOwner(room);
-            if (wishlistBtn) wishlistBtn.onclick = () => addToWishlist(room);
-            if (compareBtn) compareBtn.onclick = () => addToCompare(room);
-            renderReviewsSection(room);
-            // --- Always render Leaflet map ---
-            setTimeout(() => {
-                try {
-                    let lat = room.location_lat, lng = room.location_lng, msg = '';
-                    if (!lat || !lng) {
-                        // Default to center of India if missing
-                        lat = 22.5937;
-                        lng = 78.9629;
-                        msg = 'Location coordinates not available. Showing default map.';
-                    }
-                    const map = L.map('roomMap').setView([lat, lng], (room.location_lat && room.location_lng) ? 15 : 5);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    }).addTo(map);
-                    L.marker([lat, lng]).addTo(map);
-                    if (msg) document.getElementById('roomMapDebug').textContent = msg;
-                } catch (err) {
-                    document.getElementById('roomMapDebug').textContent = 'Map failed to load: ' + err;
-                }
-            }, 0); // Delay to ensure #roomMap is in DOM
-        }
-        function getRoomReviews(roomId) {
-            return JSON.parse(localStorage.getItem('reviews_' + roomId)) || [];
-        }
-        function saveRoomReview(roomId, review) {
-            const reviews = getRoomReviews(roomId);
-            reviews.unshift(review);
-            localStorage.setItem('reviews_' + roomId, JSON.stringify(reviews));
-        }
-        function renderReviewsSection(room) {
-            const reviewsList = document.getElementById('reviewsList');
-            const form = document.getElementById('reviewForm');
-            if (!reviewsList || !form) return;
-            const reviews = getRoomReviews(room.id);
-            reviewsList.innerHTML = reviews.length ? reviews.map(r => `
-                <div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #eee;">
-                    <div style="font-size:1.1em;color:#f5b301;">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>
-                    <div style="margin:4px 0;">${r.comment}</div>
-                    <div style="font-size:0.9em;color:#888;">${r.date || ''}</div>
-                </div>
-            `).join('') : '<div style="color:#888;">No reviews yet. Be the first to review!</div>';
-            form.onsubmit = function(e) {
-                e.preventDefault();
-                const rating = parseInt(document.getElementById('reviewRating').value);
-                const comment = document.getElementById('reviewComment').value.trim();
-                if (!comment) return;
-                saveRoomReview(room.id, { rating, comment, date: new Date().toLocaleString() });
-                form.reset();
-                renderReviewsSection(room);
-            }
-        }
-        function contactOwner(room) {
-            const phone = room.ownerPhone || '';
-            if (!phone) return alert('No phone number available.');
-            const msg = encodeURIComponent(`Hi, I'm interested in your room: ${room.title}`);
-            window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
-        }
-        function addToWishlist(room) {
-            let wishlist = JSON.parse(localStorage.getItem('wishlistRooms')||'[]');
-            if (!wishlist.find(r=>r.id===room.id)) wishlist.push(room);
-            localStorage.setItem('wishlistRooms', JSON.stringify(wishlist));
-            alert('Room added to wishlist!');
-        }
-        function addToCompare(room) {
-            let compare = JSON.parse(localStorage.getItem('compareRooms')||'[]');
-            if (!compare.find(r=>r.id===room.id)) compare.push(room);
-            localStorage.setItem('compareRooms', JSON.stringify(compare));
-            alert('Room added to compare!');
-        }
-        window.onload = renderRoom;
-    </script>
-</body>
-</html>
-    </section>
-    <!-- <section class="similar-rooms-section" id="similarRoomsSection">
-        <h4 style="margin:24px 0 10px 18px;color:#2a3d56;">Similar Rooms</h4>
-        <div class="similar-rooms-scroll" id="similarRooms"></div>
-    </section>  -->
-    <script src="env.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
-    <script>
-        // Helper: Get query param
-        function getQueryParam(name) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(name);
-        }
-
-        // Fetch room details
-        async function fetchRoomDetails(id) {
-            if (!window.supabaseClient && window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
-                window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-            }
-            const supabase = window.supabaseClient;
-            if (!supabase) throw new Error('Supabase client not initialized');
-            const { data: room, error } = await supabase
-                .from('rooms')
-                .select('*')
-                .eq('id', id)
-                .single();
-            if (error || !room) return null;
-            return room;
-        }
-
-        // Render room details
-        async function renderRoom() {
-            const id = getQueryParam('id');
-            if (!id) {
-                document.getElementById('roomSection').innerHTML = '<p>Room not found.</p>';
-                return;
-            }
-            const room = await fetchRoomDetails(id);
-            if (!room) {
-                document.getElementById('roomSection').innerHTML = '<p>Room not found.</p>';
-                return;
-            }
-            document.title = room.title + ' | StudXchange';
-            document.getElementById('roomSection').innerHTML = `
-                <div class="room-left">
-                    <div class="room-images">
-                        <img src="${room.images?.[0] || room.image || 'placeholder.jpg'}" alt="Room Image" />
-                        <div class="room-secondary-imgs">
-                            ${(room.images || []).slice(1, 4).map(img => `<img src="${img}" alt="Room Image" onclick="document.querySelector('.room-images img').src='${img}'">`).join('')}
-                        </div>
-                    <!-- Review & Comment Section -->
-                    <div class="room-reviews-section" style="margin-top:28px; background:#f8fafc; border-radius:12px; box-shadow:0 2px 8px rgba(44,62,80,0.07); padding:18px 14px;">
-                        <h5 style="margin-bottom:12px; color:#2a3d56;">Reviews & Comments</h5>
-                        <div id="reviewsList"></div>
-                        <form id="reviewForm" style="margin-top:16px;">
-                            <div class="mb-2">
-                                <label for="reviewRating" class="form-label">Rating:</label>
-                                <select id="reviewRating" class="form-select" style="width:auto; display:inline-block;">
-                                    <option value="5">5 ★</option>
-                                    <option value="4">4 ★</option>
-                                    <option value="3">3 ★</option>
-                                    <option value="2">2 ★</option>
-                                    <option value="1">1 ★</option>
-                                </select>
-                            </div>
-                            <div class="mb-2">
-                                <textarea id="reviewComment" class="form-control" rows="2" placeholder="Write your review..." required></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-sm">Submit Review</button>
-                        </form>
-                    </div>
-                    </div>
-                </div>
-                <div class="room-right">
-                    <div class="room-title">${room.title}</div>
-                    <div class="room-price">₹${room.price}</div>
-                    <div class="room-amenities">
-  ${['AC','WiFi','Washing Machine','Mess','Refrigerator','Parking','Hot Water','Furnished'].map(a =>
-    `<span style="${(room.amenities||[]).includes(a)?'background:#e9f5ff;color:#186fa7':'background:#eee;color:#aaa'}">${a}</span>`
-  ).join('')}
+    <main>
+       
+        <section id="roomMainSection" class="product-main-section">
+    <!-- Room details will be rendered here by JS -->
+</section>
+<!-- Map Section -->
+<!-- Map Banner Section -->
+<div id="roomMapBanner" style="max-width:1100px;margin:32px auto 24px auto;">
+  <div id="roomMapContainer" style="width:100%;aspect-ratio:7/3;min-height:70px;">
+    <div id="roomMap" style="width:100%;height:100%;border-radius:12px;"></div>
+  </div>
 </div>
-                    <div class="room-description">${room.description || ''}</div>
-                    <ul class="room-details-list">
-    <li><strong>Occupancy:</strong> ${room.occupancy || 'N/A'}</li>
-                        <li><strong>Location:</strong>
-  <div style="height: 200px; border-radius: 10px; margin: 8px 0; overflow: hidden;">
-    ${room.coordinates && room.coordinates.lat && room.coordinates.lon ?
-      `<img src="https://staticmap.openstreetmap.de/staticmap.php?center=${room.coordinates.lat},${room.coordinates.lon}&zoom=15&size=400x200&markers=${room.coordinates.lat},${room.coordinates.lon},red" alt="Map" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" />`
-      : '<div style="color:#888;padding:32px 0;text-align:center;">Location not available</div>'}
-  </div>
-</li>
-                        <li><strong>Posted:</strong> ${room.createdAt ? new Date(room.createdAt).toLocaleDateString() : 'N/A'}</li>
-                        <li><strong>Owner:</strong> ${room.ownerName || 'N/A'}</li>
-                    </ul>
-                    <div class="action-buttons">
-                        <button class="btn btn-primary" id="contactOwnerBtn">Contact Owner</button>
-                        <button class="btn btn-outline-secondary" id="addToWishlistBtn">Add to Wishlist</button>
-<button class="btn btn-outline-info" id="addToCompareBtn">Compare</button>
-                    </div>
-                   
-    
-            `;
-            // Attach event listeners to action buttons after rendering
-            const contactBtn = document.getElementById('contactOwnerBtn');
-            const wishlistBtn = document.getElementById('addToWishlistBtn');
-            const compareBtn = document.getElementById('addToCompareBtn');
-            if (contactBtn) contactBtn.onclick = () => contactOwner(room);
-            if (wishlistBtn) wishlistBtn.onclick = () => addToWishlist(room);
-            if (compareBtn) compareBtn.onclick = () => addToCompare(room);
-            // Initialize reviews section
-            renderReviewsSection(room);
-        }
-        // Fetch similar rooms (same location or type, excluding current)
-        async function fetchSimilarRooms(room) {
-            if (!window.supabaseClient && window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
-                window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-            }
-            const supabase = window.supabaseClient;
-            if (!supabase) throw new Error('Supabase client not initialized');
-            const { data, error } = await supabase
-                .from('rooms')
-                .select('*')
-                .eq('roomType', room.roomType)
-                .neq('id', room.id)
-                .limit(8);
-            if (error || !data) return [];
-            return data;
-        }
-            // Render similar rooms horizontally
-            async function renderSimilarRooms(room) {
-            const similar = await fetchSimilarRooms(room);
-            const container = document.getElementById('similarRooms');
-            if (!container) return;
-            if (!similar.length) {
-                container.innerHTML = '<div style="color:#888;padding:24px;">No similar rooms found.</div>';
-                return;
-            }
-            container.innerHTML = similar.map(sr => `
-                <div class="similar-room-card">
-                    <img src="${sr.images?.[0] || sr.image || 'placeholder.jpg'}" alt="Similar Room" />
-                    <div class="similar-room-title">${sr.title}</div>
-                    <div class="similar-room-price">₹${sr.price}</div>
-                    <a href="room_interface.html?id=${sr._id || sr.id}" class="similar-room-link">View Details</a>
-                </div>
-            `).join('');
-        }
-        renderRoom = async function() {
-            const id = getQueryParam('id');
-            if (!id) {
-                document.getElementById('roomSection').innerHTML = '<p>Room not found.</p>';
-                return;
-            }
-            const room = await fetchRoomDetails(id);
-            if (!room) {
-                document.getElementById('roomSection').innerHTML = '<p>Room not found.</p>';
-                return;
-            }
-            document.title = room.title + ' | StudXchange';
-            document.getElementById('roomSection').innerHTML = `
-                <div class="room-left">
-      : '<div style="color:#888;padding:32px 0;text-align:center;">Location not available</div>'}
-  </div>
-</li>
-                        <li><strong>Posted:</strong> ${room.createdAt ? new Date(room.createdAt).toLocaleDateString() : 'N/A'}</li>
-                        <li><strong>Owner:</strong> ${room.ownerName || 'N/A'}</li>
-                    </ul>
-                    <div class="action-buttons">
-                        <button class="btn btn-primary" id="contactOwnerBtn">Contact Owner</button>
-                        <button class="btn btn-outline-secondary" id="addToWishlistBtn">Add to Wishlist</button>
-<button class="btn btn-outline-info" id="addToCompareBtn">Compare</button>
-                    </div>
-                    <!-- Review & Comment Section -->
-
-    
-
-                </div>
-            `;
-            renderSimilarRooms(room);
-        }
-        renderRoom();
-    // --- Add Leaflet.js for OpenStreetMap ---
-
-
-// --- Wishlist & Compare Logic ---
-function addToWishlist(room) {
-    let wishlist = JSON.parse(localStorage.getItem('wishlistRooms')||'[]');
-    if (!wishlist.find(r => (r._id||r.id) === (room._id||room.id))) {
-        wishlist.push(room);
-        localStorage.setItem('wishlistRooms', JSON.stringify(wishlist));
-        alert('Added to Wishlist!');
+<!-- Leaflet CSS/JS for map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var mapDiv = document.getElementById('roomMap');
+    if (mapDiv && typeof L !== 'undefined') {
+      var lat = 19.076, lon = 72.8777;
+      var map = L.map('roomMap').setView([lat, lon], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+      L.marker([lat, lon]).addTo(map);
+      setTimeout(function() { map.invalidateSize(); }, 400);
     }
-}
-function addToCompare(room) {
-    let compare = JSON.parse(localStorage.getItem('compareRooms')||'[]');
-    if (!compare.find(r => (r._id||r.id) === (room._id||room.id))) {
-        compare.push(room);
-        localStorage.setItem('compareRooms', JSON.stringify(compare));
-    }
-    showCompareDialog();
-}
-function showCompareDialog() {
-    let compare = JSON.parse(localStorage.getItem('compareRooms')||'[]');
-    if (!compare.length) return;
-    let dialog = document.getElementById('compareDialog');
-    if (!dialog) {
-        dialog = document.createElement('div');
-        dialog.id = 'compareDialog';
-        dialog.style = 'position:fixed;top:10%;left:50%;transform:translateX(-50%);background:#fff;z-index:9999;box-shadow:0 6px 32px rgba(44,62,80,0.18);border-radius:18px;max-width:90vw;overflow:auto;max-height:80vh;padding:32px 18px;';
-        dialog.innerHTML = `<h4 style='margin-bottom:18px;'>Compare Rooms <button onclick="closeCompareDialog()" style="float:right;font-size:1.3rem;border:none;background:none;">&times;</button></h4><div id='compareTable'></div>`;
-        document.body.appendChild(dialog);
-    } else {
-        dialog.style.display = '';
-    }
-    // Build table
-    let fields = ['title','price','location','occupancy','type','amenities'];
-    let fieldLabels = {title:'Title',price:'Price',location:'Location',occupancy:'Occupancy',type:'Type',amenities:'Amenities'};
-    let html = `<div style='overflow-x:auto;'><table class='table table-bordered table-striped'><thead><tr><th>Field</th>${compare.map((r,i)=>`<th>Room ${i+1}</th>`).join('')}</tr></thead><tbody>`;
-    for (let f of fields) {
-        html += `<tr><td><b>${fieldLabels[f]}</b></td>${compare.map(r=>{
-            if(f==='amenities') return `<td>${(r.amenities||[]).join(', ')}</td>`;
-            return `<td>${r[f]||''}</td>`;
-        }).join('')}</tr>`;
-    }
-    html += `</tbody></table></div>`;
-    html += `<button class='btn btn-danger' style='margin-top:10px;' onclick='clearCompareRooms()'>Clear Compare</button>`;
-    document.getElementById('compareTable').innerHTML = html;
-}
-function closeCompareDialog() {
-    let dialog = document.getElementById('compareDialog');
-    if (dialog) dialog.style.display = 'none';
-}
-function clearCompareRooms() {
-    localStorage.removeItem('compareRooms');
-    closeCompareDialog();
-}
-
-// --- Map Rendering ---
-
-// Wait for Leaflet to load before rendering map
-
-// Patch renderRoom to call map after DOM update
-if (!window._patchedRenderRoom) {
-    const origRenderRoom = renderRoom;
-    renderRoom = async function() {
-        await origRenderRoom.apply(this, arguments);
-        const id = getQueryParam('id');
-        const room = await fetchRoomDetails(id);
-        if (typeof waitForLeafletAndRender === 'function') {
-    waitForLeafletAndRender(room);
-}
-    }
-    window._patchedRenderRoom = true;
-    renderRoom();
-}
-// --- Add Leaflet.js for OpenStreetMap ---
-
-
-// --- Wishlist & Compare Logic ---
-function addToWishlist(room) {
-    let wishlist = JSON.parse(localStorage.getItem('wishlistRooms')||'[]');
-    if (!wishlist.find(r => (r._id||r.id) === (room._id||room.id))) {
-        wishlist.push(room);
-        localStorage.setItem('wishlistRooms', JSON.stringify(wishlist));
-        alert('Added to Wishlist!');
-    }
-}
-function addToCompare(room) {
-    let compare = JSON.parse(localStorage.getItem('compareRooms')||'[]');
-    if (!compare.find(r => (r._id||r.id) === (room._id||room.id))) {
-        compare.push(room);
-        localStorage.setItem('compareRooms', JSON.stringify(compare));
-    }
-    showCompareDialog();
-}
-function showCompareDialog() {
-    let compare = JSON.parse(localStorage.getItem('compareRooms')||'[]');
-    if (!compare.length) return;
-    let dialog = document.getElementById('compareDialog');
-    if (!dialog) {
-        dialog = document.createElement('div');
-        dialog.id = 'compareDialog';
-        dialog.style = 'position:fixed;top:10%;left:50%;transform:translateX(-50%);background:#fff;z-index:9999;box-shadow:0 6px 32px rgba(44,62,80,0.18);border-radius:18px;max-width:90vw;overflow:auto;max-height:80vh;padding:32px 18px;';
-        dialog.innerHTML = `<h4 style='margin-bottom:18px;'>Compare Rooms <button onclick="closeCompareDialog()" style="float:right;font-size:1.3rem;border:none;background:none;">&times;</button></h4><div id='compareTable'></div>`;
-        document.body.appendChild(dialog);
-    } else {
-        dialog.style.display = '';
-    }
-    // Build table
-    let fields = ['title','price','location','occupancy','type','amenities'];
-    let fieldLabels = {title:'Title',price:'Price',location:'Location',occupancy:'Occupancy',type:'Type',amenities:'Amenities'};
-    let html = `<div style='overflow-x:auto;'><table class='table table-bordered table-striped'><thead><tr><th>Field</th>${compare.map((r,i)=>`<th>Room ${i+1}</th>`).join('')}</tr></thead><tbody>`;
-    for (let f of fields) {
-        html += `<tr><td><b>${fieldLabels[f]}</b></td>${compare.map(r=>{
-            if(f==='amenities') return `<td>${(r.amenities||[]).join(', ')}</td>`;
-            return `<td>${r[f]||''}</td>`;
-        }).join('')}</tr>`;
-    }
-    html += `</tbody></table></div>`;
-    html += `<button class='btn btn-danger' style='margin-top:10px;' onclick='clearCompareRooms()'>Clear Compare</button>`;
-    document.getElementById('compareTable').innerHTML = html;
-}
-function closeCompareDialog() {
-    let dialog = document.getElementById('compareDialog');
-    if (dialog) dialog.style.display = 'none';
-}
-function clearCompareRooms() {
-    localStorage.removeItem('compareRooms');
-    closeCompareDialog();
-}
-
-// --- Map Rendering ---
-
-// Wait for Leaflet to load before rendering map
-
-// Patch renderRoom to call map after DOM update
-if (!window._patchedRenderRoom) {
-    const origRenderRoom = renderRoom;
-    renderRoom = async function() {
-        await origRenderRoom.apply(this, arguments);
-        const id = getQueryParam('id');
-        const room = await fetchRoomDetails(id);
-        if (typeof waitForLeafletAndRender === 'function') {
-    waitForLeafletAndRender(room);
-}
-    }
-    window._patchedRenderRoom = true;
-    renderRoom();
-}
-// --- Review & Comment Logic ---
-function getRoomReviews(roomId) {
-    return JSON.parse(localStorage.getItem('reviews_' + roomId)) || [];
-}
-function saveRoomReview(roomId, review) {
-    const reviews = getRoomReviews(roomId);
-    reviews.unshift(review);
-    localStorage.setItem('reviews_' + roomId, JSON.stringify(reviews));
-}
-function renderReviewsSection(room) {
-    const reviewsList = document.getElementById('reviewsList');
-    const form = document.getElementById('reviewForm');
-    if (!reviewsList || !form) return;
-    const reviews = getRoomReviews(room._id || room.id);
-    reviewsList.innerHTML = reviews.length ? reviews.map(r => `
-        <div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #eee;">
-            <div style="font-size:1.1em;color:#f5b301;">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>
-            <div style="margin:4px 0;">${r.comment}</div>
-            <div style="font-size:0.9em;color:#888;">${r.date || ''}</div>
-        </div>
-    `).join('') : '<div style="color:#888;">No reviews yet. Be the first to review!</div>';
-    form.onsubmit = function(e) {
-        e.preventDefault();
-        const rating = parseInt(document.getElementById('reviewRating').value);
-        const comment = document.getElementById('reviewComment').value.trim();
-        if (!comment) return;
-        saveRoomReview(room._id || room.id, { rating, comment, date: new Date().toLocaleString() });
-        form.reset();
-        
-    }
-}
-function contactOwner(room) {
-    const phone = room.ownerPhone || room.sellerPhone || '';
-    if (!phone) {
-        alert('Owner phone number not available.');
-        return;
-    }
-    const msg = encodeURIComponent(`Hi, I'm interested in your room: ${room.title}`);
-    window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
-}
-// Only one review section needed; patch removed.
-    const origRenderRoom = renderRoom;
-    renderRoom = async function() {
-        await origRenderRoom.apply(this, arguments);
-        const id = getQueryParam('id');
-        const room = await fetchRoomDetails(id);
-        
-    }
-    
+  });
 </script>
-<div id="compareDialog" style="display:none"></div>
+<!-- Room Details and Reviews Section -->
+<div id="roomMapDetailsWrapper" style="display:flex;flex-wrap:wrap;gap:24px;max-width:1100px;margin:0 auto 32px auto;align-items:flex-start;">
+  <section id="reviewsSection" style="flex:2 1 420px;min-width:250px;background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(44,62,80,0.09);padding:24px 18px 12px 18px;">
+    <h3>Reviews & Comments</h3>
+    <div id="reviewsList"></div>
+    <form id="reviewForm" style="margin-top:18px;">
+      <div id="reviewStars" style="margin-bottom:8px;">
+        <span class="star" data-value="1">&#9733;</span>
+        <span class="star" data-value="2">&#9733;</span>
+        <span class="star" data-value="3">&#9733;</span>
+        <span class="star" data-value="4">&#9733;</span>
+        <span class="star" data-value="5">&#9733;</span>
+        <span id="starValueLabel" style="margin-left:8px;color:#888;font-size:0.95em;"></span>
+      </div>
+      <textarea id="reviewText" class="form-control" placeholder="Write a review or comment..." rows="2" maxlength="300" required></textarea>
+      <button type="submit" class="btn btn-primary mt-2">Submit</button>
+    </form>
+  </section>
+</div>
+
+<!-- Compare Modal Section -->
+<div id="compareModal" class="modal" tabindex="-1" style="display:none;position:fixed;z-index:9999;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.35);align-items:center;justify-content:center;">
+  <div style="background:#fff;max-width:700px;width:96vw;max-height:90vh;overflow-y:auto;border-radius:12px;padding:28px 18px 18px 18px;position:relative;">
+    <button id="closeCompareModal" style="position:absolute;top:10px;right:10px;font-size:1.6rem;background:none;border:none;color:#333;cursor:pointer;"><i class="fa fa-times"></i></button>
+    <h3 style="margin-bottom:18px;">Compare Rooms</h3>
+    <div id="compareSearchSection">
+      <input id="compareRoomSearch" type="text" placeholder="Search rooms by name, college, or type..." style="width:100%;margin-bottom:10px;padding:8px 12px;border-radius:6px;border:1px solid #ccc;">
+      <div id="compareRoomList" style="max-height:180px;overflow-y:auto;margin-bottom:12px;"></div>
+      <button id="compareConfirmBtn" class="btn btn-success" style="margin-bottom:14px;display:block;width:100%;"><i class="fa fa-check"></i> Compare Selected</button>
+    </div>
+    <div id="compareTableContainer" style="display:none;"></div>
+  </div>
+</div>
+<section class="similar-products-section">
+            <h2 style="margin: 32px 0 16px 24px;">Similar Rooms</h2>
+            <div id="similarRoomsScroll" class="similar-products-scroll"></div>
+        </section>
+    </main>
+    <!-- SCRIPTS: env, supabase, config, navbar, logic -->
+    <script src="env.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <script src="js/db-config.js"></script>
+    <script src="js/navbar.js"></script>
+    <script src="js/room_interface.js"></script>
 </body>
 </html>
-

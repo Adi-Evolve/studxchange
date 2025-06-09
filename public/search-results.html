@@ -1,637 +1,427 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Search Results - StudXchange</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
-  <script src="env.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
-  <style>
-    /* Global Styles */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    body {
-      background-color: #f4f6f9;
-      color: #333;
-    }
-    header {
-      background-color: #2a3d56;
-      color: white;
-      padding: 20px;
-      text-align: center;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    
-    /* Navbar styles */
-    .navbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: #2a3d56;
-      padding: 15px 30px;
-      /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
-      border: none;
-    }
-    
-    #searchResults {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-around;
-      padding: 20px;
-    }
-    .product {
-      background-color: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      width: 280px;
-      margin: 12px;
-      padding: 15px;
-      text-align: center;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      text-decoration: none;
-      color: inherit;
-    }
-    .product:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 12px 20px rgba(0, 0, 0, 0.2);
-    }
-    .product:hover .product-img {
-      transform: scale(1.05);
-    }
-    .product-img {
-      width: 100%;
-      height: 160px;
-      background-size: cover;
-      background-position: center;
-      border-radius: 12px;
-      margin-bottom: 15px;
-      transition: transform 0.5s ease;
-    }
-    .product h4 {
-      font-size: 1.4rem;
-      color: #2a3d56;
-      margin-bottom: 10px;
-    }
-    .product p {
-      font-size: 1rem;
-      color: #666;
-    }
-    .price {
-      font-size: 1.2rem;
-      font-weight: bold;
-      color: #1a75ff;
-      margin: 10px 0;
-    }
-    .condition {
-      font-size: 0.9rem;
-      color: #666;
-      margin-bottom: 15px;
-    }
-    .buy-now {
-      background-color: #2a3d56;
-      color: white;
-      border: none;
-      padding: 10px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-    .buy-now:hover {
-      background-color: #4d6a88;
-    }
-    footer {
-      background-color: #124559;
-      color: white;
-      padding: 20px;
-      text-align: center;
-      margin-top: 30px;
-    }
-    .product-img {
-      background-repeat: no-repeat;
-      background-position: center;
-      background-color: #f0f0f0;
-      background-size: cover;
-      min-height: 160px;
-      position: relative;
-    }
-    .search-container {
-      max-width: 600px;
-      margin: 20px auto;
-    }
-    .searchbar {
-      display: flex;
-      align-items: center;
-      background: white;
-      border-radius: 30px;
-      padding: 2px;
-      width: 100%;
-    }
-    .searchbar select,
-    .searchbar input,
-    .searchbar button {
-      border: none;
-      padding: 10px;
-    }
-    .searchbar select {
-      background: #2a3d56;
-      color: white;
-      border-radius: 30px 0 0 30px;
-      width: 80px;
-    }
-    .searchbar input {
-      flex: 1;
-    }
-    .searchbar button {
-      background: #2a3d56;
-      color: white;
-      border-radius: 0 30px 30px 0;
-      cursor: pointer;
-    }
-    /* Add to existing styles */
-.location-button {
-    background-color: #28a745 !important;
-    margin-right: 10px;
-}
-
-.location-button:hover {
-    background-color: #218838 !important;
-}
-
-.location-status {
-    color: white;
-    margin-left: 10px;
-    font-size: 0.9rem;
-}
-
-.distance {
-    color: #666;
-    font-size: 0.9rem;
-    margin-top: 8px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.distance i {
-    margin-right: 5px;
-    color: #28a745;
-}
-
-.navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #2a3d56;
-    padding: 15px 30px;
-    /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
-    border: none;
-  }
-  .navlogo img {
-    height: 100px;
-    width: 200px;
-  }
-  .search-container {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    margin: 0 20px;
-  }
-  .searchbar {
-    display: flex;
-    align-items: center;
-    background: white;
-    border-radius: 30px;
-    padding: 2px;
-    width: 100%;
-    max-width: 600px;
-  }
-  .category-select {
-    background: #2a3d56;
-    color: white;
-    border-radius: 30px 0 0 30px;
-    padding: 6px 10px;
-    font-size: 0.85rem;
-    width: 80px;
-    text-align: center;
-  }
-  .searchbar input {
-    flex-grow: 1;
-    padding: 8px 12px;
-    font-size: 0.9rem;
-  }
-  .searchbar button {
-    background: #2a3d56;
-    color: white;
-    border-radius: 0 30px 30px 0;
-    padding: 8px 15px;
-    font-size: 1rem;
-    transition: background 0.3s;
-  }
-  .searchbar button:hover {
-    background: #1a75ff;
-  }
-  .button-container {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-  }
-  .wishlist-button {
-    color: white;
-    font-size: 1.5rem;
-    transition: color 0.3s;
-  }
-  .wishlist-button:hover {
-    color: #ff4757;
-  }
-  .profile-button, .signup-button {
-    color: white;
-    padding: 10px 15px;
-    border-radius: 25px;
-    text-decoration: none;
-    background: transparent;
-    border: 2px solid white;
-    transition: all 0.3s;
-  }
-  .profile-button:hover, .signup-button:hover {
-    background: rgba(255, 255, 255, 0.2);
-  }
-  .wishlist-icon {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    font-size: 1.5rem;
-    cursor: pointer;
-    background: rgba(255, 255, 255, 0.8);
-    padding: 5px;
-    border-radius: 50%;
-    z-index: 10;
-    transition: all 0.3s ease;
-  }
-  
-  .far.fa-heart.wishlist-icon {
-    color: #ccc;
-  }
-  
-  .fas.fa-heart.wishlist-icon {
-    color: #ff4757;
-  }
-  
-  .nav-button {
-    padding: 10px 25px;
-    border-radius: 25px;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    border: 2px solid transparent;
-    font-weight: 500;
-    display: inline-block;
-    color: white;
-  }
-  
-  .nav-button:hover {
-    background-color: #4d6a88;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    cursor: pointer;
-  }
-  
-  .active-location {
-    background-color: #218838;
-    color: white;
-  }
-
-/* Add hover effects to product cards */
-.product {
-  position: relative;
-  overflow: hidden;
-}
-
-.product::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(26, 117, 255, 0.1) 0%, rgba(0, 0, 0, 0) 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: 1;
-  border-radius: 12px;
-}
-
-.product:hover::before {
-  opacity: 1;
-}
-
-/* Room product card styles */
-.room-product {
-  display: flex;
-  width: calc(50% - 24px);
-  height: 200px;
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  margin: 12px;
-  overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
-}
-
-.room-product:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.2);
-}
-
-.room-image-container {
-  width: 40%;
-  position: relative;
-  overflow: hidden;
-}
-
-.room-main-image {
-  width: 100%;
-  height: 70%;
-  object-fit: cover;
-}
-
-.room-thumbnails {
-  display: flex;
-  height: 30%;
-}
-
-.room-thumbnail {
-  flex: 1;
-  object-fit: cover;
-}
-
-.room-details {
-  width: 60%;
-  padding: 15px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.room-title {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #2a3d56;
-  margin-bottom: 5px;
-}
-
-.room-info {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.room-info-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.9rem;
-}
-
-.room-info-item i {
-  color: #28a745;
-}
-
-.room-info-item.negative i {
-  color: #dc3545;
-}
-
-.room-price {
-  font-size: 1.3rem;
-  font-weight: bold;
-  color: #1a75ff;
-  margin-top: auto;
-}
-
-.room-distance {
-  font-size: 0.9rem;
-  color: #666;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.room-distance i {
-  color: #28a745;
-}
-
-@media (max-width: 992px) {
-  .room-product {
-    width: calc(100% - 24px);
-  }
-}
-
-/* Loading animation styles */
-.loading-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  width: 100%;
-  padding: 50px 0;
-}
-
-.loader {
-  border: 5px solid #f3f3f3;
-  border-top: 5px solid #2a3d56;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  animation: spin 1s linear infinite;
-}
-
-.loading-text {
-  margin-top: 20px;
-  font-size: 18px;
-  color: #2a3d56;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudXchange | Search Results</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Load environment variables first -->
+    <script src="js/env.js"></script>
+    <!-- Load Supabase JS library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <!-- Initialize Supabase client -->
+    <script>
+        // Ensure Supabase client is initialized
+        if (!window.supabaseClient && window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+            window.supabaseClient = window.supabase.createClient(
+                window.SUPABASE_URL,
+                window.SUPABASE_ANON_KEY
+            );
+            console.log('Supabase client initialized');
+        }
+    </script>
+    <!-- Load database config and search functionality -->
+    <script src="js/db-config.js"></script>
+    <script src="js/searchSupabase.js"></script>
+    <script type="module" src="js/cardTemplates.js"></script>
+    <style>
+        /* Search Results Page Specific Styles */
+        .results-section {
+            max-width: 1200px;
+            margin: 40px auto 0 auto;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 32px 24px;
+        }
+        .results-category {
+            margin-bottom: 32px;
+        }
+        .results-category h2 {
+            color: #2a3d56;
+            margin-bottom: 18px;
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        .results-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 24px;
+        }
+        .product-card {
+            background: #f8f9fb;
+            border-radius: 18px;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            height: 100%;
+        }
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.15);
+        }
+        .product-image {
+            height: 180px;
+            width: 100%;
+            background-size: cover;
+            background-position: center;
+            transition: transform 0.5s ease;
+        }
+        .product-card:hover .product-image {
+            transform: scale(1.05);
+        }
+        .product-card h4 {
+            margin: 16px 0 8px 0;
+            font-size: 1.2rem;
+            color: #2a3d56;
+            padding: 0 16px;
+        }
+        .product-card .price {
+            font-weight: bold;
+            color: #1a75ff;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+            padding: 0 16px;
+        }
+        .product-card .condition, .product-card .desc {
+            color: #666;
+            font-size: 0.95em;
+            margin-bottom: 12px;
+            padding: 0 16px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        .product-card button {
+            margin: auto 16px 16px;
+            border: none;
+            background: #2a3d56;
+            color: #fff;
+            border-radius: 20px;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: 500;
+        }
+        .product-card button:hover {
+            background: #1d2a3a;
+        }
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 120px;
+        }
+        .loading-spinner .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            color: #2a3d56;
+        }
+        .error-message {
+            color: #c00;
+            text-align: center;
+            margin: 18px 0;
+            font-size: 1.1rem;
+        }
+        /* Navbar Styles from index.html */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #2a3d56;
+            padding: 15px 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .navlogo img {
+            height: 100px;
+            width: 250px;
+        }
+        .navbar .button-container {
+            display: flex;
+            gap: 20px;
+        }
+        .search-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            margin: 0 20px;
+        }
+        .searchbar {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 30px;
+            padding: 2px;
+            width: 100%;
+            max-width: 600px;
+        }
+        .searchbar select,
+        .searchbar input,
+        .searchbar button {
+            border: none;
+            padding: 10px;
+        }
+        .searchbar select {
+            background: #2a3d56;
+            color: white;
+            border-radius: 30px 0 0 30px;
+        }
+        .searchbar input {
+            width: 100%;
+            outline: none;
+        }
+        .searchbar button {
+            background: #2a3d56;
+            color: white;
+            border-radius: 0 30px 30px 0;
+            cursor: pointer;
+        }
+        .nav-button {
+            padding: 10px 25px;
+            border-radius: 25px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            font-weight: 500;
+            display: inline-block;
+            color: white;
+        }
+        .nav-button:hover {
+            background-color: #4d6a88;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                padding: 15px;
+            }
+            .navlogo img {
+                height: 80px;
+                width: 200px;
+                margin-bottom: 15px;
+            }
+            .search-container {
+                width: 100%;
+                margin: 15px 0;
+            }
+            .button-container {
+                flex-direction: column;
+                width: 100%;
+                gap: 10px;
+                margin-top: 15px;
+            }
+            .results-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-  <!-- Common Navbar -->
-  <header id="common-navbar"></header>
-  
-  <!-- Loading animation -->
-  <div id="loadingContainer" class="loading-container">
-    <div class="loader"></div>
-    <div class="loading-text">Fetching results...</div>
-  </div>
-
-  <div id="searchResults" style="display: none;"></div>
-
-  <footer>
-    <p>For any help, contact us at: Studxchange05@gmail.com | Phone: 8857053541</p>
-  </footer>
-
-  <script src="env.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
-  <script src="js/navbar.js"></script>
-  <script>
-    let userLocation = JSON.parse(localStorage.getItem('userLocation')) || null;
-    let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
-  
-    function toggleWishlist(event, product) {
-      // Prevent default behavior and stop event propagation
-      event.preventDefault();
-      event.stopPropagation();
-      
-      console.log("Toggle wishlist clicked for:", product.title); // Debug log
-      
-      // Get the clicked icon
-      const heartIcon = event.target;
-      
-      // Add loading animation to the heart icon
-      heartIcon.classList.add('fa-spin');
-      
-      let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
-      const index = wishlist.findIndex(item => item.title === product.title);
-      
-      if (index === -1) {
-        // Add to wishlist
-        wishlist.push({
-          title: product.title,
-          price: product.price,
-          image: product.images?.[0] || product.image,
-          category: product.category
-        });
-        
-        // Update icon appearance
-        setTimeout(() => {
-          heartIcon.classList.remove('fa-spin');
-          heartIcon.classList.remove('far');
-          heartIcon.classList.add('fas');
-          heartIcon.style.color = '#ff4757';
-        }, 500);
-        
-        console.log("Added to wishlist"); // Debug log
-      } else {
-        // Remove from wishlist
-        wishlist.splice(index, 1);
-        
-        // Update icon appearance
-        setTimeout(() => {
-          heartIcon.classList.remove('fa-spin');
-          heartIcon.classList.remove('fas');
-          heartIcon.classList.add('far');
-          heartIcon.style.color = '#ccc';
-        }, 500);
-        
-        console.log("Removed from wishlist"); // Debug log
-      }
-      
-      localStorage.setItem('wishlist', JSON.stringify(wishlist));
-      return false; // Prevent any default behavior
+    <!-- Navbar from index.html -->
+    <header>
+        <div class="navbar">
+            <div class="navlogo">
+                <img src="Logo1.png" alt="StudXchange">
+            </div>
+            <div class="search-container">
+                <form class="searchbar" id="searchForm" action="search-results.html" method="GET">
+                    <select name="category">
+                        <option value="all">All</option>
+                        <option value="VIT">VIT</option>
+                        <option value="COEP">COEP</option>
+                        <option value="PICT">PICT</option>
+                        <option value="DYP">DYP</option>
+                        <option value="PCCOE">PCCOE</option>
+                    </select>
+                    <input type="text" name="query" id="searchInput" placeholder="Search products...">
+                    <button type="submit"><i class="fas fa-search"></i></button>
+                </form>
+            </div>
+            <button class="nav-button location-button" id="locationButton">
+                <i class="fas fa-map-marker-alt"></i> 
+                <span id="locationText">Get Location</span>
+            </button>
+            <span id="locationStatus" class="location-status"></span>
+            <div class="button-container">
+                <a href="wishlist.html" class="nav-button wishlist-button me-2" id="wishlistBtn"><i class="far fa-heart"></i></a>
+                <a href="sell.html" class="nav-button sell-button" id="sellBtn">Sell/Donate</a>
+                <div id="authButtonContainer"></div>
+                <script>
+                document.addEventListener('DOMContentLoaded', async function() {
+                  const authButtonContainer = document.getElementById('authButtonContainer');
+                  if (!window.supabaseClient) {
+                    const supabaseLib = window.supabase || (typeof globalThis !== 'undefined' ? globalThis.supabase : undefined);
+                    if (supabaseLib && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+                      window.supabaseClient = supabaseLib.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+                    }
+                  }
+                  const supabase = window.supabaseClient;
+                  let { data: { user } } = await supabase.auth.getUser();
+                  if (user) {
+                    // Fetch user profile from 'users' table
+                    let { data: profile, error } = await supabase
+                      .from('users')
+                      .select('name, email')
+                      .eq('id', user.id)
+                      .single();
+                    // Store in localStorage for PROFILE_FINAL.html
+                    if (profile) {
+                      localStorage.setItem('currentUser', JSON.stringify(profile));
+                    }
+                    authButtonContainer.innerHTML = `<a href="PROFILE_FINAL.html" class="nav-button profile-button" id="profileBtn">Profile</a>`;
+                  } else {
+                    authButtonContainer.innerHTML = `<a href="login.html" class="nav-button signup-button" id="loginBtn">Login</a>`;
+                  }
+                });
+                </script>
+            </div>
+        </div>
+    </header>
+    <main>
+    <div class="results-section">
+        <div id="loadingSpinner" class="loading-spinner" style="display:none;">
+            <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+        </div>
+        <div id="errorMessage" class="error-message" style="display:none;"></div>
+        <div id="resultsArea"></div>
+    </div>
+</main>
+    <script type="module">
+    import { renderProductCard, renderNoteCard, renderRoomCard } from './js/cardTemplates.js';
+    
+    // Autofill search input from query param
+    const params = new URLSearchParams(window.location.search);
+    const query = params.get('query') || '';
+    const category = params.get('category') || 'all';
+    document.getElementById('searchInput').value = query;
+    
+    // Set the category dropdown value if it exists
+    const categorySelect = document.querySelector('select[name="category"]');
+    if (categorySelect && category) {
+        for (let i = 0; i < categorySelect.options.length; i++) {
+            if (categorySelect.options[i].value === category) {
+                categorySelect.selectedIndex = i;
+                break;
+            }
+        }
     }
 
-    // Haversine distance formula
-function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; // Earth radius in km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-}
-
-async function getLocation() {
-  return new Promise((resolve) => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        position => resolve({
-          lat: position.coords.latitude,
-          lon: position.coords.longitude
-        }),
-        () => resolve(null)
-      );
-    } else {
-      resolve(null);
+    // Make sure Supabase client is initialized
+    function ensureSupabaseClient() {
+        if (!window.supabaseClient && window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+            console.log('Initializing Supabase client in search results page');
+            window.supabaseClient = window.supabase.createClient(
+                window.SUPABASE_URL,
+                window.SUPABASE_ANON_KEY
+            );
+            return true;
+        }
+        return !!window.supabaseClient;
     }
-  });
-}
 
-    // Initialize Supabase
-    const supabase = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-
-    async function fetchAllSearchItems() {
-        const [{ data: products = [] }, { data: notes = [] }, { data: rooms = [] }] = await Promise.all([
-            supabase.from('products').select('*'),
-            supabase.from('notes').select('*'),
-            supabase.from('rooms').select('*')
-        ]);
-        return [...products, ...notes, ...rooms];
-    }
     async function loadResults() {
+        const loading = document.getElementById('loadingSpinner');
+        const errorDiv = document.getElementById('errorMessage');
+        const resultsArea = document.getElementById('resultsArea');
+        
+        loading.style.display = 'flex';
+        errorDiv.style.display = 'none';
+        resultsArea.innerHTML = '';
+        
+        if (!query.trim()) {
+            loading.style.display = 'none';
+            errorDiv.style.display = 'block';
+            errorDiv.textContent = 'Please enter a search term.';
+            return;
+        }
+        
+        // Ensure Supabase client is available
+        if (!ensureSupabaseClient()) {
+            loading.style.display = 'none';
+            errorDiv.style.display = 'block';
+            errorDiv.textContent = 'Database connection not available. Please refresh and try again.';
+            console.error('Supabase client not available for search');
+            return;
+        }
+        
         try {
-            const urlParams = new URLSearchParams(window.location.search);
-            const searchQuery = urlParams.get('query')?.toLowerCase() || '';
-            const selectedCategory = urlParams.get('category')?.toLowerCase() || 'all';
-            const allItems = await fetchAllSearchItems();
-            const searchResultsDiv = document.getElementById('searchResults');
-            searchResultsDiv.innerHTML = '';
-            let filtered = allItems;
-            if (searchQuery) {
-                filtered = filtered.filter(item => item.title?.toLowerCase().includes(searchQuery));
+            console.log('Performing search for:', query, 'in category:', category);
+            const results = await window.searchSupabase(query);
+            loading.style.display = 'none';
+            let hasResults = false;
+            
+            // Products
+            if (results.products && results.products.length) {
+                hasResults = true;
+                console.log(`Found ${results.products.length} products`);
+                resultsArea.innerHTML += `<div class='results-category'><h2>Products</h2><div class='results-list'>${results.products.map(renderProductCard).join('')}</div></div>`;
             }
-            if (selectedCategory !== 'all') {
-                filtered = filtered.filter(item => item.category?.toLowerCase() === selectedCategory);
+            
+            // Notes
+            if (results.notes && results.notes.length) {
+                hasResults = true;
+                console.log(`Found ${results.notes.length} notes`);
+                resultsArea.innerHTML += `<div class='results-category'><h2>Notes</h2><div class='results-list'>${results.notes.map(renderNoteCard).join('')}</div></div>`;
             }
-            if (!filtered || filtered.length === 0) {
-                searchResultsDiv.innerHTML = '<p>No products found.</p>';
-                return;
+            
+            // Rooms
+            if (results.rooms && results.rooms.length) {
+                hasResults = true;
+                console.log(`Found ${results.rooms.length} rooms`);
+                resultsArea.innerHTML += `<div class='results-category'><h2>Rooms</h2><div class='results-list'>${results.rooms.map(renderRoomCard).join('')}</div></div>`;
             }
-            filtered.forEach(product => {
-                const productCard = document.createElement('div');
-                productCard.className = 'product clickable';
-                productCard.onclick = () => {
-                    window.location.href = `productinterface.html?id=${product._id || product.id || ''}&type=${product.category ? encodeURIComponent(product.category.toLowerCase()) : ''}`;
-                };
-                productCard.innerHTML = `
-                    <div class=\"product-img\" style=\"background-image: url('${product.images?.[0] || product.image || 'placeholder.jpg'}')\"></div>
-                    <h4>${product.title}</h4>
-                    <p class=\"price\">₹${product.price || ''}</p>
-                    ${(product.pdfUrl) ? `<button class='buy-now' onclick=\"event.stopPropagation(); window.open('${product.pdfUrl}','_blank')\">Download PDF</button>` : ''}
-                `;
-                searchResultsDiv.appendChild(productCard);
-            });
-        } catch (error) {
-            console.error('Error loading results:', error);
-            document.getElementById('searchResults').innerHTML = '<p>Error loading products. Please try again.</p>';
+            
+            if (!hasResults) {
+                console.log('No results found');
+                resultsArea.innerHTML = `<div class='error-message'>No results found for "${query}".</div>`;
+            }
+        } catch (err) {
+            console.error('Error during search:', err);
+            loading.style.display = 'none';
+            errorDiv.style.display = 'block';
+            errorDiv.textContent = 'Error fetching results. Please try again later.';
         }
     }
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      // Get user location if not already stored
-      if (!userLocation) {
-        userLocation = await getLocation();
-        if (userLocation) {
-          localStorage.setItem('userLocation', JSON.stringify(userLocation));
-        }
-      }
-      
-      loadResults();
-      // Refresh products every 30 seconds
-      setInterval(loadResults, 30000);
+    
+    // Initialize location button functionality
+    const locationButton = document.getElementById('locationButton');
+    if (locationButton) {
+        locationButton.addEventListener('click', function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const userLocation = {
+                        lat: position.coords.latitude,
+                        lon: position.coords.longitude
+                    };
+                    localStorage.setItem('userLocation', JSON.stringify(userLocation));
+                    document.getElementById('locationText').textContent = 'Location Set';
+                    document.getElementById('locationStatus').textContent = '✓';
+                });
+            } else {
+                alert('Geolocation is not supported by your browser.');
+            }
+        });
+    }
+    
+    document.getElementById('searchForm').addEventListener('submit', function(e){
+        e.preventDefault();
+        const categoryValue = document.querySelector('select[name="category"]').value;
+        const searchQuery = document.getElementById('searchInput').value;
+        window.location.href = `search-results.html?category=${categoryValue}&query=${encodeURIComponent(searchQuery)}`;
     });
-  </script>
- 
-  
+    
+    // On page load
+    console.log('Search results page loaded, query:', query);
+    loadResults();
+    </script>
 </body>
 </html>

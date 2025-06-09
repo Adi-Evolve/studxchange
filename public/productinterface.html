@@ -700,7 +700,7 @@ align-items: center;
     <header>
         <div class="navbar">
             <div class="navlogo">
-                <img src="Logo1.png" alt="StudXchange">
+                <a href="index.html"><img src="Logo1.png" alt="StudXchange"></a>
             </div>
             <div class="search-container">
                 <form class="searchbar" action="search-results.html" method="GET">
@@ -722,8 +722,8 @@ align-items: center;
             </button>
             <span id="locationStatus" class="location-status"></span>
             <div class="button-container">
-                <a class="nav-button wishlist-button me-2" id="wishlistBtn" tabindex="0"><i class="far fa-heart"></i></a>
-                <a class="nav-button sell-button" id="sellBtn" tabindex="0">Sell/Donate</a>
+                <a href="wishlist.html" class="nav-button wishlist-button me-2" id="wishlistBtn" tabindex="0"><i class="far fa-heart"></i></a>
+                <a href="sell.html" class="nav-button sell-button" id="sellBtn" tabindex="0">Sell/Donate</a>
                 <div id="authButtonContainer"></div>
                 <script>
                 document.addEventListener('DOMContentLoaded', async function() {
@@ -747,9 +747,9 @@ align-items: center;
                     if (profile) {
                       localStorage.setItem('currentUser', JSON.stringify(profile));
                     }
-                    authButtonContainer.innerHTML = `<a class=\"nav-button profile-button\" id=\"profileBtn\" tabindex=\"0\">Profile</a>`;
+                    authButtonContainer.innerHTML = `<a href="PROFILE_FINAL.html" class=\"nav-button profile-button\" id=\"profileBtn\" tabindex=\"0\">Profile</a>`;
                   } else {
-                    authButtonContainer.innerHTML = `<a class=\"nav-button signup-button\" id=\"loginBtn\" tabindex=\"0\">Login</a>`;
+                    authButtonContainer.innerHTML = `<a href="login.html" class=\"nav-button signup-button\" id=\"loginBtn\" tabindex=\"0\">Login</a>`;
                   }
                 });
                 </script>
@@ -873,13 +873,11 @@ align-items: center;
                     <div class="product-description">${product.description || ''}</div>
                     <ul class="product-details-list">
                         <li><strong>Category:</strong> ${product.category || 'N/A'}</li>
-                        <li><strong>Condition:</strong> ${product.condition || 'N/A'}</li>
                         <li><strong>Posted:</strong> ${product.createdAt ? new Date(product.createdAt).toLocaleDateString() : 'N/A'}</li>
                         <li><strong>Seller:</strong> ${product.sellerName || 'N/A'}</li>
                     </ul>
                     <div class="action-buttons">
-    <button class="btn btn-primary contact-seller-btn"><i class="fas fa-envelope"></i> Contact Seller</button>
-    <button class="btn btn-outline-secondary" onclick="toggleWishlist(event, ${JSON.stringify(product).replace(/\"/g, '&quot;')})"><i class="far fa-heart"></i> Add to Wishlist</button>
+    <button class="btn btn-primary contact-seller-btn"><i class="fab fa-whatsapp"></i> Contact Seller</button>
     <button class="btn btn-outline-info compare-btn"><i class="fas fa-balance-scale"></i> Compare</button>
     <button class="btn btn-outline-dark seller-info-btn"><i class="fas fa-user"></i> Seller Info</button>
 </div>
@@ -933,37 +931,104 @@ align-items: center;
 
         // Wire up action buttons after each product render
 function wireProductActionButtons(product) {
-    // Contact Seller
+    // Contact Seller - Direct WhatsApp Redirect
     const contactBtn = document.querySelector('.contact-seller-btn');
     if (contactBtn) {
         contactBtn.addEventListener('click', async function() {
-            // Always fetch seller phone from users table using owner_id
-            let phone = '';
-            if (product.owner_id) {
-                const { data: user, error: userErr } = await window.supabaseClient
-                    .from('users')
-                    .select('phone')
-                    .eq('id', product.owner_id)
-                    .single();
-                if (!userErr && user && user.phone) {
-                    phone = user.phone;
+            try {
+                // First check if we already have the seller phone in the product object
+                let phone = product.sellerPhone || '';
+                let sellerId = product.owner_id || product.seller_id || '';
+                
+                console.log('Product data:', product);
+                console.log('Initial phone value:', phone);
+                console.log('Seller ID to use:', sellerId);
+                
+                // If we don't have the phone yet, try to fetch it
+                if (!phone && sellerId) {
+                    console.log('Fetching seller phone number for ID:', sellerId);
+                    
+                    // Try to fetch the phone number from the users table
+                    const { data: user, error: userErr } = await window.supabaseClient
+                        .from('users')
+                        .select('*')
+                        .eq('id', sellerId)
+                        .single();
+                    
+                    console.log('Full seller data:', user);
+                    console.log('Error:', userErr);
+                    
+                    if (!userErr && user) {
+                        // Check if phone exists in user data
+                        if (user.phone) {
+                            phone = user.phone;
+                            console.log('Found phone in user data:', phone);
+                        }
+                    }
                 }
+                
+                // If we still don't have a phone number, try to fetch by email
+                if (!phone && product.sellerEmail) {
+                    console.log('Trying to fetch user by email:', product.sellerEmail);
+                    
+                    const { data: userByEmail, error: emailErr } = await window.supabaseClient
+                        .from('users')
+                        .select('*')
+                        .eq('email', product.sellerEmail)
+                        .single();
+                    
+                    if (!emailErr && userByEmail && userByEmail.phone) {
+                        phone = userByEmail.phone;
+                        console.log('Found phone by email lookup:', phone);
+                    }
+                }
+                
+                // Last resort - try to find the seller by name if we have it
+                if (!phone && product.sellerName) {
+                    console.log('Trying to fetch user by name:', product.sellerName);
+                    
+                    const { data: usersByName, error: nameErr } = await window.supabaseClient
+                        .from('users')
+                        .select('*')
+                        .eq('name', product.sellerName);
+                    
+                    if (!nameErr && usersByName && usersByName.length > 0 && usersByName[0].phone) {
+                        phone = usersByName[0].phone;
+                        console.log('Found phone by name lookup:', phone);
+                    }
+                }
+                
+                if (!phone) {
+                    alert('Seller phone number not available. Please try contacting through other means.');
+                    return;
+                }
+                
+                // Format phone number for WhatsApp - remove non-digits
+                let phoneNum = phone.replace(/\D/g, '');
+                console.log('Cleaned phone number:', phoneNum);
+                
+                // Add country code if missing (assuming India +91)
+                if (phoneNum.length === 10) {
+                    phoneNum = '91' + phoneNum;
+                    console.log('Added country code, final number:', phoneNum);
+                }
+                
+                // Create WhatsApp message with product details
+                const msg = encodeURIComponent(`Hi, I am interested in buying the ${product.title} (₹${product.price}) listed on StudXchange.`);
+                
+                // Open WhatsApp web or app
+                console.log('Opening WhatsApp with phone:', phoneNum);
+                window.open(`https://wa.me/${phoneNum}?text=${msg}`, '_blank');
+            } catch (err) {
+                console.error('Error contacting seller:', err);
+                alert('Failed to contact seller. Please try again later.');
             }
-            if (!phone) {
-                alert('Seller phone number not available.');
-                return;
-            }
-            const phoneNum = phone.replace(/\D/g, '');
-            const msg = encodeURIComponent(`Hi, I am interested in buying the ${product.title} listed on StudXchange.`);
-            window.open(`https://wa.me/${phoneNum}?text=${msg}`, '_blank');
         });
     }
             // Wishlist
             const wishlistBtn = document.querySelector('.wishlist-btn');
             if (wishlistBtn) {
-                wishlistBtn.addEventListener('click', function() {
-                    // TO DO: Implement wishlist logic
-                });
+                wishlistBtn.onclick = () => { addToWishlist(product); alert('Product added to wishlist!'); }
             }
             // Compare
             const compareBtn = document.querySelector('.compare-btn');
@@ -1003,48 +1068,94 @@ function wireProductActionButtons(product) {
             const sellerInfoBtn = document.querySelector('.seller-info-btn');
             if (sellerInfoBtn) {
                 sellerInfoBtn.addEventListener('click', async function() {
-                    document.getElementById('sellerInfoModal').style.display = 'flex';
-                    const p = window.productDetails || {};
-                    // Fetch seller info from users table using owner_id
-                    let sellerInfo = { name: 'N/A', email: 'N/A', phone: 'N/A' };
-                    if (p.owner_id) {
+                    try {
+                        // Show loading state in the modal
+                        document.getElementById('sellerInfoModal').style.display = 'flex';
+                        document.getElementById('sellerInfoDetails').innerHTML = '<div style="text-align:center;padding:20px;"><i class="fas fa-spinner fa-spin"></i> Loading seller information...</div>';
+                        document.getElementById('sellerPastItems').innerHTML = '<div style="text-align:center;padding:20px;"><i class="fas fa-spinner fa-spin"></i> Loading sold items...</div>';
+                        
+                        const p = window.productDetails || {};
+                        console.log('Product details for seller info:', p);
+                        
+                        // Determine seller ID (try both owner_id and seller_id)
+                        let sellerId = p.owner_id || p.seller_id;
+                        
+                        if (!sellerId) {
+                            document.getElementById('sellerInfoDetails').innerHTML = '<div style="color:red;padding:10px;">Seller information not available.</div>';
+                            document.getElementById('sellerPastItems').innerHTML = '<div style="color:#888;padding:8px;">No seller information available.</div>';
+                            return;
+                        }
+                        
+                        console.log('Fetching seller info for ID:', sellerId);
+                        
+                        // Fetch comprehensive seller info
                         const { data: user, error: userErr } = await window.supabaseClient
                             .from('users')
-                            .select('name, email, phone')
-                            .eq('id', p.owner_id)
+                            .select('*')
+                            .eq('id', sellerId)
                             .single();
-                        if (!userErr && user) {
-                            sellerInfo = {
-                                name: user.name || 'N/A',
-                                email: user.email || 'N/A',
-                                phone: user.phone || 'N/A'
-                            };
+                            
+                        console.log('Seller data:', user, 'Error:', userErr);
+                        
+                        // Format seller information with all available details
+                        if (userErr || !user) {
+                            document.getElementById('sellerInfoDetails').innerHTML = '<div style="color:red;padding:10px;">Failed to load seller information.</div>';
+                        } else {
+                            // Calculate seller rating (placeholder for future implementation)
+                            const sellerRating = 4.5; // Placeholder rating
+                            
+                            // Format seller information with all available details
+                            document.getElementById('sellerInfoDetails').innerHTML = `
+                                <div style="padding:5px 0;"><b>Name:</b> ${user.name || user.full_name || 'N/A'}</div>
+                                <div style="padding:5px 0;"><b>Email:</b> ${user.email || 'N/A'}</div>
+                                <div style="padding:5px 0;"><b>Phone:</b> ${user.phone || 'Not provided'}</div>
+                                <div style="padding:5px 0;"><b>Member Since:</b> ${user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}</div>
+                                <div style="padding:5px 0;"><b>Rating:</b> 
+                                    <span style="color:#f8c51c;">
+                                        ${'★'.repeat(Math.floor(sellerRating)) + (sellerRating % 1 >= 0.5 ? '½' : '')}
+                                    </span>
+                                    <span style="color:#888;font-size:0.9em;"> (${sellerRating}/5)</span>
+                                </div>
+                            `;
                         }
-                    }
-                    document.getElementById('sellerInfoDetails').innerHTML = `
-                        <div><b>Name:</b> ${sellerInfo.name}</div>
-                        <div><b>Email:</b> ${sellerInfo.email}</div>
-                        <div><b>Phone:</b> ${sellerInfo.phone}</div>
-                    `;
-                    let items = [];
-                    try {
-                        const { data: itemsData, error } = await window.supabaseClient
+                        
+                        // Fetch all sold items by this seller
+                        console.log('Fetching sold items for seller ID:', sellerId);
+                        const { data: soldItems, error: itemsErr } = await window.supabaseClient
                             .from('products')
                             .select('*')
-                            .eq('owner_id', p.owner_id)
+                            .or(`owner_id.eq.${sellerId},seller_id.eq.${sellerId}`)
                             .eq('is_sold', true);
-                        items = error || !itemsData ? [] : itemsData;
-                    } catch { items = []; }
-                    const container = document.getElementById('sellerPastItems');
-                    if (!items.length) {
-                        container.innerHTML = '<div style="color:#888;padding:8px;">No past sold items.</div>';
-                    } else {
-                        container.innerHTML = items.map(item => `
-                            <div style='display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #eee;'>
-                                <img src='${item.images?.[0] || item.image || 'placeholder.jpg'}' style='width:32px;height:32px;object-fit:cover;border-radius:5px;'>
-                                <span>${item.title}</span>
-                            </div>
-                        `).join('');
+                            
+                        console.log('Sold items:', soldItems, 'Error:', itemsErr);
+                        
+                        // Display sold items with clickable links
+                        const container = document.getElementById('sellerPastItems');
+                        if (itemsErr || !soldItems || soldItems.length === 0) {
+                            container.innerHTML = '<div style="color:#888;padding:8px;">No past sold items found.</div>';
+                        } else {
+                            container.innerHTML = `
+                                <div style="margin-bottom:10px;">
+                                    <b>Total Sold Items:</b> ${soldItems.length}
+                                </div>
+                                ${soldItems.map(item => `
+                                    <div style='display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid #eee;border-radius:8px;margin-bottom:5px;background:#f9f9f9;cursor:pointer;' 
+                                         onclick="window.location.href='productinterface.html?id=${item.id}'">
+                                        <img src='${item.images?.[0] || item.image || 'placeholder.jpg'}' 
+                                             style='width:40px;height:40px;object-fit:cover;border-radius:5px;'>
+                                        <div style='flex:1;'>
+                                            <div style='font-weight:500;'>${item.title}</div>
+                                            <div style='color:#1a75ff;font-size:0.9em;'>₹${item.price}</div>
+                                        </div>
+                                        <div style='background:#28a745;color:white;font-size:0.7em;padding:3px 6px;border-radius:3px;'>SOLD</div>
+                                    </div>
+                                `).join('')}
+                            `;
+                        }
+                    } catch (err) {
+                        console.error('Error loading seller information:', err);
+                        document.getElementById('sellerInfoDetails').innerHTML = '<div style="color:red;padding:10px;">Error loading seller information.</div>';
+                        document.getElementById('sellerPastItems').innerHTML = '<div style="color:red;padding:8px;">Failed to load sold items.</div>';
                     }
                 });
             }
@@ -1076,7 +1187,25 @@ function wireProductActionButtons(product) {
         }
 
         // Call renderProduct after DOM is ready
-        document.addEventListener('DOMContentLoaded', renderProduct);
+        document.addEventListener('DOMContentLoaded', function() {
+            renderProduct();
+            
+            // Make sure navbar buttons have proper links
+            document.querySelectorAll('.nav-button').forEach(button => {
+                if (button.id === 'wishlistBtn' && !button.getAttribute('href')) {
+                    button.setAttribute('href', 'wishlist.html');
+                }
+                if (button.id === 'sellBtn' && !button.getAttribute('href')) {
+                    button.setAttribute('href', 'sell.html');
+                }
+                if (button.id === 'profileBtn' && !button.getAttribute('href')) {
+                    button.setAttribute('href', 'PROFILE_FINAL.html');
+                }
+                if (button.id === 'loginBtn' && !button.getAttribute('href')) {
+                    button.setAttribute('href', 'login.html');
+                }
+            });
+        });
 
         // Responsive tweaks for mobile/tablet (do not affect desktop)
         const style = document.createElement('style');
