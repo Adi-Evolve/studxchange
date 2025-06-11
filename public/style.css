@@ -1,4 +1,131 @@
 /* StudXchange Sell Page Styles - Consistent Modern Theme */
+
+/* Redesigned Product Card for Search Results */
+.product-card-new {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.2s;
+  margin: 0 auto;
+  max-width: 350px;
+  min-width: 260px;
+}
+.product-card-new:hover {
+  box-shadow: 0 8px 32px rgba(26,117,255,0.14);
+  transform: translateY(-4px) scale(1.025);
+}
+.product-image-new {
+  background-size: cover;
+  background-position: center;
+  height: 210px;
+  width: 100%;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+.wishlist-heart-new {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  background: rgba(255,255,255,0.92);
+  border-radius: 50%;
+  padding: 7px 9px;
+  font-size: 1.3rem;
+  color: #e23c3c;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.10);
+  cursor: pointer;
+  z-index: 2;
+  transition: background 0.15s, color 0.15s;
+}
+.wishlist-heart-new:hover {
+  background: #ffeaea;
+  color: #c00;
+}
+.product-info-new {
+  padding: 20px 20px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.product-title-new {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2a3d56;
+  margin-bottom: 4px;
+  line-height: 1.22;
+  letter-spacing: 0.01em;
+}
+.product-meta-new {
+  display: flex;
+  gap: 13px;
+  font-size: 1.02rem;
+  color: #4d6a88;
+  margin-bottom: 6px;
+  align-items: center;
+}
+.product-category-new {
+  background: #e6f0ff;
+  color: #2266bb;
+  border-radius: 7px;
+  padding: 3px 9px 3px 7px;
+  font-size: 0.98rem;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.product-condition-new {
+  background: #f5f7fa;
+  color: #a67c00;
+  border-radius: 7px;
+  padding: 3px 9px 3px 7px;
+  font-size: 0.98rem;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.product-bottom-row-new {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 8px 0 0 0;
+}
+.product-price-new {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #1a75ff;
+  letter-spacing: 0.01em;
+}
+.product-rating-new {
+  margin-left: 4px;
+  font-size: 1.1rem;
+  color: #ffc107;
+}
+.product-buynow-btn-new {
+  margin-top: 14px;
+  width: 100%;
+  background: linear-gradient(90deg, #2266bb 60%, #0b948f 100%);
+  color: #fff;
+  border: none;
+  border-radius: 13px;
+  padding: 11px 0;
+  font-size: 1.08rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(26,117,255,0.07);
+  transition: background 0.18s, box-shadow 0.18s, transform 0.11s;
+}
+.product-buynow-btn-new:hover {
+  background: linear-gradient(90deg, #1558b0 60%, #0b948f 100%);
+  box-shadow: 0 4px 16px rgba(26,117,255,0.18);
+  transform: translateY(-2px) scale(1.03);
+}
+
 *{
   margin: 0;
   padding: 0;

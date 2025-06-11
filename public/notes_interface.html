@@ -808,6 +808,7 @@
 
         // Render notes details
         async function renderNotes() {
+            // Fetch notes details
             const id = getQueryParam('id');
             if (!id) {
                 document.getElementById('notesSection').innerHTML = '<p>Notes not found.</p>';
@@ -819,6 +820,8 @@
                 return;
             }
             document.title = notes.title + ' | StudXchange';
+            // Set window.currentNotesPDF to notes.pdfUrl if available
+            window.currentNotesPDF = notes.pdfUrl || notes.pdf_url || '';
             document.getElementById('notesSection').innerHTML = `
                 <div class="notes-left">
                     <div class="notes-images">
@@ -845,25 +848,25 @@
                 </div>
             `;
         }
+
         // Download PDF function
         function downloadPDF() {
-            if(window.currentNotesPDF) {
-                const link = document.createElement('a');
-                link.href = window.currentNotesPDF;
-                link.download = '';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+            // Always use window.currentNotesPDF if available, fallback to direct notes.pdfUrl
+            const pdfUrl = window.currentNotesPDF;
+            if (pdfUrl && typeof pdfUrl === 'string' && pdfUrl.startsWith('http')) {
+                window.open(pdfUrl, '_blank');
             } else {
                 alert('PDF not available.');
             }
         }
+
         // Add to Wishlist function
         function addToWishlist(note) {
             let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
             wishlist.push(note);
             localStorage.setItem('wishlist', JSON.stringify(wishlist));
         }
+
         // Fetch similar notes (same subject, excluding current)
         async function fetchSimilarNotes(notes) {
             const { data, error } = await supabase

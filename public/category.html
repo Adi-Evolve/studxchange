@@ -870,20 +870,20 @@
   <script>
     let userLocation = JSON.parse(localStorage.getItem('userLocation')) || null;
     
-    function toggleWishlist(event, product) {
-      // Prevent default behavior and stop event propagation
+    // Keep a global reference to the last filtered products for lookup
+    let lastFilteredProducts = [];
+
+    function toggleWishlist(event, id) {
       event.preventDefault();
       event.stopPropagation();
-      
-      console.log("Toggle wishlist clicked for:", product.title); // Debug log
-      
+      // Find the product object by id from lastFilteredProducts
+      const product = lastFilteredProducts.find(p => (p.id || p._id) == id);
+      if (!product) return;
       let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
-      const index = wishlist.findIndex(item => item.title === product.title);
-      
+      const index = wishlist.findIndex(item => item.title === (product.title || product.name));
       if (index === -1) {
-        // Add to wishlist
         wishlist.push({
-          title: product.title,
+          title: product.title || product.name,
           price: product.price,
           image: product.images?.[0] || product.image,
           category: product.category
@@ -891,22 +891,18 @@
         event.target.classList.remove('far');
         event.target.classList.add('fas');
         event.target.style.color = '#ff4757';
-        console.log("Added to wishlist"); // Debug log
       } else {
-        // Remove from wishlist
         wishlist.splice(index, 1);
         event.target.classList.remove('fas');
         event.target.classList.add('far');
         event.target.style.color = '#ccc';
-        console.log("Removed from wishlist"); // Debug log
       }
-      
       localStorage.setItem('wishlist', JSON.stringify(wishlist));
-      return false; // Prevent any default behavior
+      return false;
     }
 
     // Haversine distance formula
-function calculateDistance(lat1, lon1, lat2, lon2) {
+    function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 6371; // Earth radius in km
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -985,120 +981,27 @@ async function fetchAllCategoryItems() {
             filtered.forEach(product => {
                 let cat = product.category?.toLowerCase();
                 if (cat === 'notes') {
-                    const notesDiv = document.createElement('div');
-                    notesDiv.className = 'product-card modern-premium notes-mini';
-                    notesDiv.style.display = 'flex';
-                    notesDiv.style.flexDirection = 'column';
-                    notesDiv.style.alignItems = 'center';
-                    notesDiv.style.justifyContent = 'flex-start';
-                    notesDiv.style.height = '350px';
-                    notesDiv.style.margin = '18px';
-                    notesDiv.style.boxSizing = 'border-box';
-                    notesDiv.style.gap = '0';
-                    notesDiv.innerHTML = `
-                        <img class="product-image-large" src="${product.images?.[0] || product.image || 'https://via.placeholder.com/85x85?text=No+Image'}" alt="${product.title || 'Untitled'}" style="width:85px;height:85px;object-fit:cover;border-radius:7px;margin-bottom:2px;box-shadow:0 2px 8px rgba(42,61,86,0.08);background:#f9f9fb;display:block;" />
-                        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;width:100%;">
-                            <div class="notes-title-centered" style="margin-bottom:3px;font-size:0.8rem;font-weight:600;line-height:1.1;text-align:center;width:100%;">${product.title || 'Untitled'}</div>
-                            <div class="product-price large-price" style="font-size:0.75rem;text-align:center;margin-bottom:2px;">₹${product.price || 'N/A'}</div>
-                        </div>
-                    `;
-                    const buyNowBtn = document.createElement('button');
-                    buyNowBtn.className = 'notes-buynow-btn';
-                    buyNowBtn.textContent = 'Buy Now';
-                    buyNowBtn.style.width = '80%';
-                    buyNowBtn.style.fontSize = '0.85rem';
-                    buyNowBtn.style.height = '32px';
-buyNowBtn.style.height = '32px';
-                    buyNowBtn.onclick = (event) => {
-                        event.stopPropagation();
-                        window.open(product.pdfUrl || '#', '_blank');
-                    };
-                    notesDiv.appendChild(buyNowBtn);
-                    notesDiv.onclick = () => {
-                        window.location.href = `notes_interface.html?id=${product._id || product.id || ''}`;
-                    };
-                    productList.appendChild(notesDiv);
-buyNowBtn.onclick = (event) => {
-    event.stopPropagation();
-    window.open(product.pdfUrl || '#', '_blank');
-};
-notesDiv.appendChild(buyNowBtn);
-notesDiv.onclick = () => {
-    window.location.href = `notes_interface.html?id=${product._id || product.id || ''}`;
-};
-productList.appendChild(notesDiv);
-                } else if (cat === 'rooms' || cat === 'rooms_hostels') {
-                    const roomDiv = document.createElement('div');
-                    roomDiv.className = 'room-card redesigned';
-                    // Show amenity icons only for available amenities
-                    const amenityIcons = {
-                        wifi: {icon: 'fa-wifi', label: 'WiFi'},
-                        ac: {icon: 'fa-snowflake', label: 'AC'},
-                        attached_bathroom: {icon: 'fa-bath', label: 'Attached Bathroom'},
-                        mess: {icon: 'fa-utensils', label: 'Mess'},
-                        parking: {icon: 'fa-car', label: 'Parking'},
-                        laundry: {icon: 'fa-tshirt', label: 'Laundry'}
-                    };
-                    const presentAmenities = (product.amenities || []).filter(function(a) { return Object.keys(amenityIcons).includes(a.toLowerCase()); });
-                    let amenityIconsHtml = '';
-                    presentAmenities.forEach(function(a) {
-                        var key = a.toLowerCase();
-                        var icon = amenityIcons[key].icon;
-                        var label = amenityIcons[key].label;
-                        amenityIconsHtml += `<i class='fa ${icon}' title='${label}' style='margin-right:8px;font-size:1.15em;'></i>`;
-                    });
-                    roomDiv.innerHTML = `
-                        <div class="room-card-horizontal" style="display:flex;flex-direction:row;align-items:stretch;min-height:340px;">
-                            <div class="room-image-section" style="flex:1;min-width:210px;max-width:300px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:18px 0 0 18px;overflow:hidden;">
-    <div style="width:320px;height:320px;display:flex;align-items:center;justify-content:center;">
-        <img class="room-image" src="${product.images?.[0] || product.image || 'https://via.placeholder.com/320x200?text=No+Image'}" alt="${product.roomName || product.title || 'Room/Hostel'}" style="width:100%;height:100%;object-fit:cover;border-radius:18px;" />
-    </div>
-</div>
-                            <div class="room-info-section" style="flex:2;padding:28px 28px 18px 28px;display:flex;flex-direction:column;justify-content:space-between;">
-                                <div>
-                                    <div class="room-title" style="font-size:1.35rem;font-weight:700;margin-bottom:9px;color:#1a2233;">${product.roomName || product.title || 'Room/Hostel'}</div>
-                                    <div class="room-meta" style="margin-bottom:10px;">
-                                        ${product.college ? `<span style='font-size:1rem;color:#3a4d6d;'><i class='fa fa-university'></i> ${product.college}</span>` : ''}
-                                        ${product.occupancy ? `<span style='margin-left:18px;font-size:1rem;color:#3a4d6d;'><i class='fa fa-users'></i> ${product.occupancy} Occupancy</span>` : ''}
-                                    </div>
-                                    <div class="room-price" style="font-size:1.15rem;font-weight:600;color:#0b948f;margin-bottom:8px;">₹${product.fees || product.price || 'N/A'}${product.feesIncludeMess ? ' <span class="badge badge-mess" style="margin-left:12px;">Mess Included</span>' : ''}</div>
-                                </div>
-                                <div class="room-amenities" style="margin-top:12px;font-size:1.35rem;">
-                                    ${(() => {
-                                        const iconMap = {
-                                            wifi: {icon: 'fa-wifi', label: 'WiFi'},
-                                            ac: {icon: 'fa-wind', label: 'AC'},
-                                            attached_bathroom: {icon: 'fa-shower', label: 'Bathroom'},
-                                            mess: {icon: 'fa-bowl-food', label: 'Mess'},
-                                            parking: {icon: 'fa-square-parking', label: 'Parking'},
-                                            laundry: {icon: 'fa-shirt', label: 'Laundry'}
-                                        };
-                                        return (product.amenities || []).map(function(a) {
-                                            var key = a.toLowerCase();
-                                            if(iconMap[key]){
-                                                return `<i class='fa ${iconMap[key].icon}' title='${iconMap[key].label}' style='margin-right:16px;color:#2a3d56;'></i>`;
-                                            }
-                                            return '';
-                                        }).join('');
-                                    })()}
-                                </div>
-                                <button class="room-buynow-btn" style="margin-top:18px;width:160px;font-size:1.1rem;align-self:flex-end;" onclick="event.stopPropagation(); window.location.href='room_interface.html?id=${product._id || product.id || ''}'">View Room</button>
-                            </div>
-                        </div>
-                    `;
-                    roomDiv.onclick = () => {
-                        window.location.href = `room_interface.html?id=${product._id || product.id || ''}`;
-                    };
-                    productList.appendChild(roomDiv);
-                } else {
-                    // Use the new renderProductCard from cardTemplates.js
-                    const wrapper = document.createElement('div');
-                    wrapper.innerHTML = window.renderProductCard ? window.renderProductCard(product) : (typeof renderProductCard === 'function' ? renderProductCard(product) : '');
-                    // If the card is generated, append the first child (the card)
-                    if (wrapper.firstElementChild) {
-                        productList.appendChild(wrapper.firstElementChild);
-                    }
-                }
+    // Use the new renderNoteCard from cardTemplates.js
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = window.renderNoteCard ? window.renderNoteCard(product) : (typeof renderNoteCard === 'function' ? renderNoteCard(product) : '');
+    if (wrapper.firstElementChild) {
+        productList.appendChild(wrapper.firstElementChild);
+    }
+} else if (cat === 'rooms' || cat === 'rooms_hostels') {
+    // Use the new renderRoomCard from cardTemplates.js
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = window.renderRoomCard ? window.renderRoomCard(product) : (typeof renderRoomCard === 'function' ? renderRoomCard(product) : '');
+    if (wrapper.firstElementChild) {
+        productList.appendChild(wrapper.firstElementChild);
+    }
+} else {
+    // Use the new renderProductCard from cardTemplates.js
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = window.renderProductCard ? window.renderProductCard(product) : (typeof renderProductCard === 'function' ? renderProductCard(product) : '');
+    if (wrapper.firstElementChild) {
+        productList.appendChild(wrapper.firstElementChild);
+    }
+}
             });
         } catch (error) {
             console.error('Error loading products:', error);

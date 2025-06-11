@@ -87,38 +87,61 @@ async function searchSupabase(query) {
       rooms: roomsSearchFields
     });
     
-    // Build search queries dynamically based on available fields
-    const buildSearchQuery = (fields) => {
-      return fields.map(field => `${field}.ilike.${likeQuery}`).join(',');
+    // Helper for prioritized search
+    async function prioritizedSearch(table, fieldsPriority) {
+      let result = { data: [], error: null };
+      for (const fields of fieldsPriority) {
+        const searchFields = fields.filter(f => f != null);
+        if (searchFields.length === 0) continue;
+        const orQuery = searchFields.map(field => `${field}.ilike.${likeQuery}`).join('|');
+        if (!orQuery) continue;
+        result = await window.supabaseClient.from(table).select('*').or(orQuery);
+        if (result.data && result.data.length > 0) break;
+      }
+      return result;
+    }
+
+    // Determine actual field names from schema
+    const getField = (schema, candidates) => {
+      for (const c of candidates) if (schema && schema[0] && c in schema[0]) return c;
+      return candidates[0]; // fallback
     };
-    
-    const productSearchQuery = buildSearchQuery(productSearchFields);
-    const notesSearchQuery = buildSearchQuery(notesSearchFields);
-    const roomsSearchQuery = buildSearchQuery(roomsSearchFields);
-    
-    console.log('Search queries:', {
-      products: productSearchQuery,
-      notes: notesSearchQuery,
-      rooms: roomsSearchQuery
-    });
-    
-    // Perform searches with dynamically built queries
+    const productTitleField = getField(schemaCheck[0].data, ['title', 'name']);
+    const productCategoryField = getField(schemaCheck[0].data, ['category']);
+    const productDescField = getField(schemaCheck[0].data, ['description']);
+    const noteTitleField = getField(schemaCheck[1].data, ['title', 'name']);
+    const noteCategoryField = getField(schemaCheck[1].data, ['category']);
+    const noteDescField = getField(schemaCheck[1].data, ['description', 'content']);
+    const roomTitleField = getField(schemaCheck[2].data, ['title', 'name']);
+    const roomCategoryField = getField(schemaCheck[2].data, ['category']);
+    const roomDescField = getField(schemaCheck[2].data, ['description']);
+
+    // Prioritized search for each type
     const [productsResult, notesResult, roomsResult] = await Promise.all([
-      // Products search
-      productSearchQuery ? 
-        window.supabaseClient.from('products').select('*').or(productSearchQuery) :
-        { data: [], error: null },
-      
-      // Notes search
-      notesSearchQuery ? 
-        window.supabaseClient.from('notes').select('*').or(notesSearchQuery) :
-        { data: [], error: null },
-      
-      // Rooms search
-      roomsSearchQuery ? 
-        window.supabaseClient.from('rooms').select('*').or(roomsSearchQuery) :
-        { data: [], error: null }
+      prioritizedSearch('products', [
+        [productTitleField],
+        [productCategoryField],
+        [productDescField]
+      ]),
+      prioritizedSearch('notes', [
+        [noteTitleField],
+        [noteCategoryField],
+        [noteDescField]
+      ]),
+      prioritizedSearch('rooms', [
+        [roomTitleField],
+        [roomCategoryField],
+        [roomDescField]
+      ])
     ]);
+
+    // If any result is an error, log it clearly
+    if (productsResult.error) console.error('Error fetching products:', productsResult.error);
+    if (notesResult.error) console.error('Error fetching notes:', notesResult.error);
+    if (roomsResult.error) console.error('Error fetching rooms:', roomsResult.error);
+    if ((!productsResult.data || productsResult.data.length === 0) && (!notesResult.data || notesResult.data.length === 0) && (!roomsResult.data || roomsResult.data.length === 0)) {
+      console.warn('No results found for query:', query);
+    }
     
     // Handle any errors
     if (productsResult.error) console.error('Error fetching products:', productsResult.error);

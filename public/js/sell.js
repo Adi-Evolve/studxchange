@@ -1,6 +1,18 @@
 // sell.js - Handles dynamic sell form for StudXchange
 // Dependencies: db-config.js, env.js, style.css
 
+// Ensure locationUtils.js is loaded for getBestLocationName
+(function ensureLocationUtilsLoaded() {
+  if (!window.getBestLocationName) {
+    var script = document.createElement('script');
+    script.src = 'js/locationUtils.js';
+    script.onload = function() {
+      console.log('locationUtils.js loaded');
+    };
+    document.head.appendChild(script);
+  }
+})();
+
 // List of Indian colleges for autocomplete
 const colleges = [
   "All", "IIT Bombay", "IIT Delhi", "IIT Kanpur", "IIT Kharagpur", "IIT Madras", "IIT Roorkee", "IIT Guwahati", "IIT Hyderabad", "IIT BHU", "IIT Dhanbad", "IIT Indore", "IIT Mandi", "IIT Ropar", "IIT Gandhinagar", "IIT Jodhpur", "IIT Patna", "IIT Palakkad", "IIT Tirupati", "IIT Bhilai", "IIT Goa", "IIT Jammu", "IIT Dharwad", "IIT Bhubaneswar", "IIT ISM Dhanbad", "IIT Varanasi", "IIT (ISM) Dhanbad", "IIT (BHU) Varanasi", "IIT (ISM)", "IIT (BHU)", "NIT Trichy", "NIT Surathkal", "NIT Warangal", "NIT Rourkela", "NIT Calicut", "NIT Kurukshetra", "NIT Durgapur", "NIT Jaipur", "NIT Allahabad", "NIT Nagpur", "NIT Silchar", "NIT Surat", "NIT Bhopal", "NIT Jalandhar", "NIT Patna", "NIT Raipur", "NIT Goa", "NIT Delhi", "NIT Meghalaya", "NIT Arunachal Pradesh", "NIT Agartala", "NIT Puducherry", "NIT Manipur", "NIT Mizoram", "NIT Sikkim", "NIT Hamirpur", "NIT Uttarakhand", "NIT Andhra Pradesh", "BITS Pilani", "BITS Goa", "BITS Hyderabad", "VIT Vellore", "VIT Chennai", "SRM Chennai", "SRM Delhi NCR", "SRM Amaravati",
@@ -32,22 +44,9 @@ let mapLocation = null;
 // Global variable to make the openMapModal function accessible
 window.openMapModal = null;
 
-// Ensure Select on Map button opens modal
-window.addEventListener('DOMContentLoaded', function() {
-    const selectOnMapBtn = document.getElementById('selectOnMapBtn');
-    if (selectOnMapBtn) {
-        selectOnMapBtn.onclick = function() {
-            if (typeof window.openMapModal === 'function') {
-                window.openMapModal();
-            } else {
-                // Wait and retry if map modal not ready yet
-                setTimeout(() => {
-                    if (typeof window.openMapModal === 'function') window.openMapModal();
-                }, 500);
-            }
-        };
-    }
-});
+// Removed redundant event listener for 'selectOnMapBtn' as no such static button exists in the HTML.
+// The Select on Map button is rendered dynamically in each form and event is bound after rendering.
+// See renderRegularProductForm and renderRoomForm for correct event binding.
 
 categorySelect.addEventListener('change', handleCategoryChange);
 sellForm.addEventListener('submit', handleSellSubmit);
@@ -149,7 +148,7 @@ function renderRegularProductForm() {
     <input type="file" id="images" name="images" accept="image/*" multiple required>
     <label for="description">Description</label>
     <textarea id="description" name="description" required maxlength="1000"></textarea>
-    <div class="location-btns">
+    <div class="location-btns" style="gap: 12px; display: flex; flex-wrap: wrap;">
       <button type="button" id="useCurrentLocation" class="btn-secondary">Use Current Location</button>
       <button type="button" id="selectOnMap" class="btn-secondary">Select on Map</button>
     </div>
@@ -222,7 +221,7 @@ function renderRoomForm() {
       <option value="nonveg">Non Veg</option>
       <option value="both">Both</option>
     </select>
-    <div class="location-btns">
+    <div class="location-btns" style="gap: 12px; display: flex; flex-wrap: wrap;">
       <button type="button" id="useCurrentLocation" class="btn-secondary">Current Location</button>
       <button type="button" id="selectOnMap" class="btn-secondary">Select on Map</button>
     </div>
@@ -258,39 +257,57 @@ function limitFiles(e, max) {
   }
 }
 
-async function getCurrentLocation() {
+async function getCurrentLocation(e) {
+  // Always use event.currentTarget for robustness
+  let btn = e && e.currentTarget ? e.currentTarget : (e && e.target ? e.target : this);
+  let form = btn.closest('form');
+  let locationInput = form ? form.querySelector('input[name="location"]') : document.getElementById('location');
+  // Remove any old status message
+  let oldMsgs = btn.parentNode.querySelectorAll('.location-status-msg');
+  oldMsgs.forEach(el => el.remove());
+  // Status message placement: near button
+  let statusMsg = document.createElement('div');
+  statusMsg.className = 'location-status-msg';
+  statusMsg.style = 'color:#c00;margin-top:8px;font-size:1rem;text-align:left;';
+  btn.parentNode.appendChild(statusMsg);
   if (!navigator.geolocation) {
-    alert('Geolocation is not supported by your browser.');
+    statusMsg.textContent = 'Geolocation is not supported by your browser.';
+    if (locationInput) locationInput.value = '';
     return;
   }
+  statusMsg.textContent = 'Fetching current location...';
+  console.log('Requesting geolocation...');
   navigator.geolocation.getCurrentPosition(
-    async (position) => {
+    (position) => {
       try {
         const lat = position.coords.latitude;
         const lon = position.coords.longitude;
-        // Reverse geocode using OpenStreetMap Nominatim
-        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
-        const data = await response.json();
-        let name = '';
-        if (data && data.address) {
-          name = window.getBestLocationName(data.address);
-        } else {
-          name = `Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}`;
-        }
-        // Store as stringified object with lat, lon, name
-        document.getElementById('location').value = JSON.stringify({
+        console.log('Got position:', lat, lon);
+        // Always use precise coordinates for the name
+        // Save coordinates in hidden input, but show only a green message
+        const name = `Lat: ${lat.toFixed(6)}, Lon: ${lon.toFixed(6)}`;
+        if (locationInput) locationInput.value = JSON.stringify({
           lat: lat,
           lon: lon,
           name: name
         });
-        alert('Location set: ' + name);
+        statusMsg.textContent = 'Location captured!';
+        statusMsg.style.color = '#090';
+        setTimeout(() => { statusMsg.textContent = ''; }, 3500);
       } catch (err) {
-        alert('Failed to get location name. Please try again.');
+        statusMsg.textContent = 'Failed to get location. Please try again.';
+        if (locationInput) locationInput.value = '';
+        console.error('Geolocation error:', err);
       }
     },
     (error) => {
-      alert('Unable to get location.');
-    }
+      let msg = 'Unable to get location.';
+      if (error && error.message) msg += ' ' + error.message;
+      statusMsg.textContent = msg;
+      if (locationInput) locationInput.value = '';
+      console.error('Geolocation error:', error);
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
   );
 }
 
@@ -467,6 +484,31 @@ function setupMapModal() {
   window.openMapModal = function() {
     console.log('Opening map modal');
     modal.style.display = 'block';
+    // Ensure modal covers the viewport as a true overlay
+    modal.style.position = 'fixed';
+    modal.style.left = '0';
+    modal.style.top = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
+    modal.style.background = 'rgba(0,0,0,0.55)';
+    modal.style.zIndex = '9999';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    // Style the inner modal-content as a centered dialog
+    var modalContent = modal.querySelector('.modal-content');
+    if(modalContent) {
+      modalContent.style.width = '350px';
+      modalContent.style.maxWidth = '95vw';
+      modalContent.style.margin = '0 auto';
+      modalContent.style.padding = '18px 10px 16px 10px';
+      modalContent.style.borderRadius = '13px';
+      modalContent.style.boxShadow = '0 8px 32px rgba(44,62,80,0.15)';
+      modalContent.style.background = '#fff';
+      modalContent.style.position = 'relative';
+      modalContent.style.zIndex = '10000';
+      modalContent.style.display = 'block';
+    }
     setTimeout(openMap, 300); // Delay to ensure modal is visible and container has size
   };
   

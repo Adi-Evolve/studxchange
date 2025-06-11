@@ -698,84 +698,83 @@
 
     <!-- Hero Section -->
     <div class="hero-section">
-      <div class="box">
-          <div class="box-content">
-             <a href="category.html?category=laptop" class="category-link" style="color: black;">
-  <h5>Laptop</h5>
-  <div class="box1-img" style="background-image: url('laptop.jpg');"></div>
-  <p>Explore</p>
-</a>
-
-          </div>
+      <div class="box" tabindex="0" role="button" data-category="laptop" aria-label="Laptop category">
+        <div class="box-content">
+          <h5>Laptop</h5>
+          <div class="box1-img" style="background-image: url('laptop.jpg');"></div>
+          <p>Explore</p>
+        </div>
       </div>
-      <!-- (Other category boxes remain unchanged) -->
-      <div class="box">
-          <div class="box-content">
-              <a href="category.html?category=notes" style="color: black;">
-                  <h5>Note</h5>
-                  <div class="box1-img" style="background-image: url('note.jpg');"></div>
-                  <p>Explore</p>
-              </a>
-          </div>
+      <div class="box" tabindex="0" role="button" data-category="notes" aria-label="Notes category">
+        <div class="box-content">
+          <h5>Note</h5>
+          <div class="box1-img" style="background-image: url('note.jpg');"></div>
+          <p>Explore</p>
+        </div>
       </div>
-      <div class="box">
-          <div class="box-content">
-               <a href="javascript:void(0)" class="category-link" data-href="category.html?category=project%20equipments" style="color: black;">
-                   <h5>Project Equipments</h5>
-                   <div class="box1-img" style="background-image: url('kit.jpg');"></div>
-                   <p>Explore</p>
-               </a>
-              
-          </div>
+      <div class="box" tabindex="0" role="button" data-category="project equipments" aria-label="Project Equipments category">
+        <div class="box-content">
+          <h5>Project Equipments</h5>
+          <div class="box1-img" style="background-image: url('kit.jpg');"></div>
+          <p>Explore</p>
+        </div>
       </div>
-      <div class="box">
-          <div class="box-content">
-               <a href="javascript:void(0)" class="category-link" data-href="category.html?category=books" style="color: black;">
-                   <h5>Books</h5>
-                   <div class="box1-img" style="background-image: url('Books.webp');"></div>
-                   <p>Explore</p>
-               </a>
-              
-          </div>
+      <div class="box" tabindex="0" role="button" data-category="books" aria-label="Books category">
+        <div class="box-content">
+          <h5>Books</h5>
+          <div class="box1-img" style="background-image: url('Books.webp');"></div>
+          <p>Explore</p>
+        </div>
       </div>
-      <div class="box">
-          <div class="box-content">
-               <a href="javascript:void(0)" class="category-link" data-href="category.html?category=rooms_hostels" style="color: black;">
-                   <h5>Rooms</h5>
-                   <div class="box1-img" style="background-image: url('rooms.jpg');"></div>
-                   <p>Explore</p>
-               </a>
-          </div>
+      <div class="box" tabindex="0" role="button" data-category="rooms_hostels" aria-label="Rooms category">
+        <div class="box-content">
+          <h5>Rooms</h5>
+          <div class="box1-img" style="background-image: url('rooms.jpg');"></div>
+          <p>Explore</p>
+        </div>
       </div>
-      <div class="box">
-          <div class="box-content">
-               <a href="javascript:void(0)" class="category-link" data-href="category.html?category=electronics" style="color: black;">
-                   <h5>Electronics</h5>
-                   <div class="box1-img" style="background-image: url('mobile.jpg');"></div>
-                   <p>Explore</p>
-               </a>
-          </div>
+      <div class="box" tabindex="0" role="button" data-category="electronics" aria-label="Electronics category">
+        <div class="box-content">
+          <h5>Electronics</h5>
+          <div class="box1-img" style="background-image: url('mobile.jpg');"></div>
+          <p>Explore</p>
+        </div>
       </div>
-      <div class="box">
-          <div class="box-content">
-               <a href="javascript:void(0)" class="category-link" data-href="category.html?category=hostel%20equipments" style="color: black;">
-                   <h5>Hostel Equipments</h5>
-                   <div class="box1-img" style="background-image: url('kettle.jpg');"></div>
-                   <p>Explore</p>
-               </a>
-              
-          </div>
+      <div class="box" tabindex="0" role="button" data-category="hostel equipments" aria-label="Hostel Equipments category">
+        <div class="box-content">
+          <h5>Hostel Equipments</h5>
+          <div class="box1-img" style="background-image: url('kettle.jpg');"></div>
+          <p>Explore</p>
+        </div>
       </div>
-      <div class="box">
-          <div class="box-content">
-               <a href="javascript:void(0)" class="category-link" data-href="category.html?category=other" style="color: black;">
-                   <h5>Other</h5>
-                   <div class="box1-img" style="background-image: url('Bag.webp');"></div>
-                   <p>Explore</p>
-               </a>
-          </div>
+      <div class="box" tabindex="0" role="button" data-category="other" aria-label="Other category">
+        <div class="box-content">
+          <h5>Other</h5>
+          <div class="box1-img" style="background-image: url('Bag.webp');"></div>
+          <p>Explore</p>
+        </div>
       </div>
-  </div>
+    </div>
+    <script>
+      // Make all .box elements in .hero-section clickable
+      document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.hero-section .box').forEach(box => {
+          box.addEventListener('click', function() {
+            const category = this.getAttribute('data-category');
+            if (category) {
+              window.location.href = `category.html?category=${encodeURIComponent(category)}`;
+            }
+          });
+          // Enable keyboard navigation (Enter/Space)
+          box.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              this.click();
+            }
+          });
+        });
+      });
+    </script>
 
     <section id="featuredProducts">
         <h2 style="text-align:center; color:#2a3d56; margin-bottom:30px;">Featured Products</h2>
