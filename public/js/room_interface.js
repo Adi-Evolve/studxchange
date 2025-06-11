@@ -276,17 +276,23 @@ async function fetchRoomReviews(roomId) {
     }
 }
 
-async function submitRoomReview(roomId, text, rating, user, userEmail) {
+async function submitRoomReview(roomId, text, rating) {
     // Simple localStorage fallback for demo; replace with Supabase insert for prod
     const key = `room_reviews_${roomId}`;
     try {
         const supabase = window.supabaseClient;
-        await supabase.from('room_reviews').insert([{ room_id: roomId, text, rating, user_name: user, user_email: userEmail }]);
+        let sender_id = null;
+        if (supabase && supabase.auth && supabase.auth.getUser) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user && user.id) sender_id = user.id;
+        }
+        if (!sender_id) throw new Error('Not logged in');
+        await supabase.from('room_reviews').insert([{ room_id: roomId, text, rating, sender_id }]);
     } catch {
         // fallback to localStorage
         let arr = [];
         try { arr = JSON.parse(localStorage.getItem(key)) || []; } catch {}
-        arr.unshift({ user, userEmail, text, rating });
+        arr.unshift({ user: 'Anonymous', text, rating });
         localStorage.setItem(key, JSON.stringify(arr));
     }
 }
@@ -327,13 +333,13 @@ function renderRoomMap(room) {
 
 
 async function fetchRoomReviews(roomId) {
-    // Simple localStorage fallback for demo; replace with Supabase table for prod
+    // Simple localStorage fallback for demo; replace with Supabase view for prod
     const key = `room_reviews_${roomId}`;
     try {
         const supabase = window.supabaseClient;
-        const { data, error } = await supabase.from('room_reviews').select('*').eq('room_id', roomId).order('created_at', { ascending: false });
+        const { data, error } = await supabase.from('room_review_with_user').select('*').eq('room_id', roomId).order('created_at', { ascending: false });
         if (error) throw error;
-        return data.map(r => ({ user: r.user_name, text: r.text }));
+        return data.map(r => ({ user: r.user_name, text: r.text, rating: r.rating }));
     } catch {
         // fallback to localStorage
         let arr = [];
