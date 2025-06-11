@@ -136,7 +136,7 @@ async function handleLocation() {
                 loc.name = 'Your Location';
             }
         } catch (error) {
-            console.error("Error getting location name:", error);
+            
             loc.name = 'Your Location';
         }
         
@@ -154,7 +154,7 @@ async function handleLocation() {
         
         return loc;
     } catch (error) {
-        console.error("Location error:", error);
+        
         alert("Location access denied");
         locationText.textContent = 'Get Location';
         locationButton.disabled = false;

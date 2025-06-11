@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
           featuredRow.innerHTML = all.map(renderFeaturedCard).join('');
           
       } catch (err) {
-          console.error('Error loading featured products:', err);
+          
           featuredRow.innerHTML = '<div style="color:#c00;padding:18px;">Failed to load featured products. Please try again later.</div>';
       }
   })();

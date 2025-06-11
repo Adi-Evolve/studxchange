@@ -1,28 +1,27 @@
-// sell.js - Handles dynamic sell form for StudXchange
-// Dependencies: db-config.js, env.js, style.css
+ sell.js - Handles dynamic sell form for StudXchange
+ Dependencies: db-config.js, env.js, style.css
 
-// Ensure locationUtils.js is loaded for getBestLocationName
+Ensure locationUtils.js is loaded for getBestLocationName
 (function ensureLocationUtilsLoaded() {
   if (!window.getBestLocationName) {
     var script = document.createElement('script');
     script.src = 'js/locationUtils.js';
     script.onload = function() {
-      console.log('locationUtils.js loaded');
     };
     document.head.appendChild(script);
   }
 })();
 
-// List of Indian colleges for autocomplete
+List of Indian colleges for autocomplete
 const colleges = [
   "All", "IIT Bombay", "IIT Delhi", "IIT Kanpur", "IIT Kharagpur", "IIT Madras", "IIT Roorkee", "IIT Guwahati", "IIT Hyderabad", "IIT BHU", "IIT Dhanbad", "IIT Indore", "IIT Mandi", "IIT Ropar", "IIT Gandhinagar", "IIT Jodhpur", "IIT Patna", "IIT Palakkad", "IIT Tirupati", "IIT Bhilai", "IIT Goa", "IIT Jammu", "IIT Dharwad", "IIT Bhubaneswar", "IIT ISM Dhanbad", "IIT Varanasi", "IIT (ISM) Dhanbad", "IIT (BHU) Varanasi", "IIT (ISM)", "IIT (BHU)", "NIT Trichy", "NIT Surathkal", "NIT Warangal", "NIT Rourkela", "NIT Calicut", "NIT Kurukshetra", "NIT Durgapur", "NIT Jaipur", "NIT Allahabad", "NIT Nagpur", "NIT Silchar", "NIT Surat", "NIT Bhopal", "NIT Jalandhar", "NIT Patna", "NIT Raipur", "NIT Goa", "NIT Delhi", "NIT Meghalaya", "NIT Arunachal Pradesh", "NIT Agartala", "NIT Puducherry", "NIT Manipur", "NIT Mizoram", "NIT Sikkim", "NIT Hamirpur", "NIT Uttarakhand", "NIT Andhra Pradesh", "BITS Pilani", "BITS Goa", "BITS Hyderabad", "VIT Vellore", "VIT Chennai", "SRM Chennai", "SRM Delhi NCR", "SRM Amaravati",
-  // Pune & Maharashtra Major Colleges
+   Pune & Maharashtra Major Colleges
   "COEP Pune", "COEP Technological University", "VIT Pune", "Vishwakarma Institute of Technology Pune", "MIT WPU Pune", "MIT World Peace University Pune", "Symbiosis Institute of Technology Pune", "Symbiosis International University Pune", "SPPU Pune", "Savitribai Phule Pune University", "DY Patil College Pune", "Dr. DY Patil Institute of Technology Pune", "SIT Pune", "Sinhgad Institute of Technology Pune", "Sinhgad College of Engineering Pune", "Bharati Vidyapeeth Pune", "Bharati Vidyapeeth College of Engineering Pune", "PICT Pune", "Pune Institute of Computer Technology", "VIIT Pune", "Vishwakarma Institute of Information Technology Pune", "PCCOE Pune", "Pimpri Chinchwad College of Engineering Pune", "JSPM Pune", "JSPM's Rajarshi Shahu College of Engineering Pune", "JSPM's Imperial College of Engineering Pune", "AIT Pune", "Army Institute of Technology Pune", "Cummins College Pune", "Cummins College of Engineering for Women Pune", "Modern College Pune", "Fergusson College Pune", "Nowrosjee Wadia College Pune", "MES Garware College Pune", "Indira College of Engineering Pune", "AISSMS Pune", "AISSMS College of Engineering Pune", "Marathwada Mitra Mandal's College of Engineering Pune", "Sinhgad Academy of Engineering Pune", "Sinhgad College of Architecture Pune", "DYP Akurdi Pune", "DYP Ambi Pune", "DYP Lohegaon Pune", "DY Patil Navi Mumbai", "DY Patil Kolhapur", "Walchand College of Engineering Sangli", "Government College of Engineering Karad", "Government College of Engineering Amravati", "VJTI Mumbai", "Veermata Jijabai Technological Institute Mumbai", "ICT Mumbai", "Institute of Chemical Technology Mumbai", "KJ Somaiya College Mumbai", "KJ Somaiya College of Engineering Mumbai", "Thadomal Shahani Engineering College Mumbai", "Fr. Conceicao Rodrigues College of Engineering Mumbai", "Sardar Patel College of Engineering Mumbai", "Terna Engineering College Navi Mumbai", "Other Maharashtra College",
-  // South & North India
+   South & North India
   "Manipal University", "Delhi University", "Mumbai University", "Jadavpur University", "Anna University", "Osmania University", "Jamia Millia Islamia", "JNU Delhi", "AMU Aligarh", "IIIT Hyderabad", "IIIT Delhi", "IIIT Bangalore", "IIIT Allahabad", "IIITDM Jabalpur", "IIITDM Kancheepuram", "IIIT Bhubaneswar", "IIIT Vadodara", "IIIT Kota", "IIIT Guwahati", "IIIT Lucknow", "IIIT Kalyani", "IIIT Una", "IIIT Sonepat", "IIIT Dharwad", "IIIT Tiruchirappalli", "IIIT Nagpur", "IIIT Pune", "IISc Bangalore", "IISER Pune", "IISER Kolkata", "IISER Mohali", "IISER Bhopal", "IISER Thiruvananthapuram", "IISER Tirupati", "IISER Berhampur", "IISER TVM", "IISER TVM", "Other"
 ];
 
-// Helper: Smart search for college names
+Helper: Smart search for college names
 function filterColleges(query) {
   if (!query) return colleges;
   query = query.toLowerCase();
@@ -34,49 +33,48 @@ function filterColleges(query) {
   );
 }
 
-// DOM Elements
+DOM Elements
 const categorySelect = document.getElementById('category');
 const dynamicFields = document.getElementById('dynamicSellFields');
 const sellForm = document.getElementById('sellForm');
 
 let currentLocation = null;
 let mapLocation = null;
-// Global variable to make the openMapModal function accessible
+Global variable to make the openMapModal function accessible
 window.openMapModal = null;
 
-// Removed redundant event listener for 'selectOnMapBtn' as no such static button exists in the HTML.
-// The Select on Map button is rendered dynamically in each form and event is bound after rendering.
-// See renderRegularProductForm and renderRoomForm for correct event binding.
+Removed redundant event listener for 'selectOnMapBtn' as no such static button exists in the HTML.
+The Select on Map button is rendered dynamically in each form and event is bound after rendering.
+See renderRegularProductForm and renderRoomForm for correct event binding.
 
 categorySelect.addEventListener('change', handleCategoryChange);
 sellForm.addEventListener('submit', handleSellSubmit);
 
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('DOMContentLoaded: Setting up sell page');
   let currentUser = null;
   try {
     currentUser = JSON.parse(localStorage.getItem('currentUser'));
   } catch {}
   if (!currentUser || !currentUser.id) {
-    // Try to get from Supabase session
+    Try to get from Supabase session
     const { data: { session } } = await window.supabaseClient.auth.getSession();
     if (session && session.user) {
-      // Set currentUser in localStorage for future checks
+      Set currentUser in localStorage for future checks
       currentUser = { id: session.user.id, email: session.user.email, ...session.user.user_metadata };
       localStorage.setItem('currentUser', JSON.stringify(currentUser));
     } else {
-      // Show dialog and prevent further actions
+      Show dialog and prevent further actions
       showLoginRequiredDialog();
       return;
     }
   }
-  // Setup map modal first so it's available when category changes
+  Setup map modal first so it's available when category changes
   setupMapModal();
   handleCategoryChange();
 });
 
 function showLoginRequiredDialog() {
-  // Create modal overlay
+  Create modal overlay
   const overlay = document.createElement('div');
   overlay.style.position = 'fixed';
   overlay.style.top = '0';
@@ -89,7 +87,7 @@ function showLoginRequiredDialog() {
   overlay.style.justifyContent = 'center';
   overlay.style.zIndex = '9999';
 
-  // Create dialog box
+  Create dialog box
   const dialog = document.createElement('div');
   dialog.style.background = '#fff';
   dialog.style.padding = '32px 24px';
@@ -120,7 +118,7 @@ function handleCategoryChange() {
 }
 
 function renderCollegeSelector(id = 'college', label = 'Select College') {
-  // Uses datalist for search
+  Uses datalist for search
   return `
     <label for="${id}">${label}</label>
     <input list="college-list" id="${id}" name="${id}" required autocomplete="off" placeholder="Type college name or short form...">
@@ -157,11 +155,9 @@ function renderRegularProductForm() {
   document.getElementById('useCurrentLocation').onclick = getCurrentLocation;
   const selectOnMapBtn = document.getElementById('selectOnMap');
   selectOnMapBtn.onclick = function() {
-    console.log('Select on Map button clicked');
     if (typeof window.openMapModal === 'function') {
       window.openMapModal();
     } else {
-      console.error('Map modal function not available');
       alert('Map feature is not ready yet. Please try again in a few seconds.');
     }
   };
@@ -258,14 +254,11 @@ function limitFiles(e, max) {
 }
 
 async function getCurrentLocation(e) {
-  // Always use event.currentTarget for robustness
   let btn = e && e.currentTarget ? e.currentTarget : (e && e.target ? e.target : this);
   let form = btn.closest('form');
   let locationInput = form ? form.querySelector('input[name="location"]') : document.getElementById('location');
-  // Remove any old status message
   let oldMsgs = btn.parentNode.querySelectorAll('.location-status-msg');
   oldMsgs.forEach(el => el.remove());
-  // Status message placement: near button
   let statusMsg = document.createElement('div');
   statusMsg.className = 'location-status-msg';
   statusMsg.style = 'color:#c00;margin-top:8px;font-size:1rem;text-align:left;';
@@ -276,15 +269,11 @@ async function getCurrentLocation(e) {
     return;
   }
   statusMsg.textContent = 'Fetching current location...';
-  console.log('Requesting geolocation...');
   navigator.geolocation.getCurrentPosition(
     (position) => {
       try {
         const lat = position.coords.latitude;
         const lon = position.coords.longitude;
-        console.log('Got position:', lat, lon);
-        // Always use precise coordinates for the name
-        // Save coordinates in hidden input, but show only a green message
         const name = `Lat: ${lat.toFixed(6)}, Lon: ${lon.toFixed(6)}`;
         if (locationInput) locationInput.value = JSON.stringify({
           lat: lat,
@@ -297,7 +286,6 @@ async function getCurrentLocation(e) {
       } catch (err) {
         statusMsg.textContent = 'Failed to get location. Please try again.';
         if (locationInput) locationInput.value = '';
-        console.error('Geolocation error:', err);
       }
     },
     (error) => {
@@ -305,15 +293,13 @@ async function getCurrentLocation(e) {
       if (error && error.message) msg += ' ' + error.message;
       statusMsg.textContent = msg;
       if (locationInput) locationInput.value = '';
-      console.error('Geolocation error:', error);
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
   );
 }
 
-// --- MAP MODAL WITH LEAFLET ---
+--- MAP MODAL WITH LEAFLET ---
 function setupMapModal() {
-  console.log('Setting up map modal');
   const modal = document.getElementById('sell-map-modal');
   const closeModal = document.getElementById('closeMapModal');
   const confirmBtn = document.getElementById('confirmMapLocation');
@@ -322,13 +308,11 @@ function setupMapModal() {
   let geocoder = null;
 
   if (!modal) {
-    console.error('Map modal not found in the DOM');
     return;
   }
   
-  // Load Leaflet CSS and JS if not already loaded
+  Load Leaflet CSS and JS if not already loaded
   if (!window.L) {
-    console.log('Loading Leaflet library');
     const leafletCSS = document.createElement('link');
     leafletCSS.rel = 'stylesheet';
     leafletCSS.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
@@ -350,12 +334,10 @@ function setupMapModal() {
   
   closeModal.onclick = function() { 
     modal.style.display = 'none'; 
-    console.log('Map modal closed');
   };
   
   confirmBtn.onclick = function() {
     if (mapLocation) {
-      // Always store as stringified object with only lat, lon, name
       document.getElementById('location').value = JSON.stringify({
         lat: mapLocation.lat,
         lon: mapLocation.lon,
@@ -363,36 +345,32 @@ function setupMapModal() {
       });
       modal.style.display = 'none';
       alert('Location set from map: ' + mapLocation.name);
-      console.log('Location confirmed:', mapLocation);
     } else {
       alert('Please select a location on the map.');
     }
   };
 
-  // --- Map Modal Logic ---
+  --- Map Modal Logic ---
   function openMap() {
-    console.log('Opening map');
-    // Make sure Leaflet is loaded
+    Make sure Leaflet is loaded
     if (!window.L) {
-      console.error('Leaflet not loaded yet');
       setTimeout(openMap, 500);
       return;
     }
     
-    // Remove any existing map instance to avoid blank map issues
+    Remove any existing map instance to avoid blank map issues
     if (leafletMap) {
       leafletMap.remove();
       leafletMap = null;
     }
     
     try {
-      console.log('Initializing Leaflet map');
-      leafletMap = L.map('mapContainer').setView([19.7515, 75.7139], 6); // Center on Maharashtra by default
+      leafletMap = L.map('mapContainer').setView([19.7515, 75.7139], 6);  Center on Maharashtra by default
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
+        attribution: ' OpenStreetMap contributors'
       }).addTo(leafletMap);
       
-      // Add geocoder if available
+      Add geocoder if available
       if (L.Control.Geocoder) {
         geocoder = L.Control.Geocoder.nominatim();
         L.Control.geocoder({
@@ -413,9 +391,8 @@ function setupMapModal() {
         .addTo(leafletMap);
       }
       
-      // Click handler for map
+      Click handler for map
       leafletMap.on('click', function(e) {
-        console.log('Map clicked at:', e.latlng);
         if (leafletMarker) leafletMap.removeLayer(leafletMarker);
         leafletMarker = L.marker(e.latlng).addTo(leafletMap);
         mapLocation = {
@@ -423,27 +400,24 @@ function setupMapModal() {
           lon: e.latlng.lng,
           name: `Lat: ${e.latlng.lat.toFixed(4)}, Lon: ${e.latlng.lng.toFixed(4)}`
         };
-        // Try reverse geocoding
+        Try reverse geocoding
         fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}`)
           .then(resp => resp.json())
           .then(data => {
             if (data && data.display_name) {
               mapLocation.name = data.display_name;
-              console.log('Reverse geocoded to:', data.display_name);
             }
           })
-          .catch(err => console.error('Reverse geocoding error:', err));
+          .catch(err => {});
       });
       
-      // --- Search bar logic ---
+      --- Search bar logic ---
       document.getElementById('mapSearchBtn').onclick = function() {
         const query = document.getElementById('mapSearchInput').value.trim();
         if (!query) return;
-        console.log('Searching for location:', query);
         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
           .then(resp => resp.json())
           .then(results => {
-            console.log('Search results:', results);
             if (results && results.length > 0) {
               const place = results[0];
               const latlng = [parseFloat(place.lat), parseFloat(place.lon)];
@@ -455,36 +429,29 @@ function setupMapModal() {
                 lon: latlng[1],
                 name: place.display_name
               };
-              console.log('Selected place:', place.display_name);
             } else {
               alert('Place not found. Try another search.');
             }
           })
           .catch(err => {
-            console.error('Error searching for place:', err);
             alert('Error searching for place.');
           });
       };
       
-      // Handle Enter key in search input
+      Handle Enter key in search input
       document.getElementById('mapSearchInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
           e.preventDefault();
           document.getElementById('mapSearchBtn').click();
         }
       });
-      
-      console.log('Map initialized successfully');
-    } catch (err) {
-      console.error('Error initializing map:', err);
-    }
+    } catch (err) {}
   }
 
-  // Define global openMapModal function
+  Define global openMapModal function
   window.openMapModal = function() {
-    console.log('Opening map modal');
     modal.style.display = 'block';
-    // Ensure modal covers the viewport as a true overlay
+    Ensure modal covers the viewport as a true overlay
     modal.style.position = 'fixed';
     modal.style.left = '0';
     modal.style.top = '0';
@@ -495,7 +462,7 @@ function setupMapModal() {
     modal.style.display = 'flex';
     modal.style.alignItems = 'center';
     modal.style.justifyContent = 'center';
-    // Style the inner modal-content as a centered dialog
+    Style the inner modal-content as a centered dialog
     var modalContent = modal.querySelector('.modal-content');
     if(modalContent) {
       modalContent.style.width = '350px';
@@ -509,17 +476,14 @@ function setupMapModal() {
       modalContent.style.zIndex = '10000';
       modalContent.style.display = 'block';
     }
-    setTimeout(openMap, 300); // Delay to ensure modal is visible and container has size
+    setTimeout(openMap, 300);  Delay to ensure modal is visible and container has size
   };
-  
-  console.log('Map modal setup complete');
 }
 
-// --- Robust imgbb Upload Function ---
+--- Robust imgbb Upload Function ---
 async function uploadImageToImgbb(file) {
-  // Fetch the imgbb API key from window.env (populated via server-side injection)
+  Fetch the imgbb API key from window.env (populated via server-side injection)
   const apiKey = window.env && window.env.IMGBB_API_KEY ? window.env.IMGBB_API_KEY : undefined;
-  console.log('[imgbb] Using API Key:', apiKey);
   if (!apiKey) {
     alert('imgbb API key is missing. Please set it in your environment/config.');
     throw new Error('imgbb API key missing');
@@ -536,41 +500,36 @@ async function uploadImageToImgbb(file) {
     try {
       data = await response.json();
     } catch (jsonErr) {
-      console.error('[imgbb] Failed to parse JSON:', jsonErr);
       throw new Error('imgbb upload failed: Invalid JSON response');
     }
     if (!response.ok) {
-      console.error('[imgbb] upload failed:', data);
       alert('Image upload failed: ' + (data.error?.message || response.statusText));
       throw new Error(data.error?.message || 'imgbb upload failed');
     }
     if (!data?.data?.url) {
-      console.error('[imgbb] No image URL returned:', data);
       alert('Image upload failed: No image URL returned');
       throw new Error('imgbb upload failed: No image URL returned');
     }
-    console.log('[imgbb] Image uploaded successfully:', data.data.url);
     return data.data.url;
   } catch (err) {
-    console.error('[imgbb] upload error:', err);
     alert('Image upload failed: ' + err.message);
     throw err;
   }
 }
 
-// --- Image and PDF Upload Helpers ---
+--- Image and PDF Upload Helpers ---
 async function uploadPdfToSupabase(file) {
-  // Uses window.supabaseClient from env.js setup
+  Uses window.supabaseClient from env.js setup
   const supabase = window.supabaseClient;
   if (!supabase) {
     alert('Supabase client is not initialized. Check your script order and config.');
     throw new Error('Supabase client not initialized');
   }
 
-  // Generate a unique filename
+  Generate a unique filename
   const fileName = `${Date.now()}_${file.name}`;
 
-  // Upload
+  Upload
   let uploadResponse;
   try {
     uploadResponse = await supabase.storage.from('product-pdfs').upload(fileName, file, {
@@ -580,29 +539,26 @@ async function uploadPdfToSupabase(file) {
   } catch (uploadErr) {
     throw new Error('PDF upload failed: ' + (uploadErr.message || uploadErr));
   }
-  console.log('[Supabase] upload response:', uploadResponse);
   const data = uploadResponse && uploadResponse.data;
   const error = uploadResponse && uploadResponse.error;
   if (error) throw new Error('PDF upload failed: ' + error.message);
   if (!data || !data.path) throw new Error('PDF upload failed: No data/path returned from Supabase.');
 
-  // Get public URL (handle all property names)
+  Get public URL (handle all property names)
   const publicUrlResult = supabase.storage.from('product-pdfs').getPublicUrl(data.path);
-  console.log('[Supabase] getPublicUrl result:', publicUrlResult);
 
-  // Try all possible property names
+  Try all possible property names
   let publicURL = publicUrlResult.data?.publicUrl || publicUrlResult.data?.publicURL;
   if (!publicURL && typeof publicUrlResult.data === 'string') publicURL = publicUrlResult.data;
 
-  if (!publicURL || typeof publicURL !== 'string' || !publicURL.startsWith('http')) {
+  if (!publicURL || typeof publicURL !== 'string' || !publicURL.startsWith('https:')) {
     throw new Error('PDF upload failed: No valid public URL returned. Check your Supabase bucket policy and public access settings.');
   }
 
   return publicURL;
 }
 
-
-// --- Form Submission ---
+--- Form Submission ---
 async function handleSellSubmit(e) {
   e.preventDefault();
   showLoading();
@@ -613,11 +569,11 @@ async function handleSellSubmit(e) {
   let pdfUrl = '';
   try {
     if (cat === 'rooms_hostels') {
-      // Room/Hostel listing
+      Room/Hostel listing
       payload = {
         college: formData.get('college'),
         roomName: formData.get('roomName'),
-        title: formData.get('roomName'), // Ensure title is set for DB
+        title: formData.get('roomName'),  Ensure title is set for DB
         roomType: formData.get('roomType'),
         fees: formData.get('fees'),
         feesIncludeMess: document.getElementById('feesIncludeMess').checked,
@@ -632,33 +588,19 @@ async function handleSellSubmit(e) {
         messType: formData.get('messType'),
         createdAt: new Date().toISOString()
       };
-      // --- LOCATION PATCH: always parse and store lat/lon/name ---
-      const locationStr = formData.get('location');
-      if (locationStr) {
-        try {
-          const locObj = JSON.parse(locationStr);
-          if (locObj.lat && locObj.lon) {
-            payload.location_lat = locObj.lat;
-            payload.location_lng = locObj.lon;
-            payload.location_name = locObj.name || '';
-          }
-        } catch (err) { /* Ignore location parse errors */ }
-      }
-      // Upload images
+      Upload images
       const files = formData.getAll('roomImages');
       for (const file of files) {
         if (file && file.size > 0) imageUrls.push(await uploadImageToImgbb(file));
       }
       payload.images = imageUrls;
-      // Attach seller_id from Supabase Auth (must match users table id)
+      Attach seller_id from Supabase Auth (must match users table id)
       let sellerId = null;
       try {
         const { data: { user } } = await window.supabaseClient.auth.getUser();
         if (user && user.id) {
           sellerId = user.id;
           payload.seller_id = sellerId;
-          console.log('[SELL DEBUG] Using seller_id:', sellerId);
-          // Ensure user exists in users table
           const upsertResult = await window.supabaseClient.from('users').upsert([
             {
               id: sellerId,
@@ -666,25 +608,9 @@ async function handleSellSubmit(e) {
               name: user.user_metadata?.name || ''
             }
           ], { onConflict: ['id'] });
-          console.log('[SELL DEBUG] Upsert result:', upsertResult);
-          if (upsertResult.error) {
-            hideLoading();
-            alert('Could not create user in users table: ' + upsertResult.error.message);
-            return;
-          }
-          // Optionally: confirm user exists by selecting
-          const { data: userRows, error: userSelectError } = await window.supabaseClient.from('users').select('id').eq('id', sellerId);
-          if (userSelectError || !userRows || userRows.length === 0) {
-            hideLoading();
-            alert('User does not exist in users table after upsert. Please contact support.');
-            return;
-          }
         }
-      } catch (err) {
-        console.error('[SELL DEBUG] Could not get Supabase Auth user:', err);
-      }
-      // Validate seller_id before insert
-      console.log('[SELL DEBUG] seller_id:', payload.seller_id, 'type:', typeof payload.seller_id);
+      } catch (err) {}
+      Validate seller_id before insert
       if (
         !payload.seller_id ||
         typeof payload.seller_id !== 'string' ||
@@ -696,8 +622,7 @@ async function handleSellSubmit(e) {
         alert('Invalid seller_id (must be a valid UUID from Supabase Auth, never 1 or a number). Please log out and log in again.');
         return;
       }
-      console.log('[SELL DEBUG] Payload to insert:', payload);
-      // Submit to backend
+      Submit to backend
       const supabase = window.supabaseClient;
       const { error: roomError } = await supabase
         .from('rooms')
@@ -707,25 +632,24 @@ async function handleSellSubmit(e) {
       sellForm.reset();
       handleCategoryChange();
     } else if (cat === 'notes') {
-      // Notes listing
+      Notes listing
       payload = {
         college: formData.get('college'),
         title: formData.get('title'),
         price: formData.get('price'),
         description: formData.get('description'),
       };
-      // Upload images
+      Upload images
       const imgFiles = formData.getAll('notesImages');
       for (const file of imgFiles) {
         if (file && file.size > 0) imageUrls.push(await uploadImageToImgbb(file));
       }
       payload.images = imageUrls;
-      // Attach seller_id from localStorage (assumes currentUser is stored as JSON with id)
+      Attach seller_id from localStorage (assumes currentUser is stored as JSON with id)
       try {
         const { data: { user } } = await window.supabaseClient.auth.getUser();
         if (user && user.id) {
           payload.seller_id = user.id;
-          console.log('[SELL DEBUG] Using seller_id:', user.id);
           const upsertResult = await window.supabaseClient.from('users').upsert([
             {
               id: user.id,
@@ -733,31 +657,24 @@ async function handleSellSubmit(e) {
               name: user.user_metadata?.name || ''
             }
           ], { onConflict: ['id'] });
-          console.log('[SELL DEBUG] Upsert result:', upsertResult);
         }
-      } catch (err) {
-        console.error('[SELL DEBUG] Could not get Supabase Auth user:', err);
-      }
-      console.log('[SELL DEBUG] Payload to insert:', payload);
-      // Upload PDF
+      } catch (err) {}
+      Upload PDF
       const pdfFile = formData.get('pdf');
       if (pdfFile && pdfFile.size > 0) {
         if (pdfFile.size > window.SUPABASE_MAX_FILE_SIZE) throw new Error('PDF exceeds 100MB limit');
         pdfUrl = await uploadPdfToSupabase(pdfFile);
-        // Ensure the pdfUrl is always set and valid
-        if (pdfUrl && typeof pdfUrl === 'string' && pdfUrl.startsWith('https://')) {
+        if (pdfUrl && typeof pdfUrl === 'string' && pdfUrl.startsWith('https:')) {
           payload.pdfUrl = pdfUrl;
         } else {
           alert('PDF upload failed: No valid URL returned');
           throw new Error('PDF upload failed: No valid URL returned');
         }
       } else {
-        // Defensive: Always set pdfUrl to empty string if no file uploaded
+        Defensive: Always set pdfUrl to empty string if no file uploaded
         payload.pdfUrl = '';
       }
-      // Submit to backend
-console.log('[SELL DEBUG] seller_id to be inserted:', payload.seller_id, 'type:', typeof payload.seller_id);
-      // Add notes to Supabase
+      Submit to backend
       const { error: notesError } = await supabase
         .from('notes')
         .insert([payload]);
@@ -766,7 +683,7 @@ console.log('[SELL DEBUG] seller_id to be inserted:', payload.seller_id, 'type:'
       sellForm.reset();
       handleCategoryChange();
     } else {
-      // Regular product
+      Regular product
       payload = {
         college: formData.get('college'),
         title: formData.get('title'),
@@ -776,18 +693,17 @@ console.log('[SELL DEBUG] seller_id to be inserted:', payload.seller_id, 'type:'
         description: formData.get('description'),
         location: formData.get('location') || ''
       };
-      // Upload images
+      Upload images
       const files = formData.getAll('images');
       for (const file of files) {
         if (file && file.size > 0) imageUrls.push(await uploadImageToImgbb(file));
       }
       payload.images = imageUrls;
-      // Attach seller_id from localStorage (assumes currentUser is stored as JSON with id)
+      Attach seller_id from localStorage (assumes currentUser is stored as JSON with id)
       try {
         const { data: { user } } = await window.supabaseClient.auth.getUser();
         if (user && user.id) {
           payload.seller_id = user.id;
-          console.log('[SELL DEBUG] Using seller_id:', user.id);
           const upsertResult = await window.supabaseClient.from('users').upsert([
             {
               id: user.id,
@@ -795,14 +711,10 @@ console.log('[SELL DEBUG] seller_id to be inserted:', payload.seller_id, 'type:'
               name: user.user_metadata?.name || ''
             }
           ], { onConflict: ['id'] });
-          console.log('[SELL DEBUG] Upsert result:', upsertResult);
         }
-      } catch (err) {
-        console.error('[SELL DEBUG] Could not get Supabase Auth user:', err);
-      }
-      console.log('[SELL DEBUG] Payload to insert:', payload);
-      // Submit to backend
-      // Add product to Supabase
+      } catch (err) {}
+      Submit to backend
+      const supabase = window.supabaseClient;
       const { error: productError } = await supabase
         .from('products')
         .insert([payload]);
@@ -813,7 +725,7 @@ console.log('[SELL DEBUG] seller_id to be inserted:', payload.seller_id, 'type:'
     }
   } catch (err) {
     alert('Error: ' + err.message);
-    console.error(err);
+    (err);
   } finally {
     hideLoading();
   }

@@ -3,46 +3,46 @@
 // CORS-safe version that only uses the Supabase client
 
 async function searchSupabase(query) {
-  console.log('Searching for:', query);
+  
   
   // Default empty results
   const emptyResults = { products: [], notes: [], rooms: [] };
   
   if (!query) {
-    console.error('Empty search query');
+    
     return emptyResults;
   }
   
   // Check if Supabase client is available
   if (!window.supabaseClient) {
-    console.error('Supabase client not initialized');
+    
     
     // Try to initialize it if env variables are available
     if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
       try {
-        console.log('Attempting to initialize Supabase client');
+        
         window.supabaseClient = window.supabase.createClient(
           window.SUPABASE_URL,
           window.SUPABASE_ANON_KEY
         );
       } catch (err) {
-        console.error('Failed to initialize Supabase client:', err);
+        
         return emptyResults;
       }
     } else {
-      console.error('Missing Supabase configuration');
+      
       return emptyResults;
     }
   }
   
   try {
-    console.log('Using Supabase client for search');
+    
     
     // Prepare search query with wildcards
     const likeQuery = `%${query}%`;
     
     // First, let's check the database schema to see what columns actually exist
-    console.log('Fetching database schema to determine correct column names');
+    
     
     // Simple approach: just get a few records from each table to see their structure
     const schemaCheck = await Promise.all([
@@ -52,9 +52,9 @@ async function searchSupabase(query) {
     ]);
     
     // Log the schema to see what columns we actually have
-    console.log('Products schema sample:', schemaCheck[0].data);
-    console.log('Notes schema sample:', schemaCheck[1].data);
-    console.log('Rooms schema sample:', schemaCheck[2].data);
+    
+    
+    
     
     // Determine which fields to search based on the actual schema
     // Default search fields if we can't determine the schema
@@ -81,7 +81,7 @@ async function searchSupabase(query) {
         .filter(key => !key.includes('id') && !key.includes('created') && !key.includes('updated'));
     }
     
-    console.log('Using search fields:', {
+    
       products: productSearchFields,
       notes: notesSearchFields,
       rooms: roomsSearchFields
@@ -136,17 +136,17 @@ async function searchSupabase(query) {
     ]);
 
     // If any result is an error, log it clearly
-    if (productsResult.error) console.error('Error fetching products:', productsResult.error);
-    if (notesResult.error) console.error('Error fetching notes:', notesResult.error);
-    if (roomsResult.error) console.error('Error fetching rooms:', roomsResult.error);
+    if (productsResult.error) 
+    if (notesResult.error) 
+    if (roomsResult.error) 
     if ((!productsResult.data || productsResult.data.length === 0) && (!notesResult.data || notesResult.data.length === 0) && (!roomsResult.data || roomsResult.data.length === 0)) {
-      console.warn('No results found for query:', query);
+      
     }
     
     // Handle any errors
-    if (productsResult.error) console.error('Error fetching products:', productsResult.error);
-    if (notesResult.error) console.error('Error fetching notes:', notesResult.error);
-    if (roomsResult.error) console.error('Error fetching rooms:', roomsResult.error);
+    if (productsResult.error) 
+    if (notesResult.error) 
+    if (roomsResult.error) 
     
     // Prepare results
     const results = {
@@ -155,11 +155,11 @@ async function searchSupabase(query) {
       rooms: roomsResult.data || []
     };
     
-    console.log('Search results:', results);
+    
     return results;
     
   } catch (err) {
-    console.error('Error during Supabase search:', err);
+    
     return emptyResults;
   }
 }

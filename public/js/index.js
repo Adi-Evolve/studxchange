@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     } catch (error) {
-        console.error('Error loading featured products:', error);
+        
         document.getElementById('featured-products').innerHTML = 
             '<p class="error">Failed to load featured products. Please try again later.</p>';
     }

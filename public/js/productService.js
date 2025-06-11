@@ -16,7 +16,7 @@ class ProductService {
             if (error) throw new Error('Failed to fetch products: ' + error.message);
             return products || [];
         } catch (error) {
-            console.error('Error fetching products:', error);
+            
             throw error;
         }
     }
@@ -34,7 +34,7 @@ class ProductService {
             if (error) throw new Error('Failed to fetch featured products: ' + error.message);
             return products || [];
         } catch (error) {
-            console.error('Error fetching featured products:', error);
+            
             throw error;
         }
     }

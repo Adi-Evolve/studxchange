@@ -119,12 +119,10 @@ async function renderRoom(room) {
 function renderRoomMap(room) {
     const mapDiv = document.getElementById('roomMap');
     if (!mapDiv) {
-        console.error('Map container #roomMap not found!');
         return;
     }
     // Ensure the map container is visible and has size
     if (mapDiv.offsetWidth === 0 || mapDiv.offsetHeight === 0) {
-        console.warn('Map container has zero size!');
     }
     // Parse location
     let loc = room.location;
@@ -157,7 +155,7 @@ function renderRoomMap(room) {
         });
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
-            attribution: '© OpenStreetMap'
+            attribution: ' OpenStreetMap'
         }).addTo(window.roomLeafletMap);
         window.roomLeafletMarker = L.marker([lat, lon]).addTo(window.roomLeafletMap);
     } else {
@@ -172,9 +170,7 @@ function renderRoomMap(room) {
     setTimeout(() => {
         window.roomLeafletMap.invalidateSize();
     }, 350);
-    console.log('Map rendered at', lat, lon);
 }
-
 
 
 // --- REVIEWS/COMMENTS ---
