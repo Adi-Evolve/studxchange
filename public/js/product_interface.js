@@ -32,6 +32,56 @@ function findItemById(data, id) {
     return null;
 }
 
+// Infinite scroll for similar products
+let similarProductsPage = 0;
+let similarProductsLoading = false;
+let similarProductsDone = false;
+let loadedSimilarProductIds = new Set();
+async function fetchSimilarProducts(item, page = 0, pageSize = 8) {
+    const supabase = window.supabaseClient;
+    if (!supabase) return [];
+    let query = supabase.from('products').select('*').neq('id', item.id);
+    if (item.college) query = query.eq('college', item.college);
+    const { data, error } = await query.range(page * pageSize, (page + 1) * pageSize - 1);
+    if (error || !data) return [];
+    return data;
+}
+async function loadMoreSimilarProducts(item) {
+    if (similarProductsLoading || similarProductsDone) return;
+    similarProductsLoading = true;
+    const products = await fetchSimilarProducts(item, similarProductsPage);
+    if (!products.length) {
+        similarProductsDone = true;
+        return;
+    }
+    const container = document.getElementById('similarProductsScroll');
+    products.forEach(prod => {
+        if (loadedSimilarProductIds.has(prod.id)) return;
+        loadedSimilarProductIds.add(prod.id);
+        const card = document.createElement('div');
+        card.className = 'similar-product-card';
+        card.innerHTML = `
+            <img src="${(prod.images && prod.images[0]) || prod.image || 'https://via.placeholder.com/120x120?text=No+Image'}" alt="Similar Product" />
+            <div class="similar-product-title">${prod.title || 'Untitled'}</div>
+            <div class="similar-product-price">₹${prod.price || 'N/A'}</div>
+            <a href="productinterface.html?id=${prod.id}" class="similar-product-link">View Details</a>
+        `;
+        container.appendChild(card);
+    });
+    similarProductsPage++;
+    similarProductsLoading = false;
+}
+function setupSimilarProductsInfiniteScroll(item) {
+    const container = document.getElementById('similarProductsScroll');
+    if (!container) return;
+    container.onscroll = function() {
+        if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 50) {
+            loadMoreSimilarProducts(item);
+        }
+    };
+    // Initial load
+    loadMoreSimilarProducts(item);
+}
 // Render product/room/note detail
 function renderDetail(item) {
     const container = document.getElementById('productDetailContainer');

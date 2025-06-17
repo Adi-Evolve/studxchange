@@ -15,22 +15,58 @@ async function fetchRoomById(roomId) {
     return data;
 }
 
-async function fetchSimilarRooms(room, limit = 6) {
+// Infinite scroll for similar rooms
+let similarRoomsPage = 0;
+let similarRoomsLoading = false;
+let similarRoomsDone = false;
+let loadedSimilarRoomIds = new Set();
+async function fetchSimilarRooms(room, page = 0, pageSize = 8) {
     const supabase = window.supabaseClient;
-    if (!supabase) throw new Error('Supabase client not initialized');
+    if (!supabase) return [];
     let query = supabase.from('rooms').select('*').neq('id', room.id);
     if (room.college) query = query.eq('college', room.college);
-    else if (room.location && typeof room.location === 'string') {
-        try {
-            const loc = JSON.parse(room.location);
-            if (loc && loc.name) query = query.ilike('location', `%${loc.name}%`);
-        } catch {}
-    }
-    const { data, error } = await query.limit(limit);
-    if (error) return [];
-    return data || [];
+    const { data, error } = await query.range(page * pageSize, (page + 1) * pageSize - 1);
+    if (error || !data) return [];
+    return data;
 }
-
+async function loadMoreSimilarRooms(room) {
+    if (similarRoomsLoading || similarRoomsDone) return;
+    similarRoomsLoading = true;
+    const rooms = await fetchSimilarRooms(room, similarRoomsPage);
+    if (!rooms.length) {
+        similarRoomsDone = true;
+        return;
+    }
+    const container = document.getElementById('similarRoomsScroll');
+    rooms.forEach(rm => {
+        if (loadedSimilarRoomIds.has(rm.id)) return;
+        loadedSimilarRoomIds.add(rm.id);
+        const card = document.createElement('div');
+        card.className = 'similar-product-card';
+        card.innerHTML = `
+            <img src="${(rm.images && rm.images[0]) || rm.image || 'https://via.placeholder.com/120x120?text=No+Image'}" alt="Similar Room" />
+            <div class="similar-product-title">${rm.title || rm.roomName || 'Untitled'}</div>
+            <div class="similar-product-price">₹${rm.price || rm.fees || 'N/A'}</div>
+            <a href="room_interface.html?id=${rm.id}" class="similar-product-link">View Details</a>
+        `;
+        container.appendChild(card);
+    });
+    similarRoomsPage++;
+    similarRoomsLoading = false;
+}
+function setupSimilarRoomsInfiniteScroll(room) {
+    const container = document.getElementById('similarRoomsScroll');
+    if (!container) return;
+    container.onscroll = function() {
+        if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 50) {
+            loadMoreSimilarRooms(room);
+        }
+    };
+    // Initial load
+    loadMoreSimilarRooms(room);
+}
+// Old function for reference
+//
 async function renderRoom(room) {
     const mainSection = document.getElementById('roomMainSection');
     if (!mainSection) return;
