@@ -874,6 +874,8 @@
 </style>
 </head>
 <body>
+    <!-- Also Check section -->
+    <div id="alsoCheckSection" class="container mb-3"></div>
     <header>
         <div class="navbar">
             <div class="navlogo">
@@ -1076,5 +1078,11 @@
         }
         renderNotes();
     </script>
+<script src="js/also_check.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    renderAlsoCheckSection('note', 'alsoCheckSection');
+});
+</script>
 </body>
 </html>

@@ -1,12 +1,13 @@
- sell.js - Handles dynamic sell form for StudXchange
- Dependencies: db-config.js, env.js, style.css
+// sell.js - Handles dynamic sell form for StudXchange
+// Dependencies: db-config.js, env.js, style.css
 
-Ensure locationUtils.js is loaded for getBestLocationName
+// Ensure locationUtils.js is loaded for getBestLocationName
 (function ensureLocationUtilsLoaded() {
   if (!window.getBestLocationName) {
     var script = document.createElement('script');
     script.src = 'js/locationUtils.js';
     script.onload = function() {
+      // Script loaded
     };
     document.head.appendChild(script);
   }
@@ -54,27 +55,31 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentUser = null;
   try {
     currentUser = JSON.parse(localStorage.getItem('currentUser'));
-  } catch {}
+  } catch (e) {
+    console.error('Error parsing user data:', e);
+  }
+  
   if (!currentUser || !currentUser.id) {
-    Try to get from Supabase session
+    // Try to get from Supabase session
     const { data: { session } } = await window.supabaseClient.auth.getSession();
     if (session && session.user) {
-      Set currentUser in localStorage for future checks
+      // Set currentUser in localStorage for future checks
       currentUser = { id: session.user.id, email: session.user.email, ...session.user.user_metadata };
       localStorage.setItem('currentUser', JSON.stringify(currentUser));
     } else {
-      Show dialog and prevent further actions
+      // Show dialog and prevent further actions
       showLoginRequiredDialog();
       return;
     }
   }
-  Setup map modal first so it's available when category changes
+  
+  // Setup map modal first so it's available when category changes
   setupMapModal();
   handleCategoryChange();
 });
 
 function showLoginRequiredDialog() {
-  Create modal overlay
+  // Create modal overlay
   const overlay = document.createElement('div');
   overlay.style.position = 'fixed';
   overlay.style.top = '0';
@@ -87,14 +92,17 @@ function showLoginRequiredDialog() {
   overlay.style.justifyContent = 'center';
   overlay.style.zIndex = '9999';
 
-  Create dialog box
+  // Create dialog box
   const dialog = document.createElement('div');
   dialog.style.background = '#fff';
   dialog.style.padding = '32px 24px';
   dialog.style.borderRadius = '12px';
   dialog.style.boxShadow = '0 4px 24px rgba(0,0,0,0.15)';
   dialog.style.textAlign = 'center';
-  dialog.innerHTML = `<div style="font-size:1.2rem;margin-bottom:12px;">You must be logged in to sell.</div><button id="closeLoginDialog" style="padding:8px 20px;background:#2a3d56;color:#fff;border:none;border-radius:6px;font-size:1rem;cursor:pointer;">Close</button>`;
+  dialog.innerHTML = `
+    <div style="font-size:1.2rem;margin-bottom:12px;">You must be logged in to sell.</div>
+    <button id="closeLoginDialog" style="padding:8px 20px;background:#2a3d56;color:#fff;border:none;border-radius:6px;font-size:1rem;cursor:pointer;">Close</button>
+  `;
 
   overlay.appendChild(dialog);
   document.body.appendChild(overlay);
@@ -300,8 +308,22 @@ async function getCurrentLocation(e) {
 
 --- MAP MODAL WITH LEAFLET ---
 function setupMapModal() {
+  // Initialize global variables
+  let leafletMap = null;
+  let leafletMarker = null;
+  let geocoder = null;
+  let mapLocation = null;
+
+  // Get modal elements
   const modal = document.getElementById('sell-map-modal');
   const closeModal = document.getElementById('closeMapModal');
+  const saveLocationBtn = document.getElementById('saveLocationBtn');
+  const mapContainer = document.getElementById('mapContainer');
+  
+  if (!modal || !closeModal || !saveLocationBtn || !mapContainer) {
+    console.error('Missing required modal elements');
+    return;
+  }
   const confirmBtn = document.getElementById('confirmMapLocation');
   let leafletMap = null;
   let leafletMarker = null;
@@ -350,34 +372,38 @@ function setupMapModal() {
     }
   };
 
-  --- Map Modal Logic ---
-  function openMap() {
-    Make sure Leaflet is loaded
+  // Map initialization function
+  function initializeMap() {
+    // Make sure Leaflet is loaded
     if (!window.L) {
-      setTimeout(openMap, 500);
-      return;
+      console.error('Leaflet not loaded');
+      return false;
     }
-    
-    Remove any existing map instance to avoid blank map issues
+
+    // Remove any existing map instance
     if (leafletMap) {
       leafletMap.remove();
       leafletMap = null;
     }
-    
+
     try {
-      leafletMap = L.map('mapContainer').setView([19.7515, 75.7139], 6);  Center on Maharashtra by default
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: ' OpenStreetMap contributors'
-      }).addTo(leafletMap);
+      // Initialize map centered on Maharashtra
+      leafletMap = L.map('mapContainer').setView([19.7515, 75.7139], 6);
       
-      Add geocoder if available
+      // Add OpenStreetMap tiles
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(leafletMap);
+
+      // Add geocoder control
       if (L.Control.Geocoder) {
         geocoder = L.Control.Geocoder.nominatim();
-        L.Control.geocoder({
+        const geocoderControl = L.Control.geocoder({
           geocoder: geocoder,
           defaultMarkGeocode: false
-        })
-        .on('markgeocode', function(e) {
+        });
+        
+        geocoderControl.on('markgeocode', function(e) {
           const latlng = e.geocode.center;
           if (leafletMarker) leafletMap.removeLayer(leafletMarker);
           leafletMarker = L.marker(latlng).addTo(leafletMap);
@@ -387,11 +413,21 @@ function setupMapModal() {
             name: e.geocode.name
           };
           leafletMap.setView(latlng, 15);
-        })
-        .addTo(leafletMap);
+        });
+        
+        geocoderControl.addTo(leafletMap);
+      } else {
+        console.warn('Geocoder control not available');
       }
+
+      return true;
+    } catch (error) {
+      console.error('Error initializing map:', error);
+      return false;
+    }
+  }
       
-      Click handler for map
+      // Click handler for map
       leafletMap.on('click', function(e) {
         if (leafletMarker) leafletMap.removeLayer(leafletMarker);
         leafletMarker = L.marker(e.latlng).addTo(leafletMap);
@@ -400,18 +436,20 @@ function setupMapModal() {
           lon: e.latlng.lng,
           name: `Lat: ${e.latlng.lat.toFixed(4)}, Lon: ${e.latlng.lng.toFixed(4)}`
         };
-        Try reverse geocoding
+        // Try reverse geocoding
         fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}`)
-          .then(resp => resp.json())
+          .then(response => response.json())
           .then(data => {
             if (data && data.display_name) {
               mapLocation.name = data.display_name;
             }
           })
-          .catch(err => {});
+          .catch(error => {
+            console.error('Error getting location:', error);
+          });
       });
       
-      --- Search bar logic ---
+      // --- Search bar logic ---
       document.getElementById('mapSearchBtn').onclick = function() {
         const query = document.getElementById('mapSearchInput').value.trim();
         if (!query) return;
@@ -448,10 +486,34 @@ function setupMapModal() {
     } catch (err) {}
   }
 
-  Define global openMapModal function
+  // Modal event handlers
+  closeModal.onclick = function() {
+    modal.style.display = 'none';
+    // Clean up map when closing
+    if (leafletMap) {
+      leafletMap.remove();
+      leafletMap = null;
+    }
+  };
+
+  saveLocationBtn.onclick = function() {
+    if (mapLocation) {
+      // Update location input fields
+      const locationInputs = document.querySelectorAll('.location-field');
+      locationInputs.forEach(input => {
+        input.value = `${mapLocation.lat},${mapLocation.lon}`;
+        input.dispatchEvent(new Event('change'));
+      });
+      
+      modal.style.display = 'none';
+    } else {
+      alert('Please select a location on the map.');
+    }
+  };
+
+  // Open modal function
   window.openMapModal = function() {
-    modal.style.display = 'block';
-    Ensure modal covers the viewport as a true overlay
+    modal.style.display = 'flex';
     modal.style.position = 'fixed';
     modal.style.left = '0';
     modal.style.top = '0';
@@ -459,15 +521,26 @@ function setupMapModal() {
     modal.style.height = '100vh';
     modal.style.background = 'rgba(0,0,0,0.55)';
     modal.style.zIndex = '9999';
-    modal.style.display = 'flex';
     modal.style.alignItems = 'center';
     modal.style.justifyContent = 'center';
-    Style the inner modal-content as a centered dialog
-    var modalContent = modal.querySelector('.modal-content');
-    if(modalContent) {
+
+    const modalContent = modal.querySelector('.modal-content');
+    if (modalContent) {
       modalContent.style.width = '350px';
       modalContent.style.maxWidth = '95vw';
       modalContent.style.margin = '0 auto';
+      modalContent.style.background = '#fff';
+      modalContent.style.borderRadius = '8px';
+      modalContent.style.padding = '20px';
+      modalContent.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+    }
+
+    // Initialize map when modal opens
+    if (!initializeMap()) {
+      alert('Error initializing map. Please try again.');
+      modal.style.display = 'none';
+    }
+  };
       modalContent.style.padding = '18px 10px 16px 10px';
       modalContent.style.borderRadius = '13px';
       modalContent.style.boxShadow = '0 8px 32px rgba(44,62,80,0.15)';

@@ -881,6 +881,8 @@ align-items: center;
 </style>
 </head>
 <body>
+    <!-- Also Check section -->
+    <div id="alsoCheckSection" class="container mb-3"></div>
     <header>
         <div class="navbar">
             <div class="navlogo">
@@ -1464,5 +1466,11 @@ function wireProductActionButtons(product) {
             }
         }
     </script>
+<script src="js/also_check.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    renderAlsoCheckSection('product', 'alsoCheckSection');
+});
+</script>
 </body>
 </html>

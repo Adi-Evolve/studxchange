@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - StudX</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #2c3e50;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f1c40f;
+            --light-bg: #f8f9fa;
+            --dark-bg: #343a40;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+        }
+
+        /* Login Styles */
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-logo h1 {
+            color: var(--primary-color);
+            font-size: 24px;
+        }
+
+        .login-form .form-control {
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .login-form .btn {
+            padding: 12px;
+            border-radius: 5px;
+            width: 100%;
+        }
+
+        .error-message {
+            color: var(--danger-color);
+            text-align: center;
+            margin-top: 10px;
+            display: none;
+        }
+
+        /* Main Content Styles */
+        #mainContent {
+            display: none;
+        }
+
+        .sidebar {
+            background-color: var(--dark-bg);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+            position: fixed;
+            width: 250px;
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            margin: 5px 0;
+            border-radius: 5px;
+            transition: all 0.3s;
+            padding: 10px 15px;
+        }
+
+        .sidebar .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .sidebar .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* Card Styles */
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 15px 20px;
+            font-weight: 600;
+        }
+
+        .stats-card {
+            background: linear-gradient(45deg, var(--primary-color), #2980b9);
+            color: white;
+        }
+
+        /* Table Styles */
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table th {
+            font-weight: 600;
+            background-color: var(--light-bg);
+            border-top: none;
+        }
+
+        .table td {
+            vertical-align: middle;
+        }
+
+        /* Search Bar Styles */
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-container input {
+            padding-left: 40px;
+            border-radius: 20px;
+            border: 1px solid #ddd;
+        }
+
+        .search-container i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+
+        /* Button Styles */
+        .btn {
+            border-radius: 5px;
+            padding: 8px 16px;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #357abd;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            border: none;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            border: none;
+        }
+
+        /* Image Styles */
+        .product-image {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+        /* Badge Styles */
+        .badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+
+        .sponsorship-badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+
+        .sponsorship-active {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .sponsorship-inactive {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        /* Modal Styles */
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        /* Form Styles */
+        .form-control {
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.25);
+        }
+
+        /* Sequence Management Styles */
+        .sequence-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .sequence-item {
+            background: var(--light-bg);
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sequence-item .drag-handle {
+            cursor: move;
+            color: #666;
+            margin-right: 10px;
+        }
+
+        /* User Management Styles */
+        .user-card {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 15px;
+        }
+
+        /* Settings Styles */
+        .settings-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .settings-section h3 {
+            margin-bottom: 20px;
+            color: var(--secondary-color);
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: relative;
+                min-height: auto;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Form -->
+    <div id="loginContainer" class="login-container">
+        <div class="login-logo">
+            <h1>StudX Admin</h1>
+        </div>
+        <form id="loginForm" class="login-form">
+            <div class="mb-3">
+                <input type="text" class="form-control" id="username" placeholder="Username" required>
+            </div>
+            <div class="mb-3">
+                <input type="password" class="form-control" id="password" placeholder="Password" required>
+            </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="rememberMe">
+                <label class="form-check-label" for="rememberMe">Remember me</label>
+            </div>
+            <button type="submit" class="btn btn-primary">Login</button>
+            <div id="errorMessage" class="error-message">Invalid username or password</div>
+        </form>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent" style="display: none;">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <h3 class="mb-4">StudX Admin</h3>
+            <nav class="nav flex-column">
+                <a href="#" class="nav-link active" data-page="dashboard">
+                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                </a>
+                <a href="#" class="nav-link" data-page="products">
+                    <i class="fas fa-box me-2"></i> Products
+                </a>
+                <a href="#" class="nav-link" data-page="sponsorships">
+                    <i class="fas fa-handshake me-2"></i> Sponsorships
+                </a>
+                <a href="#" class="nav-link" data-page="users">
+                    <i class="fas fa-users me-2"></i> Users
+                </a>
+                <a href="#" class="nav-link" data-page="settings">
+                    <i class="fas fa-cog me-2"></i> Settings
+                </a>
+                <a href="#" class="nav-link text-danger" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt me-2"></i> Logout
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <div id="content">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <script>
+        // ---- SUPABASE CONFIG ----
+        const SUPABASE_URL = 'https://lhiajxruajiarghlphkf.supabase.co'; // <-- updated URL
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxoaWFqeHJ1YWppYXJnaGxwaGtmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcxMzE3MzYsImV4cCI6MjA2MjcwNzczNn0.ZTBY4pOZwy4DzI6dADCBs8FIfV1VIeIh9k3TCxaMwOo'; // <-- updated anon key
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Fetch and render products
+        async function loadProducts() {
+            const productsList = document.getElementById('productsList');
+            if (!productsList) return;
+            productsList.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+            try {
+                const { data: products, error } = await supabase.from('products').select('*');
+                if (error) throw error;
+                if (!products.length) {
+                    productsList.innerHTML = '<div class="alert alert-info">No products found.</div>';
+                    return;
+                }
+                productsList.innerHTML = `<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Title</th><th>Price</th><th>Category</th><th>Description</th></tr></thead><tbody>${products.map(p => `<tr><td>${p.title||''}</td><td>${p.price||''}</td><td>${p.category||''}</td><td>${p.description||''}</td></tr>`).join('')}</tbody></table></div>`;
+            } catch(err) {
+                productsList.innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+            }
+        }
+
+        // ---- END SUPABASE ----
+
+        // Check login status
+        function checkLogin() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            const rememberMe = localStorage.getItem('rememberMe');
+            
+            if (isLoggedIn === 'true' && rememberMe === 'true') {
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                // Pre-fill username if remembered
+                const savedUsername = localStorage.getItem('savedUsername');
+                if (savedUsername) {
+                    document.getElementById('username').value = savedUsername;
+                }
+                // Load default page
+                loadPage('dashboard');
+            } else {
+                document.getElementById('loginContainer').style.display = 'block';
+                document.getElementById('mainContent').style.display = 'none';
+            }
+        }
+
+        // Handle login
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+
+            // Check credentials
+            if (username === 'adi_inamdar05' && password === 'Saimansays@1') {
+                localStorage.setItem('isLoggedIn', 'true');
+                if (rememberMe) {
+                    localStorage.setItem('rememberMe', 'true');
+                    localStorage.setItem('savedUsername', username);
+                } else {
+                    localStorage.setItem('rememberMe', 'false');
+                    localStorage.removeItem('savedUsername');
+                }
+                document.getElementById('errorMessage').style.display = 'none';
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                loadPage('dashboard');
+            } else {
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+        });
+        // Hide error message on input
+        document.getElementById('username').addEventListener('input', function(){
+            document.getElementById('errorMessage').style.display = 'none';
+        });
+        document.getElementById('password').addEventListener('input', function(){
+            document.getElementById('errorMessage').style.display = 'none';
+        });
+
+        // Handle logout
+        document.getElementById('logoutBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            localStorage.removeItem('isLoggedIn');
+            // Don't remove rememberMe and savedUsername on logout
+            checkLogin();
+        });
+
+        // Function to load page content
+        function loadPage(page) {
+            const contentDiv = document.getElementById('content');
+            // Update active link
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('data-page') === page) {
+                    link.classList.add('active');
+                }
+            });
+            if (page === 'dashboard') {
+                contentDiv.innerHTML = `<iframe src="/" style="width:100%;height:80vh;border:none;"></iframe>`;
+            } else if (page === 'products') {
+                // PRODUCTS PAGE
+                contentDiv.innerHTML = `<h2>Products</h2><div class='mb-3'><input type='text' id='productSearch' class='form-control' placeholder='Search products, rooms, notes...'></div><div id='productCards' class='row g-3'></div><div id='editProductModal'></div>`;
+                renderProductsPage();
+            } else if (page === 'sponsorships') {
+                // SPONSORSHIPS PAGE
+                contentDiv.innerHTML = `<h2>Sponsorships</h2><div class='mb-3'><input type='text' id='sponsorshipSearch' class='form-control' placeholder='Search items...'></div><div id='sponsorshipItems' class='row g-3'></div><div id='sponsorshipActions' class='mt-3'></div>`;
+                renderSponsorshipsPage();
+            } else if (page === 'users') {
+                // USERS PAGE
+                contentDiv.innerHTML = `<h2>Users</h2><div id='usersTable'></div>`;
+                renderUsersPage();
+            } else if (page === 'settings') {
+                contentDiv.innerHTML = '<h2>Settings</h2><p>Settings page coming soon.</p>';
+            } else {
+                contentDiv.innerHTML = `<div class="alert alert-danger">Unknown page: ${page}</div>`;
+            }
+        }
+
+        // PRODUCTS PAGE: Fetch all items and render as cards
+        async function renderProductsPage() {
+            let allItems = [];
+            try {
+                // Fetch from all three tables, handle missing tables gracefully
+                const [{ data: products = [] } = {}, { data: notes = [] } = {}, { data: rooms = [] } = {}] = await Promise.all([
+                    supabase.from('products').select('*').throwOnError(false),
+                    supabase.from('notes').select('*').throwOnError(false),
+                    supabase.from('rooms').select('*').throwOnError(false)
+                ]);
+                products.forEach(p => p._type = 'product');
+                notes.forEach(n => n._type = 'note');
+                rooms.forEach(r => r._type = 'room');
+                allItems = [...products, ...notes, ...rooms];
+            } catch (err) {
+                document.getElementById('productCards').innerHTML = `<div class='alert alert-danger'>Failed to load items: ${err.message}</div>`;
+                return;
+            }
+            function renderCards(filter = '') {
+                const filtered = allItems.filter(item => {
+                    const search = filter.toLowerCase();
+                    return Object.values(item).join(' ').toLowerCase().includes(search);
+                });
+                if (!filtered.length) {
+                    document.getElementById('productCards').innerHTML = `<div class='alert alert-info'>No items found.</div>`;
+                    return;
+                }
+                document.getElementById('productCards').innerHTML = filtered.map(item => {
+                    let imgSrc = item.image || item.image_url || item.img || (item.images && Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : '');
+                    let imgTag = imgSrc ? `<img src='${imgSrc}' alt='Image' class='card-img-top' style='object-fit:cover;height:180px;'>` : `<div style='height:180px;background:#eee;display:flex;align-items:center;justify-content:center;color:#aaa;'>No Image</div>`;
+                    return `
+                    <div class='col-md-4'>
+                        <div class='card product-card h-100' style='cursor:pointer;' data-id='${item.id}' data-type='${item._type}'>
+                            ${imgTag}
+                            <div class='card-body'>
+                                <h5 class='card-title'>${item.title || item.name || '(no title)'}</h5>
+                                <p class='card-text'><b>Type:</b> ${item._type}</p>
+                                <p class='card-text'><b>ID:</b> ${item.id}</p>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+                document.querySelectorAll('.product-card').forEach(card => {
+                    card.onclick = () => openEditProductModal(card.dataset.id, card.dataset.type);
+                });
+            }
+            renderCards();
+            // Fix: live search for products
+            const searchInput = document.getElementById('productSearch');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    renderCards(e.target.value);
+                });
+            }
+        }
+        // EDIT PRODUCT MODAL
+        async function openEditProductModal(id, type) {
+            // Support all three types
+            let table = type === 'note' ? 'notes' : (type === 'room' ? 'rooms' : 'products');
+            const { data, error } = await supabase.from(table).select('*').eq('id', id).single();
+            if (error) {
+                alert('Failed to load item: ' + error.message);
+                return;
+            }
+            let fields = Object.keys(data).filter(k => k !== 'id' && k !== '_type');
+            let formHtml = `<div class='modal fade show' tabindex='-1' style='display:block;background:rgba(0,0,0,0.5);'><div class='modal-dialog'><div class='modal-content'><div class='modal-header'><h5 class='modal-title'>Edit ${type.charAt(0).toUpperCase() + type.slice(1)}</h5><button type='button' class='btn-close' onclick='closeEditModal()'></button></div><div class='modal-body'><form id='editProductForm'>`;
+            fields.forEach(f => {
+                formHtml += `<div class='mb-3 row align-items-center'>
+        <label class='col-sm-4 col-form-label'>${f}</label>
+        <div class='col-sm-8'>
+            <input class='form-control' name='${f}' value='${data[f] || ''}'>
+        </div>
+    </div>`;
+            });
+            formHtml += `</form></div><div class='modal-footer'><button class='btn btn-secondary' onclick='closeEditModal()'>Cancel</button><button class='btn btn-primary' onclick='saveEditProduct(${id},"${type}")'>Save</button></div></div></div></div>`;
+            document.getElementById('editProductModal').innerHTML = formHtml;
+        }
+        function closeEditModal() {
+            document.getElementById('editProductModal').innerHTML = '';
+        }
+        async function saveEditProduct(id, type) {
+            let table = type === 'note' ? 'notes' : (type === 'room' ? 'rooms' : 'products');
+            const form = document.getElementById('editProductForm');
+            const updates = {};
+            Array.from(form.elements).forEach(el => {
+                if (el.name) updates[el.name] = el.value;
+            });
+            const { error } = await supabase.from(table).update(updates).eq('id', id);
+            if (error) {
+                alert('Failed to save: ' + error.message);
+                return;
+            }
+            closeEditModal();
+            renderProductsPage();
+        }
+        window.closeEditModal = closeEditModal;
+        window.saveEditProduct = saveEditProduct;
+        window.openEditProductModal = openEditProductModal;
+        // SPONSORSHIPS PAGE: Select items, set sequence, save to new table
+        async function renderSponsorshipsPage() {
+            let allItems = [];
+            try {
+                // Fetch from all three tables, handle missing tables gracefully
+                const [{ data: products = [] } = {}, { data: notes = [] } = {}, { data: rooms = [] } = {}] = await Promise.all([
+                    supabase.from('products').select('*').throwOnError(false),
+                    supabase.from('notes').select('*').throwOnError(false),
+                    supabase.from('rooms').select('*').throwOnError(false)
+                ]);
+                products.forEach(p => p._type = 'product');
+                notes.forEach(n => n._type = 'note');
+                rooms.forEach(r => r._type = 'room');
+                allItems = [...products, ...notes, ...rooms];
+                let sequence = [];
+                function renderSponsorshipCards(filter = '') {
+                    const search = filter.toLowerCase();
+                    const filteredSponsorshipItems = allItems.filter(item => Object.values(item).join(' ').toLowerCase().includes(search));
+                    document.getElementById('sponsorshipItems').innerHTML = filteredSponsorshipItems.map(item => {
+        let imgSrc = item.image || item.image_url || item.img || (item.images && Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : '');
+        let imgTag = imgSrc ? `<img src='${imgSrc}' alt='Image' class='card-img-top' style='object-fit:cover;height:140px;'>` : `<div style='height:140px;background:#eee;display:flex;align-items:center;justify-content:center;color:#aaa;'>No Image</div>`;
+        return `
+        <div class='col-md-3'>
+            <div class='card sponsorship-card h-100' style='cursor:pointer;${sequence.includes(item.id + '-' + item._type) ? 'border:2px solid #4a90e2;' : ''}' data-id='${item.id}' data-type='${item._type}'>
+                ${imgTag}
+                <div class='card-body'>
+                    <h5 class='card-title'>${item.title || item.name || '(no title)'}</h5>
+                    <p class='card-text'><b>Type:</b> ${item._type}</p>
+                    <p class='card-text'><b>ID:</b> ${item.id}</p>
+                    <p class='card-text'>${sequence.includes(item.id + '-' + item._type) ? 'Selected: ' + (sequence.indexOf(item.id + '-' + item._type) + 1) : ''}</p>
+                </div>
+            </div>
+        </div>
+        `;
+    }).join('');
+    // Fix: add click handlers for selection
+    document.querySelectorAll('.sponsorship-card').forEach(card => {
+        card.onclick = () => {
+            const key = card.dataset.id + '-' + card.dataset.type;
+            const idx = sequence.indexOf(key);
+            if (idx === -1) {
+                if (sequence.length < 20) sequence.push(key);
+            } else {
+                sequence.splice(idx, 1);
+            }
+            renderSponsorshipCards(document.getElementById('sponsorshipSearch')?.value || '');
+            renderSponsorshipActions();
+        };
+    });
+                }
+                function renderSponsorshipActions() {
+                    const actionsDiv = document.getElementById('sponsorshipActions');
+                    actionsDiv.innerHTML = `<button class='btn btn-primary' id='saveSequenceBtn'>Save Sequence (${sequence.length}/20)</button>
+                    <button class='btn btn-outline-secondary ms-2' id='showSequenceBtn'>Show Current Sequence</button>
+                    <div id='currentSequenceList' class='mt-3'></div>`;
+                    document.getElementById('saveSequenceBtn').onclick = async () => {
+    if (sequence.length < 1) {
+        alert('Please select at least 1 item before saving the sequence.');
+        return;
+    }
+    if (sequence.length > 20) {
+        alert('You can save a maximum of 20 items in the sequence.');
+        return;
+    }
+    const rows = sequence.map((key, idx) => {
+    const lastDash = key.lastIndexOf('-');
+    const item_id = key.substring(0, lastDash);
+    const item_type = key.substring(lastDash + 1);
+    return {
+        slot: idx + 1,
+        item_id,
+        item_type,
+        created_at: new Date().toISOString()
+    };
+});
+    const { error } = await supabase.from('sponsorship_sequences').insert(rows);
+    if (error) {
+        alert('Failed to save sequence: ' + error.message);
+        return;
+    }
+    alert('Sequence saved!');
+    sequence = [];
+    renderSponsorshipCards();
+    renderSponsorshipActions();
+};
+                    document.getElementById('showSequenceBtn').onclick = fetchAndShowCurrentSponsorshipSequence;
+                }
+                renderSponsorshipCards();
+                // Fix: live search for sponsorships
+                const searchInput = document.getElementById('sponsorshipSearch');
+                if (searchInput) {
+                    searchInput.addEventListener('input', (e) => {
+                        renderSponsorshipCards(e.target.value);
+                    });
+                }
+                renderSponsorshipActions();
+            } catch (err) {
+                document.getElementById('sponsorshipItems').innerHTML = `<div class='alert alert-danger'>Failed to load items: ${err.message}</div>`;
+                return;
+            }
+        }
+
+        // Fetch and display the latest sponsorship sequence in order
+        async function fetchAndShowCurrentSponsorshipSequence() {
+    const { data: rows, error } = await supabase
+        .from('sponsorship_sequences')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .order('slot', { ascending: true });
+    if (error) {
+        document.getElementById('currentSequenceList').innerHTML = `<div class='alert alert-danger'>Failed to fetch sequence: ${error.message}</div>`;
+        return;
+    }
+    if (!rows || rows.length === 0) {
+        document.getElementById('currentSequenceList').innerHTML = `<div class='alert alert-info'>No saved sequence found.</div>`;
+        return;
+    }
+    // Group by created_at timestamp (to the second)
+    const grouped = {};
+    rows.forEach(r => {
+        const ts = new Date(r.created_at).toISOString().slice(0,19);
+        if (!grouped[ts]) grouped[ts] = [];
+        grouped[ts].push(r);
+    });
+    // Pick the latest group with 10 slots
+    let latest = Object.values(grouped).find(g => g.length === 10) || [];
+    if (latest.length !== 10) {
+        // fallback: take first 10 by created_at
+        latest = rows.slice(0, 10);
+    }
+    // Order by slot
+    latest.sort((a,b) => a.slot - b.slot);
+    // Render readable list
+    if (!latest.length) {
+        document.getElementById('currentSequenceList').innerHTML = `<div class='alert alert-info'>No complete sequence found.</div>`;
+        return;
+    }
+    let html = `<ol class='list-group list-group-numbered'>`;
+    for (const row of latest) {
+        html += `<li class='list-group-item'>Slot ${row.slot}: <b>${row.item_id}</b> <span class='badge bg-secondary'>${row.item_type}</span></li>`;
+    }
+    html += `</ol>`;
+    document.getElementById('currentSequenceList').innerHTML = html;
+}
+        // USERS PAGE: Fetch all users from users table
+        async function renderUsersPage() {
+            try {
+                const { data: users = [], error } = await supabase.from('users').select('*');
+                if (error) throw error;
+                if (!users.length) {
+                    document.getElementById('usersTable').innerHTML = `<div class='alert alert-info'>No users found.</div>`;
+                    return;
+                }
+                document.getElementById('usersTable').innerHTML = `<div class='table-responsive'><table class='table table-striped'><thead><tr>${Object.keys(users[0]).map(k => `<th>${k}</th>`).join('')}</tr></thead><tbody>${users.map(u => `<tr>${Object.values(u).map(v => `<td>${v}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+            } catch (err) {
+                document.getElementById('usersTable').innerHTML = `<div class='alert alert-danger'>Failed to load users: ${err.message}</div>`;
+            }
+        }
+
+        // Handle navigation
+        document.querySelectorAll('.nav-link[data-page]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = this.getAttribute('data-page');
+                loadPage(page);
+            });
+        });
+
+        // Call checkLogin on page load
+        window.addEventListener('DOMContentLoaded', checkLogin);
+    </script>
+</body>
+</html>

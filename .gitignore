@@ -16,6 +16,7 @@ jspm_packages/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.example
 
 # Build outputs
 dist/
@@ -32,3 +33,4 @@ out/
 .DS_Store
 Thumbs.db 
 .qodo
+

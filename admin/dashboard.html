@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - StudX Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="../style.css" rel="stylesheet">
+    <style>
+        .stats-card {
+            background: linear-gradient(45deg, var(--primary-color), #2980b9);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.2s;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .recent-activity {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .activity-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
+        .activity-icon.product { background: #e3f2fd; color: #1976d2; }
+        .activity-icon.user { background: #e8f5e9; color: #2e7d32; }
+        .activity-icon.sponsorship { background: #fff3e0; color: #f57c00; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Stats Cards -->
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h5>Total Products</h5>
+                    <h2 id="totalProducts">0</h2>
+                    <p class="mb-0"><i class="fas fa-arrow-up"></i> <span id="productGrowth">0%</span> this month</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h5>Active Sponsorships</h5>
+                    <h2 id="activeSponsorships">0</h2>
+                    <p class="mb-0"><i class="fas fa-arrow-up"></i> <span id="sponsorshipGrowth">0%</span> this month</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h5>Total Users</h5>
+                    <h2 id="totalUsers">0</h2>
+                    <p class="mb-0"><i class="fas fa-arrow-up"></i> <span id="userGrowth">0%</span> this month</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h5>Revenue</h5>
+                    <h2 id="totalRevenue">$0</h2>
+                    <p class="mb-0"><i class="fas fa-arrow-up"></i> <span id="revenueGrowth">0%</span> this month</p>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="col-md-8">
+                <div class="chart-container">
+                    <h4>Revenue Overview</h4>
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="chart-container">
+                    <h4>User Distribution</h4>
+                    <canvas id="userDistributionChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="col-md-12">
+                <div class="recent-activity">
+                    <h4>Recent Activity</h4>
+                    <div id="activityList">
+                        <!-- Activity items will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Initialize Supabase client
+        const supabaseUrl = 'https://lhiajxruajiarghlphkf.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxoaWFqeHJ1YWppYXJnaGxwaGtmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcxMzE3MzYsImV4cCI6MjA2MjcwNzczNn0.ZTBY4pOZwy4DzI6dADCBs8FIfV1VIeIh9k3TCxaMwOo';
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                // Fetch all necessary data
+                const [products, sponsorships, users, revenue] = await Promise.all([
+                    supabase.from('products').select('*'),
+                    supabase.from('sponsorships').select('*'),
+                    supabase.from('users').select('*'),
+                    supabase.from('transactions').select('*')
+                ]);
+
+                // Update stats
+                updateStats(products.data, sponsorships.data, users.data, revenue.data);
+                
+                // Initialize charts
+                initializeCharts(products.data, sponsorships.data, users.data, revenue.data);
+                
+                // Load recent activity
+                loadRecentActivity();
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+
+        // Update statistics
+        function updateStats(products, sponsorships, users, revenue) {
+            document.getElementById('totalProducts').textContent = products.length;
+            document.getElementById('activeSponsorships').textContent = 
+                sponsorships.filter(s => s.status === 'active').length;
+            document.getElementById('totalUsers').textContent = users.length;
+            
+            const totalRevenue = revenue.reduce((sum, t) => sum + t.amount, 0);
+            document.getElementById('totalRevenue').textContent = `$${totalRevenue.toFixed(2)}`;
+
+            // Calculate growth percentages (mock data for now)
+            document.getElementById('productGrowth').textContent = '12%';
+            document.getElementById('sponsorshipGrowth').textContent = '8%';
+            document.getElementById('userGrowth').textContent = '15%';
+            document.getElementById('revenueGrowth').textContent = '20%';
+        }
+
+        // Initialize charts
+        function initializeCharts(products, sponsorships, users, revenue) {
+            // Revenue Chart
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Revenue',
+                        data: [1200, 1900, 1500, 2100, 1800, 2400],
+                        borderColor: '#4a90e2',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // User Distribution Chart
+            const userCtx = document.getElementById('userDistributionChart').getContext('2d');
+            new Chart(userCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Students', 'Sellers', 'Admins'],
+                    datasets: [{
+                        data: [65, 25, 10],
+                        backgroundColor: ['#4a90e2', '#2ecc71', '#e74c3c']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        // Load recent activity
+        async function loadRecentActivity() {
+            try {
+                const { data: activities, error } = await supabase
+                    .from('activity_log')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+
+                if (error) throw error;
+
+                const activityList = document.getElementById('activityList');
+                activityList.innerHTML = activities.map(activity => `
+                    <div class="activity-item d-flex align-items-center">
+                        <div class="activity-icon ${activity.type}">
+                            <i class="fas fa-${getActivityIcon(activity.type)}"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">${activity.description}</h6>
+                            <small class="text-muted">${new Date(activity.created_at).toLocaleString()}</small>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading recent activity:', error);
+            }
+        }
+
+        // Helper function to get activity icon
+        function getActivityIcon(type) {
+            switch (type) {
+                case 'product': return 'box';
+                case 'user': return 'user';
+                case 'sponsorship': return 'handshake';
+                default: return 'circle';
+            }
+        }
+
+        // Load data when page loads
+        loadDashboardData();
+    </script>
+</body>
+</html> 

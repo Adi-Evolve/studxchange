@@ -412,6 +412,20 @@ function initModels() {
 }
 
 // API Routes
+// PRIVATE: Secret admin page route (do not share this URL)
+// Basic HTTP auth for admin dashboard
+app.get('/super-secret-admin', (req, res) => {
+  const auth = req.headers.authorization;
+  const basic = (process.env.ADMIN_DASH_USER || 'studxadmin') + ':' + (process.env.ADMIN_DASH_PASS || 'Studx$SuperSecret');
+  const expected = 'Basic ' + Buffer.from(basic).toString('base64');
+  if (!auth || auth !== expected) {
+    res.set('WWW-Authenticate', 'Basic realm="StudX Admin"');
+    return res.status(401).send('Unauthorized');
+  }
+  const path = require('path');
+  res.sendFile(path.join(__dirname, 'adi.html'));
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   const healthData = {

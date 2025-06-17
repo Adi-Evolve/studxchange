@@ -785,6 +785,8 @@
 </style>
 </head>
 <body>
+    <!-- Also Check section -->
+    <div id="alsoCheckSection" class="container mb-3"></div>
     <header>
         <div class="navbar">
             <div class="navlogo">
@@ -918,5 +920,11 @@
     <script src="js/db-config.js"></script>
     <script src="js/navbar.js"></script>
     <script src="js/room_interface.js"></script>
+<script src="js/also_check.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    renderAlsoCheckSection('room', 'alsoCheckSection');
+});
+</script>
 </body>
 </html>
