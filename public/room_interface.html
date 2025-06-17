@@ -783,9 +783,13 @@
     }
 }
 </style>
+<style>
+#alsoCheckSection { margin: 0 !important; padding: 0 !important; min-height: 0 !important; }
+</style>
 </head>
 <body>
-    <!-- Also Check section -->
+<!-- You Might Like This section -->
+<!-- Also Check section -->
     <div id="alsoCheckSection" class="container mb-3"></div>
     <header>
         <div class="navbar">
@@ -910,6 +914,7 @@
   </div>
 </div>
 <div id="alsoCheckSection"></div>
+<div id="alsoYouMightLikeSection" class="container mb-3"></div>
 <section class="similar-products-section">
     <h2 style="margin: 32px 0 16px 24px;">Similar Rooms</h2>
     <div id="similarRoomsScroll" class="similar-products-scroll"></div>
@@ -927,5 +932,7 @@ document.addEventListener('DOMContentLoaded', function() {
     renderAlsoCheckSection('room', 'alsoCheckSection');
 });
 </script>
+<script src="js/also_check.js"></script>
+<script>renderAlsoYouMightLikeSlider();</script>
 </body>
 </html>

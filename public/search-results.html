@@ -25,7 +25,7 @@
     <!-- Load database config and search functionality -->
     <script src="js/db-config.js"></script>
     <script src="js/searchSupabase.js"></script>
-    <script type="module" src="js/cardTemplates.js"></script>
+    <script src="js/cardTemplates.js"></script>
     <style>
         /* Search Results Page Specific Styles */
         .results-section {
@@ -295,10 +295,9 @@
         <div id="resultsArea"></div>
     </div>
 </main>
-    <script type="module">
-    import { renderProductCard, renderNoteCard, renderRoomCard } from './js/cardTemplates.js';
-    
-    // Autofill search input from query param
+    <script>
+
+// Autofill search input from query param
     const params = new URLSearchParams(window.location.search);
     const query = params.get('query') || '';
     const category = params.get('category') || 'all';
@@ -355,7 +354,7 @@
         
         try {
             console.log('Performing search for:', query, 'in category:', category);
-            const results = await window.searchSupabase(query);
+            const results = await window.searchSupabase(query, category);
             loading.style.display = 'none';
             let hasResults = false;
             
@@ -381,8 +380,15 @@
             }
             
             if (!hasResults) {
-                console.log('No results found');
-                resultsArea.innerHTML = `<div class='error-message'>No results found for "${query}".</div>`;
+                console.log('No results found. Raw results:', results);
+                resultsArea.innerHTML = `<div class='error-message'>No results found for "${query}".<br>
+                <ul style='margin-top:10px;text-align:left;'>
+                  <li>Try different or fewer keywords</li>
+                  <li>Check spelling</li>
+                  <li>Try searching for a single word (e.g. 'hp', 'laptop', 'i5')</li>
+                </ul>
+                <details style='margin-top:10px;'><summary>Debug: Raw Results</summary><pre style='font-size:0.9em;background:#f7f7f7;padding:8px;border-radius:6px;'>" + JSON.stringify(results, null, 2) + "</pre></details>
+                </div>`;
             }
         } catch (err) {
             console.error('Error during search:', err);

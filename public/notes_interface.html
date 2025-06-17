@@ -872,9 +872,13 @@
     }
 }
 </style>
+<style>
+#alsoCheckSection { margin: 0 !important; padding: 0 !important; min-height: 0 !important; }
+</style>
 </head>
 <body>
-    <!-- Also Check section -->
+<!-- You Might Like This section -->
+<!-- Also Check section -->
     <div id="alsoCheckSection" class="container mb-3"></div>
     <header>
         <div class="navbar">
@@ -940,7 +944,8 @@
         <!-- Notes details will be loaded here -->
     </section>
     <div id="alsoCheckSection"></div>
-    <section class="similar-notes-section">
+    <div id="alsoYouMightLikeSection" class="container mb-3"></div>
+<section class="similar-notes-section">
         <h2 style="margin: 32px 0 16px 24px;">Similar Notes</h2>
         <div id="similarNotes" class="similar-notes-scroll"></div>
     </section>
@@ -1087,5 +1092,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupSimilarNotesInfiniteScroll(window.currentNotes);
 });
 </script>
+<script src="js/also_check.js"></script>
+<script>renderAlsoYouMightLikeSlider();</script>
 </body>
 </html>

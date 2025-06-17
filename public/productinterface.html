@@ -879,6 +879,9 @@ align-items: center;
     }
 }
 </style>
+<style>
+#alsoCheckSection { margin: 0 !important; padding: 0 !important; min-height: 0 !important; }
+</style>
 </head>
 <body>
     <!-- Also Check section -->
@@ -946,14 +949,20 @@ align-items: center;
     <section class="product-main-section" id="productSection">
         <!-- Product details will be loaded here -->
     </section>
-    <div id="alsoCheckSection"></div>
+    <div id="alsoYouMightLikeSection"></div>
     <section class="similar-products-section">
-        <h2 style="margin: 32px 0 16px 24px;">Similar Products</h2>
-        <div id="similarProductsScroll" class="similar-products-scroll"></div>
+        <h3 style="margin:32px 0 16px 24px;">Similar Products</h3>
+        <div class="similar-products-scroll" id="similarProducts" style="display: flex; flex-direction: column; overflow-y: auto; max-height: 420px; min-height: 120px; gap: 18px; padding: 12px 24px 18px 24px;"></div>
     </section>
     <script src="env.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
     <script src="js/db-config.js"></script>
+    <script src="js/also_check.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        renderAlsoYouMightLikeSlider('product', 'alsoYouMightLikeSection');
+    });
+    </script>
     <!-- All custom scripts must come after Supabase CDN -->
     <script>
     if (!window.supabaseClient) {
@@ -1468,8 +1477,10 @@ function wireProductActionButtons(product) {
         }
     </script>
 <script src="js/also_check.js"></script>
+<script src="js/product_interface_similar.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    renderAlsoYouMightLikeSlider('product', 'alsoYouMightLikeSection');
     renderAlsoCheckSection('product', 'alsoCheckSection');
 });
 </script>
