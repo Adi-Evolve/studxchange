@@ -131,12 +131,17 @@ async function connectToDatabase() {
   
   // If the connection is already established, recent, and in a good state, reuse it
   if (cachedDb && mongoose.connection.readyState === 1 && !connectionExpired) {
-    console.log('Using cached database connection');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Using cached database connection');
+    }
     return cachedDb;
   }
   
   // If connection exists but is expired or in a bad state, force a reconnection
   if (mongoose.connection.readyState !== 0) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Closing existing mongoose connection (expired or bad state)');
+    }
     console.log('Closing existing mongoose connection (expired or bad state)');
     try {
       await mongoose.connection.close();
@@ -440,7 +445,7 @@ app.get('/api/health', (req, res) => {
     memory: process.memoryUsage()
   };
   
-  console.log('Health check:', healthData);
+  
   res.json(healthData);
 });
 

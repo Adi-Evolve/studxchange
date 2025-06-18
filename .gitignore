@@ -19,6 +19,9 @@ jspm_packages/
 .env.example
 
 # Build outputs
+
+# Admin page (keep private)
+adi.html
 dist/
 build/
 out/

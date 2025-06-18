@@ -9,7 +9,7 @@
   await rooms.deleteOne({ _id: new ObjectId('681ee09007da76869c2d9bb7') });
 
   // Insert test room
-  const result = await rooms.insertOne({
+  One({
     _id: new ObjectId('681ee09007da76869c2d9bb7'),
     title: 'Test Room',
     location: 'Demo City',
@@ -20,6 +20,6 @@
     createdAt: new Date()
   });
 
-  console.log('Inserted room:', result.insertedId);
+  
   client.close();
 })();
