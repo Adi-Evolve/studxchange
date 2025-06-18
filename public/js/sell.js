@@ -13,16 +13,14 @@
   }
 })();
 
-List of Indian colleges for autocomplete
+// List of Indian colleges for autocomplete
 const colleges = [
   "All", "IIT Bombay", "IIT Delhi", "IIT Kanpur", "IIT Kharagpur", "IIT Madras", "IIT Roorkee", "IIT Guwahati", "IIT Hyderabad", "IIT BHU", "IIT Dhanbad", "IIT Indore", "IIT Mandi", "IIT Ropar", "IIT Gandhinagar", "IIT Jodhpur", "IIT Patna", "IIT Palakkad", "IIT Tirupati", "IIT Bhilai", "IIT Goa", "IIT Jammu", "IIT Dharwad", "IIT Bhubaneswar", "IIT ISM Dhanbad", "IIT Varanasi", "IIT (ISM) Dhanbad", "IIT (BHU) Varanasi", "IIT (ISM)", "IIT (BHU)", "NIT Trichy", "NIT Surathkal", "NIT Warangal", "NIT Rourkela", "NIT Calicut", "NIT Kurukshetra", "NIT Durgapur", "NIT Jaipur", "NIT Allahabad", "NIT Nagpur", "NIT Silchar", "NIT Surat", "NIT Bhopal", "NIT Jalandhar", "NIT Patna", "NIT Raipur", "NIT Goa", "NIT Delhi", "NIT Meghalaya", "NIT Arunachal Pradesh", "NIT Agartala", "NIT Puducherry", "NIT Manipur", "NIT Mizoram", "NIT Sikkim", "NIT Hamirpur", "NIT Uttarakhand", "NIT Andhra Pradesh", "BITS Pilani", "BITS Goa", "BITS Hyderabad", "VIT Vellore", "VIT Chennai", "SRM Chennai", "SRM Delhi NCR", "SRM Amaravati",
-   Pune & Maharashtra Major Colleges
   "COEP Pune", "COEP Technological University", "VIT Pune", "Vishwakarma Institute of Technology Pune", "MIT WPU Pune", "MIT World Peace University Pune", "Symbiosis Institute of Technology Pune", "Symbiosis International University Pune", "SPPU Pune", "Savitribai Phule Pune University", "DY Patil College Pune", "Dr. DY Patil Institute of Technology Pune", "SIT Pune", "Sinhgad Institute of Technology Pune", "Sinhgad College of Engineering Pune", "Bharati Vidyapeeth Pune", "Bharati Vidyapeeth College of Engineering Pune", "PICT Pune", "Pune Institute of Computer Technology", "VIIT Pune", "Vishwakarma Institute of Information Technology Pune", "PCCOE Pune", "Pimpri Chinchwad College of Engineering Pune", "JSPM Pune", "JSPM's Rajarshi Shahu College of Engineering Pune", "JSPM's Imperial College of Engineering Pune", "AIT Pune", "Army Institute of Technology Pune", "Cummins College Pune", "Cummins College of Engineering for Women Pune", "Modern College Pune", "Fergusson College Pune", "Nowrosjee Wadia College Pune", "MES Garware College Pune", "Indira College of Engineering Pune", "AISSMS Pune", "AISSMS College of Engineering Pune", "Marathwada Mitra Mandal's College of Engineering Pune", "Sinhgad Academy of Engineering Pune", "Sinhgad College of Architecture Pune", "DYP Akurdi Pune", "DYP Ambi Pune", "DYP Lohegaon Pune", "DY Patil Navi Mumbai", "DY Patil Kolhapur", "Walchand College of Engineering Sangli", "Government College of Engineering Karad", "Government College of Engineering Amravati", "VJTI Mumbai", "Veermata Jijabai Technological Institute Mumbai", "ICT Mumbai", "Institute of Chemical Technology Mumbai", "KJ Somaiya College Mumbai", "KJ Somaiya College of Engineering Mumbai", "Thadomal Shahani Engineering College Mumbai", "Fr. Conceicao Rodrigues College of Engineering Mumbai", "Sardar Patel College of Engineering Mumbai", "Terna Engineering College Navi Mumbai", "Other Maharashtra College",
-   South & North India
-  "Manipal University", "Delhi University", "Mumbai University", "Jadavpur University", "Anna University", "Osmania University", "Jamia Millia Islamia", "JNU Delhi", "AMU Aligarh", "IIIT Hyderabad", "IIIT Delhi", "IIIT Bangalore", "IIIT Allahabad", "IIITDM Jabalpur", "IIITDM Kancheepuram", "IIIT Bhubaneswar", "IIIT Vadodara", "IIIT Kota", "IIIT Guwahati", "IIIT Lucknow", "IIIT Kalyani", "IIIT Una", "IIIT Sonepat", "IIIT Dharwad", "IIIT Tiruchirappalli", "IIIT Nagpur", "IIIT Pune", "IISc Bangalore", "IISER Pune", "IISER Kolkata", "IISER Mohali", "IISER Bhopal", "IISER Thiruvananthapuram", "IISER Tirupati", "IISER Berhampur", "IISER TVM", "IISER TVM", "Other"
+  "Manipal University", "Delhi University", "Mumbai University", "Jadavpur University", "Anna University", "Osmania University", "Jamia Millia Islamia", "JNU Delhi", "AMU Aligarh", "IIIT Hyderabad", "IIIT Delhi", "IIIT Bangalore", "IIIT Allahabad", "IIITDM Jabalpur", "IIITDM Kancheepuram", "IIIT Bhubaneswar", "IIIT Vadodara", "IIIT Kota", "IIIT Guwahati", "IIIT Lucknow", "IIIT Kalyani", "IIIT Una", "IIIT Sonepat", "IIIT Dharwad", "IIIT Tiruchirappalli", "IIIT Nagpur", "IIIT Pune", "IISc Bangalore", "IISER Pune", "IISER Kolkata", "IISER Mohali", "IISER Bhopal", "IISER Thiruvananthapuram", "IISER Tirupati", "IISER Berhampur", "IISER TVM", "Other"
 ];
 
-Helper: Smart search for college names
+// Helper: Smart search for college names
 function filterColleges(query) {
   if (!query) return colleges;
   query = query.toLowerCase();
@@ -34,19 +32,19 @@ function filterColleges(query) {
   );
 }
 
-DOM Elements
+// DOM Elements
 const categorySelect = document.getElementById('category');
 const dynamicFields = document.getElementById('dynamicSellFields');
 const sellForm = document.getElementById('sellForm');
 
 let currentLocation = null;
 let mapLocation = null;
-Global variable to make the openMapModal function accessible
+// Global variable to make the openMapModal function accessible
 window.openMapModal = null;
 
-Removed redundant event listener for 'selectOnMapBtn' as no such static button exists in the HTML.
-The Select on Map button is rendered dynamically in each form and event is bound after rendering.
-See renderRegularProductForm and renderRoomForm for correct event binding.
+// Removed redundant event listener for 'selectOnMapBtn' as no such static button exists in the HTML.
+// The Select on Map button is rendered dynamically in each form and event is bound after rendering.
+// See renderRegularProductForm and renderRoomForm for correct event binding.
 
 categorySelect.addEventListener('change', handleCategoryChange);
 sellForm.addEventListener('submit', handleSellSubmit);
@@ -126,7 +124,7 @@ function handleCategoryChange() {
 }
 
 function renderCollegeSelector(id = 'college', label = 'Select College') {
-  Uses datalist for search
+  // Uses datalist for search
   return `
     <label for="${id}">${label}</label>
     <input list="college-list" id="${id}" name="${id}" required autocomplete="off" placeholder="Type college name or short form...">
@@ -232,7 +230,7 @@ function renderRoomForm() {
     <input type="hidden" id="location" name="location">
   `;
   document.getElementById('useCurrentLocation').onclick = getCurrentLocation;
-  document.getElementById('selectOnMap').onclick = openMapModal || function() { alert('Map modal not available.'); };
+  document.getElementById('selectOnMap').onclick = window.openMapModal || function() { alert('Map modal not available.'); };
   document.getElementById('roomImages').onchange = (e) => limitFiles(e, 10);
 }
 
@@ -306,13 +304,12 @@ async function getCurrentLocation(e) {
   );
 }
 
---- MAP MODAL WITH LEAFLET ---
+// --- MAP MODAL WITH LEAFLET ---
 function setupMapModal() {
   // Initialize global variables
   let leafletMap = null;
   let leafletMarker = null;
   let geocoder = null;
-  let mapLocation = null;
 
   // Get modal elements
   const modal = document.getElementById('sell-map-modal');
@@ -325,15 +322,13 @@ function setupMapModal() {
     return;
   }
   const confirmBtn = document.getElementById('confirmMapLocation');
-  let leafletMap = null;
-  let leafletMarker = null;
-  let geocoder = null;
+  // Removed duplicate variable declarations
 
   if (!modal) {
     return;
   }
   
-  Load Leaflet CSS and JS if not already loaded
+  // Load Leaflet CSS and JS if not already loaded
   if (!window.L) {
     const leafletCSS = document.createElement('link');
     leafletCSS.rel = 'stylesheet';
@@ -392,7 +387,7 @@ function setupMapModal() {
       
       // Add OpenStreetMap tiles
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
+        attribution: ' OpenStreetMap contributors'
       }).addTo(leafletMap);
 
       // Add geocoder control
@@ -427,15 +422,18 @@ function setupMapModal() {
     }
   }
       
-      // Click handler for map
-      leafletMap.on('click', function(e) {
-        if (leafletMarker) leafletMap.removeLayer(leafletMarker);
-        leafletMarker = L.marker(e.latlng).addTo(leafletMap);
-        mapLocation = {
-          lat: e.latlng.lat,
-          lon: e.latlng.lng,
-          name: `Lat: ${e.latlng.lat.toFixed(4)}, Lon: ${e.latlng.lng.toFixed(4)}`
-        };
+  // Add map click handler only after map is initialized
+  function addLeafletMapClickHandler() {
+    if (!leafletMap) return;
+    leafletMap.on('click', function(e) {
+      if (leafletMarker) leafletMap.removeLayer(leafletMarker);
+      leafletMarker = L.marker(e.latlng).addTo(leafletMap);
+      mapLocation = {
+        lat: e.latlng.lat,
+        lon: e.latlng.lng,
+        name: `Lat: ${e.latlng.lat.toFixed(4)}, Lon: ${e.latlng.lng.toFixed(4)}`
+      };
+      try {
         // Try reverse geocoding
         fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}`)
           .then(response => response.json())
@@ -447,43 +445,45 @@ function setupMapModal() {
           .catch(error => {
             console.error('Error getting location:', error);
           });
-      });
+      } catch (err) {
+        console.error('Error handling map click:', err);
+      }
+    });
       
-      // --- Search bar logic ---
-      document.getElementById('mapSearchBtn').onclick = function() {
-        const query = document.getElementById('mapSearchInput').value.trim();
-        if (!query) return;
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
-          .then(resp => resp.json())
-          .then(results => {
-            if (results && results.length > 0) {
-              const place = results[0];
-              const latlng = [parseFloat(place.lat), parseFloat(place.lon)];
-              leafletMap.setView(latlng, 15);
-              if (leafletMarker) leafletMap.removeLayer(leafletMarker);
-              leafletMarker = L.marker(latlng).addTo(leafletMap);
-              mapLocation = {
-                lat: latlng[0],
-                lon: latlng[1],
-                name: place.display_name
-              };
-            } else {
-              alert('Place not found. Try another search.');
-            }
-          })
-          .catch(err => {
-            alert('Error searching for place.');
-          });
-      };
+    // --- Search bar logic ---
+    document.getElementById('mapSearchBtn').onclick = function() {
+      const query = document.getElementById('mapSearchInput').value.trim();
+      if (!query) return;
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+        .then(resp => resp.json())
+        .then(results => {
+          if (results && results.length > 0) {
+            const place = results[0];
+            const latlng = [parseFloat(place.lat), parseFloat(place.lon)];
+            leafletMap.setView(latlng, 15);
+            if (leafletMarker) leafletMap.removeLayer(leafletMarker);
+            leafletMarker = L.marker(latlng).addTo(leafletMap);
+            mapLocation = {
+              lat: latlng[0],
+              lon: latlng[1],
+              name: place.display_name
+            };
+          } else {
+            alert('Place not found. Try another search.');
+          }
+        })
+        .catch(err => {
+          alert('Error searching for place.');
+        });
+    };
       
-      Handle Enter key in search input
-      document.getElementById('mapSearchInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          document.getElementById('mapSearchBtn').click();
-        }
-      });
-    } catch (err) {}
+    // Handle Enter key in search input
+    document.getElementById('mapSearchInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('mapSearchBtn').click();
+      }
+    });
   }
 
   // Modal event handlers
@@ -540,22 +540,11 @@ function setupMapModal() {
       alert('Error initializing map. Please try again.');
       modal.style.display = 'none';
     }
-  };
-      modalContent.style.padding = '18px 10px 16px 10px';
-      modalContent.style.borderRadius = '13px';
-      modalContent.style.boxShadow = '0 8px 32px rgba(44,62,80,0.15)';
-      modalContent.style.background = '#fff';
-      modalContent.style.position = 'relative';
-      modalContent.style.zIndex = '10000';
-      modalContent.style.display = 'block';
-    }
-    setTimeout(openMap, 300);  Delay to ensure modal is visible and container has size
+    addLeafletMapClickHandler();
   };
 }
 
---- Robust imgbb Upload Function ---
 async function uploadImageToImgbb(file) {
-  Fetch the imgbb API key from window.env (populated via server-side injection)
   const apiKey = window.env && window.env.IMGBB_API_KEY ? window.env.IMGBB_API_KEY : undefined;
   if (!apiKey) {
     alert('imgbb API key is missing. Please set it in your environment/config.');
@@ -590,19 +579,14 @@ async function uploadImageToImgbb(file) {
   }
 }
 
---- Image and PDF Upload Helpers ---
 async function uploadPdfToSupabase(file) {
-  Uses window.supabaseClient from env.js setup
   const supabase = window.supabaseClient;
   if (!supabase) {
     alert('Supabase client is not initialized. Check your script order and config.');
     throw new Error('Supabase client not initialized');
   }
 
-  Generate a unique filename
   const fileName = `${Date.now()}_${file.name}`;
-
-  Upload
   let uploadResponse;
   try {
     uploadResponse = await supabase.storage.from('product-pdfs').upload(fileName, file, {
@@ -617,21 +601,19 @@ async function uploadPdfToSupabase(file) {
   if (error) throw new Error('PDF upload failed: ' + error.message);
   if (!data || !data.path) throw new Error('PDF upload failed: No data/path returned from Supabase.');
 
-  Get public URL (handle all property names)
+  // Get public URL (handle all property names)
   const publicUrlResult = supabase.storage.from('product-pdfs').getPublicUrl(data.path);
-
-  Try all possible property names
+  // Try all possible property names
   let publicURL = publicUrlResult.data?.publicUrl || publicUrlResult.data?.publicURL;
   if (!publicURL && typeof publicUrlResult.data === 'string') publicURL = publicUrlResult.data;
 
   if (!publicURL || typeof publicURL !== 'string' || !publicURL.startsWith('https:')) {
     throw new Error('PDF upload failed: No valid public URL returned. Check your Supabase bucket policy and public access settings.');
   }
-
   return publicURL;
 }
 
---- Form Submission ---
+// async function handleSellSubmit(e) {
 async function handleSellSubmit(e) {
   e.preventDefault();
   showLoading();
@@ -642,11 +624,10 @@ async function handleSellSubmit(e) {
   let pdfUrl = '';
   try {
     if (cat === 'rooms_hostels') {
-      Room/Hostel listing
       payload = {
         college: formData.get('college'),
         roomName: formData.get('roomName'),
-        title: formData.get('roomName'),  Ensure title is set for DB
+        title: formData.get('roomName'),
         roomType: formData.get('roomType'),
         fees: formData.get('fees'),
         feesIncludeMess: document.getElementById('feesIncludeMess').checked,
@@ -661,13 +642,11 @@ async function handleSellSubmit(e) {
         messType: formData.get('messType'),
         createdAt: new Date().toISOString()
       };
-      Upload images
       const files = formData.getAll('roomImages');
       for (const file of files) {
         if (file && file.size > 0) imageUrls.push(await uploadImageToImgbb(file));
       }
       payload.images = imageUrls;
-      Attach seller_id from Supabase Auth (must match users table id)
       let sellerId = null;
       try {
         const { data: { user } } = await window.supabaseClient.auth.getUser();
@@ -683,7 +662,6 @@ async function handleSellSubmit(e) {
           ], { onConflict: ['id'] });
         }
       } catch (err) {}
-      Validate seller_id before insert
       if (
         !payload.seller_id ||
         typeof payload.seller_id !== 'string' ||
@@ -695,7 +673,6 @@ async function handleSellSubmit(e) {
         alert('Invalid seller_id (must be a valid UUID from Supabase Auth, never 1 or a number). Please log out and log in again.');
         return;
       }
-      Submit to backend
       const supabase = window.supabaseClient;
       const { error: roomError } = await supabase
         .from('rooms')
@@ -705,20 +682,17 @@ async function handleSellSubmit(e) {
       sellForm.reset();
       handleCategoryChange();
     } else if (cat === 'notes') {
-      Notes listing
       payload = {
         college: formData.get('college'),
         title: formData.get('title'),
         price: formData.get('price'),
         description: formData.get('description'),
       };
-      Upload images
       const imgFiles = formData.getAll('notesImages');
       for (const file of imgFiles) {
         if (file && file.size > 0) imageUrls.push(await uploadImageToImgbb(file));
       }
       payload.images = imageUrls;
-      Attach seller_id from localStorage (assumes currentUser is stored as JSON with id)
       try {
         const { data: { user } } = await window.supabaseClient.auth.getUser();
         if (user && user.id) {
@@ -732,7 +706,6 @@ async function handleSellSubmit(e) {
           ], { onConflict: ['id'] });
         }
       } catch (err) {}
-      Upload PDF
       const pdfFile = formData.get('pdf');
       if (pdfFile && pdfFile.size > 0) {
         if (pdfFile.size > window.SUPABASE_MAX_FILE_SIZE) throw new Error('PDF exceeds 100MB limit');
@@ -744,10 +717,8 @@ async function handleSellSubmit(e) {
           throw new Error('PDF upload failed: No valid URL returned');
         }
       } else {
-        Defensive: Always set pdfUrl to empty string if no file uploaded
         payload.pdfUrl = '';
       }
-      Submit to backend
       const { error: notesError } = await supabase
         .from('notes')
         .insert([payload]);
@@ -756,7 +727,6 @@ async function handleSellSubmit(e) {
       sellForm.reset();
       handleCategoryChange();
     } else {
-      Regular product
       payload = {
         college: formData.get('college'),
         title: formData.get('title'),
@@ -766,13 +736,11 @@ async function handleSellSubmit(e) {
         description: formData.get('description'),
         location: formData.get('location') || ''
       };
-      Upload images
       const files = formData.getAll('images');
       for (const file of files) {
         if (file && file.size > 0) imageUrls.push(await uploadImageToImgbb(file));
       }
       payload.images = imageUrls;
-      Attach seller_id from localStorage (assumes currentUser is stored as JSON with id)
       try {
         const { data: { user } } = await window.supabaseClient.auth.getUser();
         if (user && user.id) {
@@ -786,7 +754,6 @@ async function handleSellSubmit(e) {
           ], { onConflict: ['id'] });
         }
       } catch (err) {}
-      Submit to backend
       const supabase = window.supabaseClient;
       const { error: productError } = await supabase
         .from('products')
