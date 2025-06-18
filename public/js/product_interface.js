@@ -37,7 +37,7 @@ async function renderAlsoYouMightLikeSection(type = 'product') {
     // To be implemented: fetch and render sponsored items as a slider in 'alsoYouMightLikeSection'
 }
 // Render product/room/note detail
-function renderDetail(item) {
+async function renderDetail(item) {
     const container = document.getElementById('productDetailContainer');
     if (!container) return;
     let imagesHtml = '';
@@ -124,6 +124,28 @@ function renderDetail(item) {
         return;
     }
     // --- PRODUCT DETAIL (default) ---
+    let sellerName = 'N/A';
+    let sellerPhone = '';
+    let sellerEmail = '';
+    let sellerCollege = '';
+    let postedDate = item.created_at ? new Date(item.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
+    if (item.seller_id) {
+        try {
+            const supabase = window.supabaseClient;
+            const { data: userRow } = await supabase.from('users').select('name, phone, email, college').eq('id', item.seller_id).maybeSingle();
+            if (userRow) {
+                sellerName = userRow.name || 'N/A';
+                sellerPhone = userRow.phone || '';
+                sellerEmail = userRow.email || '';
+                sellerCollege = userRow.college || '';
+                if (sellerPhone && !sellerPhone.startsWith('+')) {
+                    sellerPhone = '+91' + sellerPhone.replace(/^0+/, '');
+                }
+                sellerPhone = sellerPhone.replace(/(?!^\+)\D/g, '');
+            }
+        } catch (err) { console.warn('Could not fetch seller info', err); }
+    }
+    window.currentItem = { ...item, sellerName, sellerPhone, sellerEmail, sellerCollege, postedDate };
     container.innerHTML = `
         <div class="product-images">
             ${imagesHtml}
@@ -136,6 +158,8 @@ function renderDetail(item) {
                 <span><b>Category:</b> ${item.category || item._type}</span>
                 <span><b>College:</b> ${item.college || 'N/A'}</span>
                 ${item.condition ? `<span><b>Condition:</b> ${item.condition}</span>` : ''}
+                <span><b>Posted:</b> ${postedDate}</span>
+                <span><b>Seller:</b> ${sellerName}</span>
             </div>
             <div class="product-buttons">
                 <button class="btn btn-success" onclick="buyNow()">Buy Now</button>
@@ -195,10 +219,13 @@ function downloadNotePdf(pdfUrl) {
 // Buy Now button: WhatsApp redirect
 function buyNow() {
     if (!window.currentItem) return;
-    const phone = window.currentItem.sellerPhone || window.currentItem.sellerContact || '';
+    let phone = window.currentItem.sellerPhone || '';
     if (!phone) return alert('Seller phone not available');
+    // WhatsApp expects country code, remove non-digits except +
+    phone = phone.replace(/(?!^\+)\D/g, '');
+    if (!phone.startsWith('+91')) phone = '+91' + phone.replace(/^0+/, '');
     const msg = encodeURIComponent(`Hi, I am interested in buying the product: ${window.currentItem.title}`);
-    window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
+    window.open(`https://wa.me/${phone.replace('+','')}?text=${msg}`, '_blank');
 }
 
 // Seller Info Modal
@@ -208,8 +235,7 @@ function showSellerInfo() {
     let html = `<b>Name:</b> ${c.sellerName || 'N/A'}<br>
                 <b>Email:</b> ${c.sellerEmail || 'N/A'}<br>
                 <b>Phone:</b> ${c.sellerPhone || 'N/A'}<br>
-                <b>College:</b> ${c.college || 'N/A'}<br>`;
-    // Optionally: fetch and show seller's past sold items
+                <b>College:</b> ${c.sellerCollege || 'N/A'}<br>`;
     document.getElementById('sellerInfoContent').innerHTML = html + '<hr><b>Past Sold Items:</b><div id="sellerSoldItems">Loading...</div>';
     modal.show();
     fetchSellerSoldItems();

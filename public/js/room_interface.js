@@ -379,18 +379,23 @@ async function fetchRoomReviews(roomId) {
         return arr;
     }
 }
-async function submitRoomReview(roomId, text) {
-    // Simple localStorage fallback for demo; replace with Supabase insert for prod
+async function submitRoomReview(roomId, text, rating) {
+    // Save review to Supabase room_reviews with sender_id (user id)
     const key = `room_reviews_${roomId}`;
     try {
         const supabase = window.supabaseClient;
-        const user = (window.currentUser && window.currentUser.name) || 'Anonymous';
-        await supabase.from('room_reviews').insert([{ room_id: roomId, text, user_name: user }]);
+        let sender_id = null;
+        if (supabase && supabase.auth && supabase.auth.getUser) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user && user.id) sender_id = user.id;
+        }
+        if (!sender_id) throw new Error('Not logged in');
+        await supabase.from('room_reviews').insert([{ room_id: roomId, text, rating, sender_id }]);
     } catch {
         // fallback to localStorage
         let arr = [];
         try { arr = JSON.parse(localStorage.getItem(key)) || []; } catch {}
-        arr.unshift({ user: 'Anonymous', text });
+        arr.unshift({ user: 'Anonymous', text, rating });
         localStorage.setItem(key, JSON.stringify(arr));
     }
 }
@@ -400,18 +405,20 @@ async function contactRoomSellerFull(sellerId) {
     if (!sellerId) return alert('Seller info not available.');
     try {
         const supabase = window.supabaseClient;
-        const { data, error } = await supabase.from('users').select('phone').eq('id', sellerId).single();
+        const { data, error } = await supabase.from('users').select('phone').eq('id', sellerId).maybeSingle();
         if (error || !data || !data.phone) return alert('Seller phone not found.');
         let phone = data.phone.trim();
-        // If phone starts with +, use as is, else prepend +91
+        // Prepend +91 if not present
         if (!phone.startsWith('+')) {
-            phone = '+91' + phone.replace(/^0+/, ''); // Remove leading zeros if present
+            phone = '+91' + phone.replace(/^0+/, '');
         }
         // Remove all non-digit except leading +
         phone = phone.replace(/(?!^\+)\D/g, '');
-        window.open('https://wa.me/' + encodeURIComponent(phone.replace('+','')), '_blank');
-    } catch {
+        // WhatsApp expects only digits after +
+        window.open('https://wa.me/' + phone.replace('+',''), '_blank');
+    } catch (err) {
         alert('Could not fetch seller phone.');
+        console.error('Error fetching seller phone:', err);
     }
 }
 

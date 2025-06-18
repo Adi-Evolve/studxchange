@@ -168,42 +168,38 @@ async function connectToDatabase() {
     try {
       // Ensure MONGODB_URI is defined
       if (!process.env.MONGODB_URI) {
-        
-        throw 
+        throw new Error('MONGODB_URI is not defined in environment variables');
       }
       
-      
-      
-      
-{{ ... }}
-          lastConnectionTime = null; // Force reconnection on next request
-        }
-        // Don't set cachedDb to null here, let the reconnection logic handle it
+      // Establish a new connection
+      await mongoose.connect(MONGODB_URI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
       });
       
-      mongoose., () => {
-        
+      // Set up event handlers for connection events
+      mongoose.connection.on('disconnected', () => {
         lastConnectionTime = null;
       });
+      mongoose.connection.on('error', () => {
+        lastConnectionTime = null;
+      });
+      
+      // Update cachedDb and lastConnectionTime
+      cachedDb = mongoose.connection;
+      lastConnectionTime = Date.now();
       
       return cachedDb;
     } catch (error) {
       retryCount++;
       
-      
       if (retryCount >= MAX_RETRIES) {
-        
         throw error;
       }
       
       // Wait before retrying (exponential backoff)
       const delay = Math.pow(2, retryCount) * 1000;
-{{ ... }}
-        // Try to recreate the model
-        if (mongoose.models.Room) {
-          delete mongoose.models.Room;
-        }
-        Room = mongoose.model('Room', roomSchema);
+      await new Promise(res => setTimeout(res, delay));
         
       }
     }
@@ -236,19 +232,47 @@ async function connectToDatabase() {
     if (!Order) {
       
       Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
-      
-    }
-    
-    if (!Review) {
-      Review = mongoose.models.Review || mongoose.model('Review', reviewSchema);
-{{ ... }}
-      
-    }
-    
-    return;
-  } catch (error) {
-    throw error;
   }
+}
+
+// Initialize models
+async function initModels() {
+  if (!Notes) {
+    
+    try {
+      // Check if model exists first to avoid model compilation errors
+      Notes = mongoose.models.Notes || mongoose.model('Notes', notesSchema);
+      
+    } catch (notesError) {
+      
+      // Try to recreate the model
+      if (mongoose.models.Notes) {
+        delete mongoose.models.Notes;
+      }
+      try {
+        Notes = mongoose.model('Notes', notesSchema);
+      } catch (recreateError) {
+        // Last resort - try with a different model name
+        Notes = mongoose.model('NotesCollection', notesSchema);
+      }
+    }
+  }
+  
+  if (!PaymentRequest) {
+    PaymentRequest = mongoose.models.PaymentRequest || mongoose.model('PaymentRequest', paymentRequestSchema);
+  }
+  
+  if (!Order) {
+    
+    Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
+    
+  }
+  
+  if (!Review) {
+    Review = mongoose.models.Review || mongoose.model('Review', reviewSchema);
+  }
+  
+  return;
 }
 
 // API Routes
@@ -261,55 +285,14 @@ app.get('/api/health', (req, res) => {
       connection: mongoose.connection.readyState,
       connectionStatus: ['disconnected', 'connected', 'connecting', 'disconnecting'][mongoose.connection.readyState] || 'unknown'
     },
-    uptime: process.uptime(),
-{{ ... }}
-        
-        if ((queryError.name === 'MongoExpiredSessionError' || 
-             queryError.message === 'Query timeout' ||
-             queryError.message.includes('topology')) && 
-            retryCount < MAX_RETRIES) {
-          
-          // Force a new connection
-          if (mongoose.connection.readyState !== 0) {
-            try {
-              await mongoose.connection.close();
-            } catch (closeError) {
-            }
-          }
-          await connectToDatabase();
-          initModels();
-          continue; // Retry the query
-{{ ... }}
-      try {
-        rooms = await Room.find(query).sort({ createdAt: -1 });
-        break; // If successful, exit the loop
-      } catch (queryError) {
-        retryCount++;
-        
-        if (queryError.name === 'MongoExpiredSessionError' && retryCount < MAX_RETRIES) {
-          // Force a new connection
-          if (mongoose.connection.readyState !== 0) {
-{{ ... }}
-      try {
-        product = await Product.findById(productId);
-        break; // If successful, exit the loop
-      } catch (queryError) {
-        retryCount++;
-        
-        if (queryError.name === 'MongoExpiredSessionError' && retryCount < MAX_RETRIES) {
-          // Force a new connection
-          if (mongoose.connection.readyState !== 0) {
-{{ ... }}
-  try {
-    
-    // Ensure database connection
-    await connectToDatabase();
-    
-    // Initialize models
-    initModels();
-    
-{{ ... }}
-};
+    uptime: process.uptime()
+  };
+  
+  res.json(healthData);
+});
+
+// Other API routes...
+
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err.message);

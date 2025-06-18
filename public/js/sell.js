@@ -49,7 +49,44 @@ window.openMapModal = null;
 categorySelect.addEventListener('change', handleCategoryChange);
 sellForm.addEventListener('submit', handleSellSubmit);
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', async function() {
+  // Check user phone number before allowing form
+  const messageContainer = document.getElementById('profile-message-container');
+  const sellForm = document.getElementById('sellForm');
+  let userPhone = null;
+  let userId = null;
+  let userEmail = null;
+  let userMeta = null;
+  let supabase = window.supabaseClient;
+  if (supabase) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && user.id) {
+        userId = user.id;
+        userEmail = user.email;
+        userMeta = user.user_metadata || {};
+        // Try to get phone from users table
+        let { data: userRow } = await supabase.from('users').select('phone').eq('id', userId).maybeSingle();
+        userPhone = userRow && userRow.phone ? userRow.phone : (userMeta.phone || null);
+        if (!userPhone || userPhone.length < 8) {
+          messageContainer.style.display = 'block';
+          messageContainer.innerHTML = '<div style="background:#ffe0e0;color:#b00;padding:12px 18px;border-radius:8px;margin-bottom:16px;text-align:center;font-weight:500;">Please save your phone number in your <a href="profile.html" style="color:#1a75ff;text-decoration:underline;">profile page</a> before selling. Redirecting to profile...</div>';
+          if (sellForm) sellForm.style.display = 'none';
+          setTimeout(() => {
+            window.location.href = 'profile.html';
+          }, 2000);
+          return;
+        } else {
+          if (sellForm) sellForm.style.display = '';
+        }
+      }
+    } catch (err) {
+      // If error, allow form but log
+      console.error('Error checking user phone:', err);
+      if (sellForm) sellForm.style.display = '';
+    }
+  }
+
   let currentUser = null;
   try {
     currentUser = JSON.parse(localStorage.getItem('currentUser'));
@@ -314,19 +351,219 @@ function setupMapModal() {
   // Get modal elements
   const modal = document.getElementById('sell-map-modal');
   const closeModal = document.getElementById('closeMapModal');
-  const saveLocationBtn = document.getElementById('saveLocationBtn');
   const mapContainer = document.getElementById('mapContainer');
-  
-  if (!modal || !closeModal || !saveLocationBtn || !mapContainer) {
+  const confirmBtn = document.getElementById('confirmMapLocation');
+
+  if (!modal || !closeModal || !mapContainer || !confirmBtn) {
     console.error('Missing required modal elements');
     return;
   }
-  const confirmBtn = document.getElementById('confirmMapLocation');
-  // Removed duplicate variable declarations
 
-  if (!modal) {
-    return;
+  // Helper: Clean up map instance
+  function cleanupMap() {
+    if (leafletMap) {
+      leafletMap.off();
+      leafletMap.remove();
+      leafletMap = null;
+      leafletMarker = null;
+    }
   }
+
+  // Modal close logic
+  closeModal.onclick = function() {
+    modal.style.display = 'none';
+    cleanupMap();
+  };
+
+  // Confirm location logic
+  confirmBtn.onclick = function() {
+    if (window.mapLocation) {
+      const locInput = document.getElementById('location');
+      if (locInput) {
+        locInput.value = JSON.stringify({
+          lat: window.mapLocation.lat,
+          lon: window.mapLocation.lon,
+          name: window.mapLocation.name
+        });
+        locInput.dispatchEvent(new Event('change'));
+      }
+      modal.style.display = 'none';
+      cleanupMap();
+      alert('Location set from map: ' + window.mapLocation.name);
+    } else {
+      alert('Please select a location on the map.');
+    }
+  };
+
+  // Map initialization function
+  function initializeMap() {
+    if (!window.L) {
+      console.error('Leaflet not loaded');
+      return false;
+    }
+    cleanupMap();
+    try {
+      leafletMap = L.map('mapContainer').setView([19.7515, 75.7139], 6);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: ' OpenStreetMap contributors'
+      }).addTo(leafletMap);
+      // Add geocoder control
+      if (L.Control.Geocoder) {
+        geocoder = L.Control.Geocoder.nominatim();
+        const geocoderControl = L.Control.geocoder({
+          geocoder: geocoder,
+          defaultMarkGeocode: false
+        });
+        geocoderControl.on('markgeocode', function(e) {
+          const latlng = e.geocode.center;
+          if (leafletMarker) leafletMap.removeLayer(leafletMarker);
+          leafletMarker = L.marker(latlng).addTo(leafletMap);
+          window.mapLocation = {
+            lat: latlng.lat,
+            lon: latlng.lng,
+            name: e.geocode.name
+          };
+          leafletMap.setView(latlng, 15);
+        });
+        geocoderControl.addTo(leafletMap);
+      } else {
+        console.warn('Geocoder control not available');
+      }
+      return true;
+    } catch (error) {
+      console.error('Error initializing map:', error);
+      return false;
+    }
+  }
+
+  // Add map click handler only after map is initialized
+  function addLeafletMapClickHandler() {
+    if (!leafletMap) return;
+    leafletMap.on('click', function(e) {
+      if (leafletMarker) leafletMap.removeLayer(leafletMarker);
+      leafletMarker = L.marker(e.latlng).addTo(leafletMap);
+      window.mapLocation = {
+        lat: e.latlng.lat,
+        lon: e.latlng.lng,
+        name: `Lat: ${e.latlng.lat.toFixed(4)}, Lon: ${e.latlng.lng.toFixed(4)}`
+      };
+      // Try reverse geocoding
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data && data.display_name) {
+            window.mapLocation.name = data.display_name;
+          }
+        })
+        .catch(error => {
+          console.error('Error getting location:', error);
+        });
+    });
+    // Search bar logic
+    document.getElementById('mapSearchBtn').onclick = function() {
+      const query = document.getElementById('mapSearchInput').value.trim();
+      if (!query) return;
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+        .then(resp => resp.json())
+        .then(results => {
+          if (results && results.length > 0) {
+            const place = results[0];
+            const latlng = [parseFloat(place.lat), parseFloat(place.lon)];
+            leafletMap.setView(latlng, 15);
+            if (leafletMarker) leafletMap.removeLayer(leafletMarker);
+            leafletMarker = L.marker(latlng).addTo(leafletMap);
+            window.mapLocation = {
+              lat: latlng[0],
+              lon: latlng[1],
+              name: place.display_name
+            };
+          } else {
+            alert('Place not found. Try another search.');
+          }
+        })
+        .catch(err => {
+          alert('Error searching for place.');
+        });
+    };
+    // Handle Enter key in search input
+    document.getElementById('mapSearchInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('mapSearchBtn').click();
+      }
+    });
+  }
+
+  // Expose modal open function globally
+  window.openMapModal = function() {
+    modal.style.display = 'flex';
+    modal.style.position = 'fixed';
+    modal.style.left = '0';
+    modal.style.top = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
+    modal.style.background = 'rgba(0,0,0,0.55)';
+    modal.style.zIndex = '9999';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    const modalContent = modal.querySelector('.modal-content');
+    if (modalContent) {
+      modalContent.style.width = '350px';
+      modalContent.style.maxWidth = '95vw';
+      modalContent.style.margin = '0 auto';
+      modalContent.style.background = '#fff';
+      modalContent.style.borderRadius = '8px';
+      modalContent.style.padding = '20px';
+      modalContent.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+    }
+    // Load Leaflet if not loaded
+    function ensureLeafletLoaded(cb) {
+      if (window.L && window.L.Control && window.L.Control.Geocoder) {
+        cb();
+        return;
+      }
+      let loaded = 0;
+      const total = 2;
+      function checkLoaded() {
+        loaded++;
+        if (loaded === total) cb();
+      }
+      if (!window.L) {
+        const leafletCSS = document.createElement('link');
+        leafletCSS.rel = 'stylesheet';
+        leafletCSS.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(leafletCSS);
+        const leafletJS = document.createElement('script');
+        leafletJS.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        leafletJS.onload = checkLoaded;
+        document.head.appendChild(leafletJS);
+      } else {
+        checkLoaded();
+      }
+      if (!window.L || !window.L.Control || !window.L.Control.Geocoder) {
+        const geocoderJS = document.createElement('script');
+        geocoderJS.src = 'https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js';
+        geocoderJS.onload = checkLoaded;
+        document.head.appendChild(geocoderJS);
+        const geocoderCSS = document.createElement('link');
+        geocoderCSS.rel = 'stylesheet';
+        geocoderCSS.href = 'https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css';
+        document.head.appendChild(geocoderCSS);
+      } else {
+        checkLoaded();
+      }
+    }
+    ensureLeafletLoaded(function() {
+      if (!initializeMap()) {
+        alert('Error initializing map. Please try again.');
+        modal.style.display = 'none';
+      } else {
+        addLeafletMapClickHandler();
+      }
+    });
+  };
+}
+
   
   // Load Leaflet CSS and JS if not already loaded
   if (!window.L) {
@@ -542,7 +779,7 @@ function setupMapModal() {
     }
     addLeafletMapClickHandler();
   };
-}
+
 
 async function uploadImageToImgbb(file) {
   const apiKey = window.env && window.env.IMGBB_API_KEY ? window.env.IMGBB_API_KEY : undefined;
@@ -616,6 +853,29 @@ async function uploadPdfToSupabase(file) {
 // async function handleSellSubmit(e) {
 async function handleSellSubmit(e) {
   e.preventDefault();
+  const supabase = window.supabaseClient;
+  let userId = null;
+  let userPhone = null;
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user && user.id) {
+      userId = user.id;
+      // Get phone from form if present
+      let formPhone = null;
+      const phoneInput = document.querySelector('input[name="phone"]');
+      if (phoneInput) formPhone = phoneInput.value.trim();
+      // Get phone from users table
+      let { data: userRow } = await supabase.from('users').select('phone').eq('id', userId).maybeSingle();
+      userPhone = userRow && userRow.phone ? userRow.phone : (user.user_metadata && user.user_metadata.phone ? user.user_metadata.phone : null);
+      // If phone in form and different, update
+      if (formPhone && formPhone.length > 7 && formPhone !== userPhone) {
+        await supabase.from('users').update({ phone: formPhone }).eq('id', userId);
+      }
+    }
+  } catch (err) {
+    // Log but do not block
+    console.error('Error updating phone:', err);
+  }
   showLoading();
   const cat = categorySelect.value;
   const formData = new FormData(sellForm);

@@ -32,6 +32,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 window.location.href = `productinterface.html?id=${id}`;
             }
         });
+
+        // Category box click logic for homepage
+        // Only update for categories except laptop, notes, rooms/hostel
+        const categoryBoxes = document.querySelectorAll('.category-box');
+        categoryBoxes.forEach(box => {
+            const cat = box.getAttribute('data-category');
+            if (!cat) return;
+            const catLower = cat.toLowerCase();
+            // Do not touch laptop, notes, rooms/hostel
+            if (catLower === 'laptop' || catLower === 'laptops' || catLower === 'notes' || catLower === 'rooms' || catLower === 'rooms/hostel' || catLower === 'room' || catLower === 'hostel') {
+                return;
+            }
+            box.addEventListener('click', function() {
+                // Redirect to category.html with correct category param
+                window.location.href = `category.html?category=${encodeURIComponent(cat)}`;
+            });
+        });
     } catch (error) {
         
         document.getElementById('featured-products').innerHTML = 
