@@ -960,6 +960,11 @@ async function fetchAllCategoryItems() {
                         const cat = p.category?.toLowerCase();
                         return cat === 'rooms_hostels' || cat === 'rooms';
                     });
+                } else if (categoryParam === 'others') {
+                    filtered = allItems.filter(p => {
+                        const cat = p.category?.toLowerCase();
+                        return cat === 'others' || cat === 'cycle_bike';
+                    });
                 } else {
                     filtered = allItems.filter(p => p.category?.toLowerCase() === categoryParam);
                 }

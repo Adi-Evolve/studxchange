@@ -82,6 +82,24 @@
             font-size: 0.97rem;
             font-weight: 600;
         }
+    .similar-products-row {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+    @media (max-width: 700px) {
+        .similar-products-row {
+            flex-direction: column;
+            gap: 18px;
+        }
+    }
+    .similar-product-card {
+        flex: 1 1 0;
+        max-width: 48%;
+        min-width: 0;
+        margin: 0;
+    }
     </style>
 <style>
     /* ===== Original Global Styles ===== */
