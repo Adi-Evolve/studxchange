@@ -21,7 +21,7 @@ jspm_packages/
 # Build outputs
 
 # Admin page (keep private)
-adi.html
+
 dist/
 build/
 out/
