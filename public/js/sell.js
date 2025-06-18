@@ -49,44 +49,7 @@ window.openMapModal = null;
 categorySelect.addEventListener('change', handleCategoryChange);
 sellForm.addEventListener('submit', handleSellSubmit);
 
-document.addEventListener('DOMContentLoaded', async function() {
-  // Check user phone number before allowing form
-  const messageContainer = document.getElementById('profile-message-container');
-  const sellForm = document.getElementById('sellForm');
-  let userPhone = null;
-  let userId = null;
-  let userEmail = null;
-  let userMeta = null;
-  let supabase = window.supabaseClient;
-  if (supabase) {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user && user.id) {
-        userId = user.id;
-        userEmail = user.email;
-        userMeta = user.user_metadata || {};
-        // Try to get phone from users table
-        let { data: userRow } = await supabase.from('users').select('phone').eq('id', userId).maybeSingle();
-        userPhone = userRow && userRow.phone ? userRow.phone : (userMeta.phone || null);
-        if (!userPhone || userPhone.length < 8) {
-          messageContainer.style.display = 'block';
-          messageContainer.innerHTML = '<div style="background:#ffe0e0;color:#b00;padding:12px 18px;border-radius:8px;margin-bottom:16px;text-align:center;font-weight:500;">Please save your phone number in your <a href="profile.html" style="color:#1a75ff;text-decoration:underline;">profile page</a> before selling. Redirecting to profile...</div>';
-          if (sellForm) sellForm.style.display = 'none';
-          setTimeout(() => {
-            window.location.href = 'profile.html';
-          }, 2000);
-          return;
-        } else {
-          if (sellForm) sellForm.style.display = '';
-        }
-      }
-    } catch (err) {
-      // If error, allow form but log
-      console.error('Error checking user phone:', err);
-      if (sellForm) sellForm.style.display = '';
-    }
-  }
-
+document.addEventListener('DOMContentLoaded', async () => {
   let currentUser = null;
   try {
     currentUser = JSON.parse(localStorage.getItem('currentUser'));
@@ -853,29 +816,6 @@ async function uploadPdfToSupabase(file) {
 // async function handleSellSubmit(e) {
 async function handleSellSubmit(e) {
   e.preventDefault();
-  const supabase = window.supabaseClient;
-  let userId = null;
-  let userPhone = null;
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user && user.id) {
-      userId = user.id;
-      // Get phone from form if present
-      let formPhone = null;
-      const phoneInput = document.querySelector('input[name="phone"]');
-      if (phoneInput) formPhone = phoneInput.value.trim();
-      // Get phone from users table
-      let { data: userRow } = await supabase.from('users').select('phone').eq('id', userId).maybeSingle();
-      userPhone = userRow && userRow.phone ? userRow.phone : (user.user_metadata && user.user_metadata.phone ? user.user_metadata.phone : null);
-      // If phone in form and different, update
-      if (formPhone && formPhone.length > 7 && formPhone !== userPhone) {
-        await supabase.from('users').update({ phone: formPhone }).eq('id', userId);
-      }
-    }
-  } catch (err) {
-    // Log but do not block
-    console.error('Error updating phone:', err);
-  }
   showLoading();
   const cat = categorySelect.value;
   const formData = new FormData(sellForm);

@@ -1213,10 +1213,21 @@ button, select {
     };
 
     // Other account actions
-    function logout() {
-        localStorage.removeItem('currentUser');
-        showLoginRequiredDialog();
+    async function logout() {
+    if (!window.supabaseClient) {
+        if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+            window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+        }
     }
+    try {
+        await window.supabaseClient.auth.signOut();
+    } catch (e) {
+        // ignore
+    }
+    localStorage.removeItem('currentUser');
+    window.location.href = 'login.html';
+}
+
     function showLoginRequiredDialog() {
   // Create modal overlay
   const overlay = document.createElement('div');

@@ -947,7 +947,8 @@ async function fetchAllCategoryItems() {
     async function loadCategoryProducts() {
         try {
             const urlParams = new URLSearchParams(window.location.search);
-            const categoryParam = urlParams.get('category')?.toLowerCase() || 'all';
+            let categoryParam = urlParams.get('category') || 'all';
+            categoryParam = categoryParam.replace(/\s+/g, '_').toLowerCase();
             const allItems = await fetchAllCategoryItems();
             const productList = document.getElementById('productList');
             productList.innerHTML = '';
