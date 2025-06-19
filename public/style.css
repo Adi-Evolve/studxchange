@@ -1421,6 +1421,27 @@ input, select, textarea, button {
   background: #4d6a88;
 }
 
+/* --- Footer and Navbar Logo Custom Styles --- */
+
+footer a {
+  color: #fff !important;
+  text-decoration: none !important;
+  transition: color 0.18s, text-decoration 0.18s;
+}
+footer a:hover {
+  color: #e6f0ff !important;
+  text-decoration: underline dotted !important;
+}
+
+.navlogo img {
+  transition: transform 0.25s cubic-bezier(0.4, 0.2, 0.2, 1), box-shadow 0.25s;
+}
+.navlogo img:hover {
+  transform: scale(1.06) rotate(-2deg);
+  box-shadow: 0 6px 32px rgba(26,117,255,0.18), 0 2px 8px rgba(44,62,80,0.13);
+  cursor: pointer;
+}
+
 /* --- Wishlist Icon Styling --- */
 .wishlist-icon, .wishlist-icon i, .wishlist-btn i, .fa-heart {
   color: #fff !important;
