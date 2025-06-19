@@ -577,7 +577,7 @@ button, select {
       }
       
       const user = session.user;
-      console.log('Auth user data:', user);
+      // console.log('Auth user data:', user);
       
       // Set default values
       let name = 'User';
@@ -605,7 +605,7 @@ button, select {
           .eq('email', email)
           .single();
           
-        console.log('Found user profile:', profile, 'Error:', error);
+        // console.log('Found user profile:', profile, 'Error:', error);
         
         if (profile) {
           // Update with database values if available
@@ -613,11 +613,13 @@ button, select {
           if (profile.phone) phone = profile.phone;
           if (profile.id) {
             userId = profile.id;
-            console.log('Using database ID instead of auth ID:', userId);
+            // 
+            // console.log('Using database ID instead of auth ID:', userId);
           }
         }
       } catch (err) {
-        console.error('Error fetching user profile:', err);
+        // 
+        // console.warn('Error fetching user profile:', err);
       }
       
       // Store user data
@@ -626,13 +628,14 @@ button, select {
       window.userData = userData; // Make it globally available
 
       // Update DOM with user information - with extra debug logging
-      console.log('Updating profile display with:', userData);
-      console.log('DOM elements:', {
-        userName: document.getElementById('userName'),
-        profileName: document.getElementById('profileName'),
-        profileEmail: document.getElementById('profileEmail'),
-        profilePhone: document.getElementById('profilePhone')
-      });
+      // 
+      // console.log('Updating profile display with:', userData);
+      // console.log('DOM elements:', {
+        // userName: document.getElementById('userName'),
+        // profileName: document.getElementById('profileName'),
+        // profileEmail: document.getElementById('profileEmail'),
+        // profilePhone: document.getElementById('profilePhone')
+      // });
       
       // Force update the DOM elements with a slight delay to ensure they exist
       setTimeout(() => {
@@ -656,7 +659,8 @@ button, select {
           }
         }
         
-        console.log('Profile information updated successfully');
+        // 
+        // console.log('Profile information updated successfully');
       }, 100);
       // Listings are loaded in the main DOMContentLoaded event
     });
@@ -671,13 +675,15 @@ button, select {
         if (!window.supabaseClient) {
           if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
             window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-            console.log('Supabase client initialized in loadListedItems');
+            // 
+            // console.log('Supabase client initialized in loadListedItems');
           } else {
             throw new Error('Supabase client not available');
           }
         }
         
-        console.log('Fetching all products from database...');
+        // 
+        // console.log('Fetching all products from database...');
         
         // Simple approach: just fetch all products
         const { data: allProducts, error: fetchError } = await window.supabaseClient
@@ -685,19 +691,23 @@ button, select {
           .select('*');
           
         if (fetchError) {
-          console.error('Error fetching products:', fetchError);
+          // 
+          // console.error('Error fetching products:', fetchError);
           throw new Error(fetchError.message);
         }
         
-        console.log('Total products in database:', allProducts?.length || 0);
+        // 
+        // console.log('Total products in database:', allProducts?.length || 0);
         
         if (allProducts && allProducts.length > 0) {
           // Log the first product to see its structure
-          console.log('Sample product:', allProducts[0]);
+          // 
+          // console.log('Sample product:', allProducts[0]);
           
           // Filter for unsold products only
           const listedProducts = allProducts.filter(product => !product.is_sold);
-          console.log('Unsold products:', listedProducts.length);
+          // 
+          // console.log('Unsold products:', listedProducts.length);
           
           if (listedProducts.length > 0) {
             renderListedItems(listedProducts);
@@ -707,7 +717,8 @@ button, select {
         
         document.getElementById('listedItemsList').innerHTML = '<li>No items found in the database.</li>';
       } catch (error) {
-        console.error('Error loading listed items:', error);
+        // 
+        // console.error('Error loading listed items:', error);
         document.getElementById('listedItemsList').innerHTML = `<li>Failed to load your listed items: ${error.message}</li>`;
       }
     }
@@ -730,7 +741,8 @@ button, select {
         }
       }
       
-      console.log('Rendering unique products:', uniqueProducts.length);
+      // 
+      // console.log('Rendering unique products:', uniqueProducts.length);
         
       document.getElementById('listedItemsList').innerHTML = uniqueProducts.map(product => {
         return `
@@ -759,13 +771,15 @@ button, select {
         if (!window.supabaseClient) {
           if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
             window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-            console.log('Supabase client initialized in loadSoldItems');
+            // 
+            // console.log('Supabase client initialized in loadSoldItems');
           } else {
             throw new Error('Supabase client not available');
           }
         }
         
-        console.log('Fetching all products from database for sold items...');
+        // 
+        // console.log('Fetching all products from database for sold items...');
         
         // Simple approach: just fetch all products
         const { data: allProducts, error: fetchError } = await window.supabaseClient
@@ -773,16 +787,19 @@ button, select {
           .select('*');
           
         if (fetchError) {
-          console.error('Error fetching products for sold items:', fetchError);
+          // 
+          // console.error('Error fetching products for sold items:', fetchError);
           throw new Error(fetchError.message);
         }
         
-        console.log('Total products in database:', allProducts?.length || 0);
+        // 
+        // console.log('Total products in database:', allProducts?.length || 0);
         
         if (allProducts && allProducts.length > 0) {
           // Filter for sold products only
           const soldProducts = allProducts.filter(product => product.is_sold === true);
-          console.log('Sold products:', soldProducts.length);
+          // 
+          // console.log('Sold products:', soldProducts.length);
           
           if (soldProducts.length > 0) {
             renderSoldItems(soldProducts);
@@ -792,7 +809,8 @@ button, select {
         
         document.getElementById('soldItemsList').innerHTML = '<li>No sold items found in the database.</li>';
       } catch (error) {
-        console.error('Error loading sold items:', error);
+        // 
+        // console.error('Error loading sold items:', error);
         document.getElementById('soldItemsList').innerHTML = `<li>Failed to load your sold items: ${error.message}</li>`;
       }
     }
@@ -815,7 +833,8 @@ button, select {
         }
       }
       
-      console.log('Rendering unique sold items:', uniqueSoldItems.length);
+      // 
+      // console.log('Rendering unique sold items:', uniqueSoldItems.length);
         
       document.getElementById('soldItemsList').innerHTML = uniqueSoldItems.map(item =>
         `<li class="listed-item sold-effect" onclick="window.location.href='product-details.html?id=${item.id}'" style="cursor: pointer;">
@@ -841,28 +860,33 @@ button, select {
             if (!window.supabaseClient) {
                 if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
                     window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-                    console.log('Supabase client initialized in deleteItem');
+                    // 
+                    // console.log('Supabase client initialized in deleteItem');
                 } else {
                     throw new Error('Supabase client not available');
                 }
             }
             
-            console.log('Deleting product with ID:', productId);
+            // 
+            // console.log('Deleting product with ID:', productId);
             const { error } = await window.supabaseClient
                 .from('products')
                 .delete()
                 .eq('id', productId);
                 
             if (error) {
-                console.error('Error deleting product:', error);
+                // 
+                // console.error('Error deleting product:', error);
                 throw new Error(error.message);
             }
             
-            console.log('Product deleted successfully');
+            // 
+            // console.log('Product deleted successfully');
             await loadListedItems();
             alert('Item deleted successfully!');
         } catch (error) {
-            console.error('Delete error:', error);
+            // 
+            // console.error('Delete error:', error);
             alert('Failed to delete item: ' + error.message);
         }
     }
@@ -874,13 +898,15 @@ button, select {
             if (!window.supabaseClient) {
                 if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
                     window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-                    console.log('Supabase client initialized in handleSold');
+                    // 
+                    // console.log('Supabase client initialized in handleSold');
                 } else {
                     throw new Error('Supabase client not available');
                 }
             }
             
-            console.log('Marking product as sold with ID:', productId);
+            // 
+            // console.log('Marking product as sold with ID:', productId);
             
             // First, get the current product to preserve all its data
             const { data: product, error: fetchError } = await window.supabaseClient
@@ -890,7 +916,8 @@ button, select {
                 .single();
                 
             if (fetchError) {
-                console.error('Error fetching product:', fetchError);
+                // 
+                // console.error('Error fetching product:', fetchError);
                 throw new Error(fetchError.message);
             }
             
@@ -898,7 +925,8 @@ button, select {
                 throw new Error('Product not found');
             }
             
-            console.log('Found product to mark as sold:', product);
+            // 
+            // console.log('Found product to mark as sold:', product);
             
             // Update the product with is_sold = true
             const { error } = await window.supabaseClient
@@ -907,16 +935,19 @@ button, select {
                 .eq('id', productId);
                 
             if (error) {
-                console.error('Error marking product as sold:', error);
+                // 
+                // console.error('Error marking product as sold:', error);
                 throw new Error(error.message);
             }
             
-            console.log('Product marked as sold successfully');
+            // 
+            // console.log('Product marked as sold successfully');
             await loadListedItems();
             await loadSoldItems();
             alert('Item marked as sold!');
         } catch (error) {
-            console.error('Error marking as sold:', error);
+            // 
+            // console.error('Error marking as sold:', error);
             alert('Failed to mark item as sold: ' + error.message);
         }
     }
@@ -930,13 +961,15 @@ button, select {
         if (!window.supabaseClient) {
           if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
             window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-            console.log('Supabase client initialized in loadNotes');
+            // 
+            // console.log('Supabase client initialized in loadNotes');
           } else {
             throw new Error('Supabase client not available');
           }
         }
         
-        console.log('Fetching all notes from database...');
+        // 
+        // console.log('Fetching all notes from database...');
         
         // Fetch all notes
         const { data: allNotes, error: fetchError } = await window.supabaseClient
@@ -944,11 +977,13 @@ button, select {
           .select('*');
           
         if (fetchError) {
-          console.error('Error fetching notes:', fetchError);
+          // 
+          // console.error('Error fetching notes:', fetchError);
           throw new Error(fetchError.message);
         }
         
-        console.log('Total notes in database:', allNotes?.length || 0);
+        // 
+        // console.log('Total notes in database:', allNotes?.length || 0);
         
         if (allNotes && allNotes.length > 0) {
           renderNotes(allNotes);
@@ -956,7 +991,8 @@ button, select {
           document.getElementById('listedNotesList').innerHTML = '<li>No notes found in the database.</li>';
         }
       } catch (error) {
-        console.error('Error loading notes:', error);
+        // 
+        // console.error('Error loading notes:', error);
         document.getElementById('listedNotesList').innerHTML = `<li>Failed to load your notes: ${error.message}</li>`;
       }
     }
@@ -979,7 +1015,8 @@ button, select {
         }
       }
       
-      console.log('Rendering unique notes:', uniqueNotes.length);
+      // 
+      // console.log('Rendering unique notes:', uniqueNotes.length);
         
       document.getElementById('listedNotesList').innerHTML = uniqueNotes.map(note => {
         return `
@@ -1005,28 +1042,33 @@ button, select {
             if (!window.supabaseClient) {
                 if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
                     window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-                    console.log('Supabase client initialized in deleteNote');
+                    // 
+                    // console.log('Supabase client initialized in deleteNote');
                 } else {
                     throw new Error('Supabase client not available');
                 }
             }
             
-            console.log('Deleting note with ID:', noteId);
+            // 
+            // console.log('Deleting note with ID:', noteId);
             const { error } = await window.supabaseClient
                 .from('notes')
                 .delete()
                 .eq('id', noteId);
                 
             if (error) {
-                console.error('Error deleting note:', error);
+                // 
+                // console.error('Error deleting note:', error);
                 throw new Error(error.message);
             }
             
-            console.log('Note deleted successfully');
+            // 
+            // console.log('Note deleted successfully');
             await loadNotes();
             alert('Note deleted successfully!');
         } catch (error) {
-            console.error('Delete error:', error);
+            // 
+            // console.error('Delete error:', error);
             alert('Failed to delete note: ' + error.message);
         }
     }
@@ -1040,13 +1082,15 @@ button, select {
         if (!window.supabaseClient) {
           if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
             window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-            console.log('Supabase client initialized in loadRooms');
+            // 
+            // console.log('Supabase client initialized in loadRooms');
           } else {
             throw new Error('Supabase client not available');
           }
         }
         
-        console.log('Fetching all rooms from database...');
+        // 
+        // console.log('Fetching all rooms from database...');
         
         // Fetch all rooms
         const { data: allRooms, error: fetchError } = await window.supabaseClient
@@ -1054,11 +1098,13 @@ button, select {
           .select('*');
           
         if (fetchError) {
-          console.error('Error fetching rooms:', fetchError);
+          // 
+          // console.error('Error fetching rooms:', fetchError);
           throw new Error(fetchError.message);
         }
         
-        console.log('Total rooms in database:', allRooms?.length || 0);
+        // 
+        // console.log('Total rooms in database:', allRooms?.length || 0);
         
         if (allRooms && allRooms.length > 0) {
           renderRooms(allRooms);
@@ -1066,7 +1112,8 @@ button, select {
           document.getElementById('listedRoomsList').innerHTML = '<li>No room listings found in the database.</li>';
         }
       } catch (error) {
-        console.error('Error loading rooms:', error);
+        // 
+        // console.error('Error loading rooms:', error);
         document.getElementById('listedRoomsList').innerHTML = `<li>Failed to load your room listings: ${error.message}</li>`;
       }
     }
@@ -1089,7 +1136,8 @@ button, select {
         }
       }
       
-      console.log('Rendering unique rooms:', uniqueRooms.length);
+      // 
+      // console.log('Rendering unique rooms:', uniqueRooms.length);
         
       document.getElementById('listedRoomsList').innerHTML = uniqueRooms.map(room => {
         return `
@@ -1115,28 +1163,33 @@ button, select {
             if (!window.supabaseClient) {
                 if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
                     window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-                    console.log('Supabase client initialized in deleteRoom');
+                    // 
+                    // console.log('Supabase client initialized in deleteRoom');
                 } else {
                     throw new Error('Supabase client not available');
                 }
             }
             
-            console.log('Deleting room with ID:', roomId);
+            // 
+            // console.log('Deleting room with ID:', roomId);
             const { error } = await window.supabaseClient
                 .from('rooms')
                 .delete()
                 .eq('id', roomId);
                 
             if (error) {
-                console.error('Error deleting room:', error);
+                // 
+                // console.error('Error deleting room:', error);
                 throw new Error(error.message);
             }
             
-            console.log('Room listing deleted successfully');
+            // 
+            // console.log('Room listing deleted successfully');
             await loadRooms();
             alert('Room listing deleted successfully!');
         } catch (error) {
-            console.error('Delete error:', error);
+            // 
+            // console.error('Delete error:', error);
             alert('Failed to delete room listing: ' + error.message);
         }
     }
@@ -1197,7 +1250,8 @@ button, select {
         }
         alert('Phone number updated!');
       } catch (error) {
-        console.error('Error saving phone:', error);
+        // 
+        // console.error('Error saving phone:', error);
         alert('Failed to save phone number');
       }
     }
@@ -1214,18 +1268,24 @@ button, select {
 
     // Other account actions
     async function logout() {
-    if (!window.supabaseClient) {
-        if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
-            window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-        }
+  // Ensure Supabase client is initialized
+  if (!window.supabaseClient) {
+    if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+      window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
     }
-    try {
-        await window.supabaseClient.auth.signOut();
-    } catch (e) {
-        // ignore
-    }
-    localStorage.removeItem('currentUser');
-    window.location.href = 'login.html';
+  }
+  try {
+    await window.supabaseClient.auth.signOut();
+  } catch (e) {
+    // ignore
+  }
+  // Remove all user/session data
+  localStorage.removeItem('currentUser');
+  localStorage.removeItem('isLoggedIn');
+  sessionStorage.clear();
+  // Optionally clear cookies if any custom auth
+  // Redirect to login page
+  window.location.href = 'login.html';
 }
 
     function showLoginRequiredDialog() {

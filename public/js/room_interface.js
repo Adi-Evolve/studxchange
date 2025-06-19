@@ -166,23 +166,8 @@ async function renderRoom(room) {
 
 // --- MAP RENDERING ---
 function renderRoomMap(room) {
-    const mapDiv = document.getElementById('roomMap');
-    if (!mapDiv) {
-        return;
-    }
-    // Ensure the map container is visible and has size
-    if (mapDiv.offsetWidth === 0 || mapDiv.offsetHeight === 0) {
-    }
-    // Parse location
-    let loc = room.location;
-    if (typeof loc === 'string') {
-        try { loc = JSON.parse(loc); } catch {}
-    }
-    let lat = 19.076, lon = 72.8777; // Default Mumbai
-    if (loc && typeof loc.lat === 'number' && typeof loc.lon === 'number') {
-        lat = loc.lat;
-        lon = loc.lon;
-    }
+    const mapDiv = document.getElementById('roomMapContainer');
+    mapDiv.innerHTML = '<div id="roomMap" style="width:100%;height:100%;border-radius:12px;"></div>';
     // Load Leaflet if not loaded
     if (!window.L) {
         const leafletCSS = document.createElement('link');
@@ -195,115 +180,24 @@ function renderRoomMap(room) {
         document.body.appendChild(leafletScript);
         return;
     }
-    // Only initialize map ONCE
-    if (!window.roomLeafletMap) {
-        window.roomLeafletMap = L.map('roomMap', {
-            center: [lat, lon],
-            zoom: 15,
-            attributionControl: true
-        });
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: ' OpenStreetMap'
-        }).addTo(window.roomLeafletMap);
-        window.roomLeafletMarker = L.marker([lat, lon]).addTo(window.roomLeafletMap);
-    } else {
-        window.roomLeafletMap.setView([lat, lon], 15);
-        if (window.roomLeafletMarker) {
-            window.roomLeafletMarker.setLatLng([lat, lon]);
-        } else {
-            window.roomLeafletMarker = L.marker([lat, lon]).addTo(window.roomLeafletMap);
-        }
+    let loc = room.location;
+    if (typeof loc === 'string') {
+        try { loc = JSON.parse(loc); } catch {}
     }
-    // Always try to fix map size
-    setTimeout(() => {
-        window.roomLeafletMap.invalidateSize();
-    }, 350);
+    let lat = 19.076, lon = 72.8777; // Default Mumbai
+    if (loc && typeof loc.lat === 'number' && typeof loc.lon === 'number') {
+        lat = loc.lat;
+        lon = loc.lon;
+    }
+    if (window.roomLeafletMap) { window.roomLeafletMap.remove(); }
+    window.roomLeafletMap = L.map('roomMap').setView([lat, lon], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: ' OpenStreetMap'
+    }).addTo(window.roomLeafletMap);
+    L.marker([lat, lon]).addTo(window.roomLeafletMap);
 }
 
-
-// --- REVIEWS/COMMENTS ---
-function renderReviews(roomId) {
-    const reviewsList = document.getElementById('reviewsList');
-    reviewsList.innerHTML = '<div>Loading reviews...</div>';
-    fetchRoomReviews(roomId).then(reviews => {
-        if (!reviews.length) {
-            reviewsList.innerHTML = '<div>No reviews yet.</div>';
-        } else {
-            reviewsList.innerHTML = reviews.map(r => {
-                const stars = renderStars(r.rating || 0);
-                const user = r.user || r.user_name || r.userEmail || 'Anonymous';
-                return `<div class="review-item"><span class="review-stars">${stars}</span> <b>${user}:</b> ${r.text}</div>`;
-            }).join('');
-        }
-    });
-    // Star rating UI logic
-    let selectedRating = 0;
-    const stars = document.querySelectorAll('#reviewStars .star');
-    const starLabel = document.getElementById('starValueLabel');
-    stars.forEach(star => {
-        star.style.cursor = 'pointer';
-        star.onclick = function() {
-            selectedRating = parseInt(this.getAttribute('data-value'));
-            updateStarUI();
-        };
-        star.onmouseover = function() {
-            highlightStars(parseInt(this.getAttribute('data-value')));
-        };
-        star.onmouseout = function() {
-            updateStarUI();
-        };
-    });
-    function updateStarUI() {
-        stars.forEach(star => {
-            const val = parseInt(star.getAttribute('data-value'));
-            star.style.color = (val <= selectedRating) ? '#ffb400' : '#ccc';
-        });
-        starLabel.textContent = selectedRating ? `${selectedRating} star${selectedRating > 1 ? 's' : ''}` : '';
-    }
-    function highlightStars(val) {
-        stars.forEach(star => {
-            const v = parseInt(star.getAttribute('data-value'));
-            star.style.color = (v <= val) ? '#ffb400' : '#ccc';
-        });
-        starLabel.textContent = val ? `${val} star${val > 1 ? 's' : ''}` : '';
-    }
-    updateStarUI();
-    // Review submit logic
-    const form = document.getElementById('reviewForm');
-    form.onsubmit = async (e) => {
-        e.preventDefault();
-        const text = document.getElementById('reviewText').value.trim();
-        if (!text) return;
-        // Get user name and email from Supabase auth or window.currentUser
-        let user = '';
-        let userEmail = '';
-        if (window.currentUser && window.currentUser.name) {
-            user = window.currentUser.name;
-            userEmail = window.currentUser.email || '';
-        } else if (window.supabaseClient && window.supabaseClient.auth && window.supabaseClient.auth.user) {
-            const u = window.supabaseClient.auth.user();
-            user = (u && u.user_metadata && u.user_metadata.name) || '';
-            userEmail = (u && u.email) || '';
-        }
-        if (!user && userEmail) user = userEmail;
-        if (!user) user = 'Anonymous';
-        await submitRoomReview(roomId, text, selectedRating, user, userEmail);
-        document.getElementById('reviewText').value = '';
-        selectedRating = 0;
-        updateStarUI();
-        renderReviews(roomId);
-    };
-
-}
-
-function renderStars(rating) {
-    let html = '';
-    for (let i = 1; i <= 5; i++) {
-        html += `<span style="color:${i <= rating ? '#ffb400' : '#ccc'};font-size:1.1em;">&#9733;</span>`;
-    }
-    return html;
-}
 
 async function fetchRoomReviews(roomId) {
     // Simple localStorage fallback for demo; replace with Supabase table for prod
@@ -338,72 +232,6 @@ async function submitRoomReview(roomId, text, rating) {
         let arr = [];
         try { arr = JSON.parse(localStorage.getItem(key)) || []; } catch {}
         arr.unshift({ user: 'Anonymous', text, rating });
-        localStorage.setItem(key, JSON.stringify(arr));
-    }
-}
-
-// Update map rendering to use new container and smaller size
-function renderRoomMap(room) {
-    const mapDiv = document.getElementById('roomMapContainer');
-    mapDiv.innerHTML = '<div id="roomMap" style="width:100%;height:100%;border-radius:12px;"></div>';
-    // Load Leaflet if not loaded
-    if (!window.L) {
-        const leafletCSS = document.createElement('link');
-        leafletCSS.rel = 'stylesheet';
-        leafletCSS.href = 'https://unpkg.com/leaflet/dist/leaflet.css';
-        document.head.appendChild(leafletCSS);
-        const leafletScript = document.createElement('script');
-        leafletScript.src = 'https://unpkg.com/leaflet/dist/leaflet.js';
-        leafletScript.onload = () => renderRoomMap(room);
-        document.body.appendChild(leafletScript);
-        return;
-    }
-    let loc = room.location;
-    if (typeof loc === 'string') {
-        try { loc = JSON.parse(loc); } catch {}
-    }
-    let lat = 19.076, lon = 72.8777; // Default Mumbai
-    if (loc && typeof loc.lat === 'number' && typeof loc.lon === 'number') {
-        lat = loc.lat;
-        lon = loc.lon;
-    }
-    if (window.roomLeafletMap) { window.roomLeafletMap.remove(); }
-    window.roomLeafletMap = L.map('roomMap').setView([lat, lon], 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '© OpenStreetMap'
-    }).addTo(window.roomLeafletMap);
-    L.marker([lat, lon]).addTo(window.roomLeafletMap);
-}
-
-
-async function fetchRoomReviews(roomId) {
-    // Simple localStorage fallback for demo; replace with Supabase view for prod
-    const key = `room_reviews_${roomId}`;
-    try {
-        const supabase = window.supabaseClient;
-        const { data, error } = await supabase.from('room_review_with_user').select('*').eq('room_id', roomId).order('created_at', { ascending: false });
-        if (error) throw error;
-        return data.map(r => ({ user: r.user_name, text: r.text, rating: r.rating }));
-    } catch {
-        // fallback to localStorage
-        let arr = [];
-        try { arr = JSON.parse(localStorage.getItem(key)) || []; } catch {}
-        return arr;
-    }
-}
-async function submitRoomReview(roomId, text) {
-    // Simple localStorage fallback for demo; replace with Supabase insert for prod
-    const key = `room_reviews_${roomId}`;
-    try {
-        const supabase = window.supabaseClient;
-        const user = (window.currentUser && window.currentUser.name) || 'Anonymous';
-        await supabase.from('room_reviews').insert([{ room_id: roomId, text, user_name: user }]);
-    } catch {
-        // fallback to localStorage
-        let arr = [];
-        try { arr = JSON.parse(localStorage.getItem(key)) || []; } catch {}
-        arr.unshift({ user: 'Anonymous', text });
         localStorage.setItem(key, JSON.stringify(arr));
     }
 }

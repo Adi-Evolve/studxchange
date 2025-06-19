@@ -7,12 +7,12 @@ async function fetchSimilarNotes(note, page = 0, pageSize = 8) {
     const supabase = window.supabaseClient;
     if (!supabase) return [];
     let query = supabase.from('notes').select('*').neq('id', note.id);
-    if (note.college) query = query.eq('college', note.college);
+    if (note.college) query = query.eq('college', note.college); // console.logllege
     const { data, error } = await query.range(page * pageSize, (page + 1) * pageSize - 1);
     if (error || !data) return [];
     // Fetch seller info from users table using seller_id or owner_id
     const fetchSellerName = async (nt) => {
-        const sellerId = nt.seller_id || nt.owner_id;
+        const sellerId = nt.seller_id || nt.owner_id; // console.errorId = nt.seller_id || nt.owner_id;
         if (sellerId) {
             const { data: user, error: userErr } = await supabase
                 .from('users')
@@ -39,7 +39,7 @@ async function loadMoreSimilarNotes(note) {
     notes.forEach(nt => {
         if (loadedSimilarNoteIds.has(nt.id)) return;
         loadedSimilarNoteIds.add(nt.id);
-        const card = document.createElement('div');
+        const card = document.createElement('div'); // console.warnd = document.createElement('div');
         card.className = 'similar-notes-card';
         card.innerHTML = `
             <img src="${(nt.images && nt.images[0]) || nt.image || 'https://via.placeholder.com/120x120?text=No+Image'}" alt="Similar Note" />
