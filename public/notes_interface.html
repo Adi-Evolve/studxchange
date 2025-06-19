@@ -989,6 +989,17 @@
                 .eq('id', id)
                 .single();
             if (error || !notes) return null;
+            // Fetch seller name from users table using seller_id
+            if (notes.seller_id) {
+                const { data: user, error: userErr } = await supabase
+                    .from('users')
+                    .select('name')
+                    .eq('id', notes.seller_id)
+                    .single();
+                if (!userErr && user) {
+                    notes.sellerName = user.name || '';
+                }
+            }
             return notes;
         }
 
@@ -1022,11 +1033,9 @@
                     <div class="notes-price">₹${notes.price}</div>
                     <div class="notes-description">${notes.description || ''}</div>
                     <ul class="notes-details-list">
-                        <li><strong>Subject:</strong> ${notes.subject || 'N/A'}</li>
-                        <li><strong>Course:</strong> ${notes.course || 'N/A'}</li>
-                        <li><strong>Posted:</strong> ${notes.createdAt ? new Date(notes.createdAt).toLocaleDateString() : 'N/A'}</li>
-                        <li><strong>Seller:</strong> ${notes.sellerName || 'N/A'}</li>
-                    </ul>
+    <li><strong>Posted:</strong> ${(notes.createdat || '').split('T')[0] || (notes.createdat || '').split(' ')[0] || 'N/A'}</li>
+    <li><strong>Seller:</strong> ${notes.sellerName || 'N/A'}</li>
+</ul>
                     <div class="action-buttons">
                         <button class="btn btn-success" onclick="downloadPDF()">Buy Now</button>
                         <button class="btn btn-outline-secondary" onclick="addToWishlist()">Add to Wishlist</button>

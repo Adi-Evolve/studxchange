@@ -12,6 +12,18 @@ async function fetchRoomById(roomId) {
     if (!supabase) throw new Error('Supabase client not initialized');
     const { data, error } = await supabase.from('rooms').select('*').eq('id', roomId).single();
     if (error) throw new Error('Failed to fetch room: ' + error.message);
+    // Fetch owner info from users table using seller_id or owner_id
+    const ownerId = data.seller_id || data.owner_id;
+    if (ownerId) {
+        const { data: user, error: userErr } = await supabase
+            .from('users')
+            .select('name')
+            .eq('id', ownerId)
+            .single();
+        if (!userErr && user) {
+            data.ownerName = user.name || '';
+        }
+    }
     return data;
 }
 
@@ -127,6 +139,7 @@ async function renderRoom(room) {
             <div class="product-title">${room.roomName || room.title || 'Untitled Room'}</div>
             <div class="product-price">₹${room.fees || room.price || 'N/A'} / month</div>
             <ul class="product-details-list">
+                <li><strong>Owner:</strong> ${room.ownerName || 'N/A'}</li>
                 <li><b>College:</b> ${room.college || 'N/A'}</li>
                 <li><b>Room Type:</b> ${room.roomType || 'N/A'}</li>
                 <li><b>Occupancy:</b> ${occupancyStr}</li>

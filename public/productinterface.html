@@ -969,9 +969,72 @@ align-items: center;
     </section>
     <div id="alsoYouMightLikeSection"></div>
     <section class="similar-products-section">
-        <h3 style="margin:32px 0 16px 24px;">Similar Products</h3>
-        <div class="similar-products-scroll" id="similarProducts" style="display: flex; flex-direction: column; overflow-y: auto; max-height: 420px; min-height: 120px; gap: 18px; padding: 12px 24px 18px 24px;"></div>
-    </section>
+        <div class="similar-products-section">
+    <h4>Similar Products</h4>
+    <div id="similarProducts" class="similar-products-grid"></div>
+</div>
+<style>
+.similar-products-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 28px;
+    justify-content: space-between;
+    padding: 18px 0 18px 0;
+}
+.similar-product-card {
+    box-sizing: border-box;
+    flex: 0 1 calc(50% - 14px);
+    background: #fff;
+    border: 1.5px solid #e3e6ea;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(44,62,80,0.06);
+    padding: 18px 16px 16px 16px;
+    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: box-shadow 0.18s, transform 0.18s;
+}
+.similar-product-card:hover {
+    box-shadow: 0 6px 18px rgba(44,62,80,0.13);
+    transform: translateY(-3px) scale(1.025);
+}
+.similar-product-card img {
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    border: 1px solid #eee;
+}
+.similar-product-title {
+    font-size: 1.09rem;
+    font-weight: 600;
+    color: #2a3d56;
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 90%;
+}
+.similar-product-price {
+    color: #1a75ff;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+.similar-product-link {
+    text-decoration: none;
+    color: #2a3d56;
+    font-size: 1.01rem;
+    font-weight: 600;
+    margin-top: 7px;
+}
+@media (max-width: 800px) {
+    .similar-product-card { flex: 0 1 100%; max-width: 100%; }
+    .similar-products-grid { gap: 18px; }
+}
+</style>
     <script src="env.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
     <script src="js/db-config.js"></script>
@@ -1005,12 +1068,13 @@ align-items: center;
                 .eq('id', id)
                 .single();
             if (error || !product) return null;
-            // Fetch seller info from users table using owner_id
-            if (product.owner_id) {
+            // Fetch seller info from users table using seller_id or owner_id
+            const sellerId = product.seller_id || product.owner_id;
+            if (sellerId) {
                 const { data: user, error: userErr } = await window.supabaseClient
                     .from('users')
                     .select('name, email, phone')
-                    .eq('id', product.owner_id)
+                    .eq('id', sellerId)
                     .single();
                 if (!userErr && user) {
                     product.sellerName = user.name || '';
@@ -1084,18 +1148,18 @@ align-items: center;
                 <div class="product-right">
                     <div class="product-title">${product.title}</div>
                     <div class="product-price">₹${product.price}</div>
-                    <div class="product-description">${product.description || ''}</div>
                     <ul class="product-details-list">
                         <li><strong>Category:</strong> ${product.category || 'N/A'}</li>
-                        <li><strong>Posted:</strong> ${product.createdAt ? new Date(product.createdAt).toLocaleDateString() : 'N/A'}</li>
+                        <li><strong>Posted:</strong> ${(product.created_at || product.createdAt || '').split('T')[0] || (product.created_at || product.createdAt || '').split(' ')[0] || 'N/A'}</li>
                         <li><strong>Seller:</strong> ${product.sellerName || 'N/A'}</li>
                     </ul>
+                    <div class="product-description">${product.description || ''}</div>
                     <div class="action-buttons">
     <button class="btn btn-primary contact-seller-btn"><i class="fab fa-whatsapp"></i> Contact Seller</button>
     <button class="btn btn-outline-info compare-btn"><i class="fas fa-balance-scale"></i> Compare</button>
     <button class="btn btn-outline-dark seller-info-btn"><i class="fas fa-user"></i> Seller Info</button>
 </div>
-<div class="product-description" style="margin-top:24px;">${product.description || ''}</div>
+
 </div>
 </div>
 <!-- Seller Info Modal -->

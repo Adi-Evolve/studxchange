@@ -10,6 +10,21 @@ async function fetchSimilarNotes(note, page = 0, pageSize = 8) {
     if (note.college) query = query.eq('college', note.college);
     const { data, error } = await query.range(page * pageSize, (page + 1) * pageSize - 1);
     if (error || !data) return [];
+    // Fetch seller info from users table using seller_id or owner_id
+    const fetchSellerName = async (nt) => {
+        const sellerId = nt.seller_id || nt.owner_id;
+        if (sellerId) {
+            const { data: user, error: userErr } = await supabase
+                .from('users')
+                .select('name')
+                .eq('id', sellerId)
+                .single();
+            if (!userErr && user) {
+                nt.sellerName = user.name || '';
+            }
+        }
+    };
+    await Promise.all(data.map(fetchSellerName));
     return data;
 }
 async function loadMoreSimilarNotes(note) {
@@ -30,6 +45,7 @@ async function loadMoreSimilarNotes(note) {
             <img src="${(nt.images && nt.images[0]) || nt.image || 'https://via.placeholder.com/120x120?text=No+Image'}" alt="Similar Note" />
             <div class="similar-notes-title">${nt.title || nt.name || 'Untitled'}</div>
             <div class="similar-notes-price">₹${nt.price || 'N/A'}</div>
+            <div class="similar-notes-seller"><strong>Seller:</strong> ${nt.sellerName || 'N/A'}</div>
             <a href="notes_interface.html?id=${nt.id}" class="similar-notes-link">View Details</a>
         `;
         container.appendChild(card);

@@ -136,6 +136,8 @@ function renderDetail(item) {
                 <span><b>Category:</b> ${item.category || item._type}</span>
                 <span><b>College:</b> ${item.college || 'N/A'}</span>
                 ${item.condition ? `<span><b>Condition:</b> ${item.condition}</span>` : ''}
+                <span><b>Seller:</b> ${item.sellerName || 'N/A'}</span>
+                <span><b>Posted:</b> ${item.created_at ? item.created_at.split(' ')[0] : 'N/A'}</span>
             </div>
             <div class="product-buttons">
                 <button class="btn btn-success" onclick="buyNow()">Buy Now</button>
@@ -172,11 +174,31 @@ function renderMap(location) {
 }
 
 // Contact Seller for Room (WhatsApp)
-function contactRoomSeller() {
+async function contactRoomSeller() {
     if (!window.currentItem) return;
-    const phone = window.currentItem.sellerPhone || window.currentItem.sellerContact || '';
+    const item = window.currentItem;
+    let phone = '';
+    if (item._type === 'product') {
+        // Always use seller_id from product to fetch seller info
+        const sellerId = item.seller_id;
+        if ((!item.sellerPhone || !item.sellerEmail || !item.sellerName) && sellerId) {
+            try {
+                const supabase = window.supabaseClient;
+                const { data: user, error } = await supabase.from('users').select('*').eq('id', sellerId).single();
+                if (!error && user) {
+                    item.sellerName = user.name || '';
+                    item.sellerEmail = user.email || '';
+                    item.sellerPhone = user.phone || '';
+                    item.sellerCollege = user.college || '';
+                }
+            } catch {}
+        }
+        phone = item.sellerPhone || '';
+    } else {
+        phone = item.sellerPhone || item.sellerContact || '';
+    }
     if (!phone) return alert('Seller phone not available');
-    const msg = encodeURIComponent(`Hi, I am interested in renting the room: ${window.currentItem.title}`);
+    const msg = encodeURIComponent(`Hi, I am interested in renting the room: ${item.title}`);
     window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
 }
 // Room Rating Submission
@@ -193,23 +215,63 @@ function downloadNotePdf(pdfUrl) {
     window.open(pdfUrl, '_blank');
 }
 // Buy Now button: WhatsApp redirect
-function buyNow() {
+async function buyNow() {
     if (!window.currentItem) return;
-    const phone = window.currentItem.sellerPhone || window.currentItem.sellerContact || '';
+    const item = window.currentItem;
+    let phone = '';
+    if (item._type === 'product') {
+        // Fetch seller info if not already present
+        if (!item.sellerPhone && item.seller_id) {
+            try {
+                const supabase = window.supabaseClient;
+                const { data: user, error } = await supabase.from('users').select('*').eq('id', item.seller_id).single();
+                if (!error && user) {
+                    item.sellerName = user.name || '';
+                    item.sellerEmail = user.email || '';
+                    item.sellerPhone = user.phone || '';
+                    item.sellerCollege = user.college || '';
+                }
+            } catch {}
+        }
+        phone = item.sellerPhone || '';
+    } else {
+        phone = item.sellerPhone || item.sellerContact || '';
+    }
     if (!phone) return alert('Seller phone not available');
-    const msg = encodeURIComponent(`Hi, I am interested in buying the product: ${window.currentItem.title}`);
+    const msg = encodeURIComponent(`Hi, I am interested in buying the product: ${item.title}`);
     window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
 }
 
 // Seller Info Modal
-function showSellerInfo() {
+async function showSellerInfo() {
     const modal = new bootstrap.Modal(document.getElementById('sellerInfoModal'));
     const c = window.currentItem || {};
-    let html = `<b>Name:</b> ${c.sellerName || 'N/A'}<br>
+    if (c._type === 'product' && c.seller_id && (!c.sellerName || !c.sellerPhone || !c.sellerEmail)) {
+        // Always use seller_id from product to fetch seller info
+        const sellerId = c.seller_id;
+        try {
+            const supabase = window.supabaseClient;
+            const { data: user, error } = await supabase.from('users').select('*').eq('id', sellerId).single();
+            if (!error && user) {
+                c.sellerName = user.name || '';
+                c.sellerEmail = user.email || '';
+                c.sellerPhone = user.phone || '';
+                c.sellerCollege = user.college || '';
+            }
+        } catch {}
+    }
+    let html = '';
+    if (c._type === 'product') {
+        html = `<b>Name:</b> ${c.sellerName || 'N/A'}<br>
+                <b>Email:</b> ${c.sellerEmail || 'N/A'}<br>
+                <b>Phone:</b> ${c.sellerPhone || 'N/A'}<br>
+                <b>College:</b> ${c.sellerCollege || c.college || 'N/A'}<br>`;
+    } else {
+        html = `<b>Name:</b> ${c.sellerName || 'N/A'}<br>
                 <b>Email:</b> ${c.sellerEmail || 'N/A'}<br>
                 <b>Phone:</b> ${c.sellerPhone || 'N/A'}<br>
                 <b>College:</b> ${c.college || 'N/A'}<br>`;
-    // Optionally: fetch and show seller's past sold items
+    }
     document.getElementById('sellerInfoContent').innerHTML = html + '<hr><b>Past Sold Items:</b><div id="sellerSoldItems">Loading...</div>';
     modal.show();
     fetchSellerSoldItems();
@@ -283,6 +345,21 @@ window.addEventListener('DOMContentLoaded', async () => {
         if (!item) {
             document.getElementById('productDetailContainer').innerHTML = '<div class="alert alert-danger">Product not found.</div>';
             return;
+        }
+        // Only for regular products, fetch seller info from users table
+        if (item._type === 'product' && item.seller_id) {
+            try {
+                const supabase = window.supabaseClient;
+                const { data: user, error } = await supabase.from('users').select('*').eq('id', item.seller_id).single();
+                if (!error && user) {
+                    item.sellerName = user.name || '';
+                    item.sellerEmail = user.email || '';
+                    item.sellerPhone = user.phone || '';
+                    item.sellerCollege = user.college || '';
+                }
+            } catch (e) {
+                // fail silently
+            }
         }
     } else {
         // Try loading note from sessionStorage (for PDF/notes navigation)
