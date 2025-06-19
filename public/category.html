@@ -880,12 +880,14 @@
       const product = lastFilteredProducts.find(p => (p.id || p._id) == id);
       if (!product) return;
       let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
-      const index = wishlist.findIndex(item => item.title === (product.title || product.name));
+      const index = wishlist.findIndex(item => (item.id || item._id) == id);
       if (index === -1) {
         wishlist.push({
+          id: product.id || product._id,
           title: product.title || product.name,
           price: product.price,
           image: product.images?.[0] || product.image,
+          description: product.description || '',
           category: product.category
         });
         event.target.classList.remove('far');
@@ -1009,6 +1011,7 @@ async function fetchAllCategoryItems() {
     }
 }
             });
+            lastFilteredProducts = filtered;
         } catch (error) {
             console.error('Error loading products:', error);
             document.getElementById('productList').innerHTML = '<p>Error loading products. Please refresh.</p>';

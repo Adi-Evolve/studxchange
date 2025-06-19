@@ -182,14 +182,169 @@
     .modal {
       display: none;
       position: fixed;
-      z-index: 1;
+      z-index: 10000;
       left: 0;
       top: 0;
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
       overflow: auto;
-      background-color: rgba(0,0,0,0.4);
+      background-color: rgba(0,0,0,0.5);
+      transition: opacity 0.2s;
     }
+    .modal-content {
+      background: #fff;
+      margin: 40px auto;
+      padding: 32px 24px;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(42,61,86,0.14);
+      width: 95%;
+      max-width: 480px;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      animation: modalPop 0.2s cubic-bezier(.4,2,.6,1);
+    }
+    @keyframes modalPop {
+      0% { transform: scale(0.96) translateY(40px); opacity: 0; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    .modal-content h2 {
+      margin-bottom: 18px;
+      color: #2a3d56;
+      font-size: 1.3rem;
+      font-weight: 700;
+      text-align: center;
+    }
+    .modal-content label {
+      display: block;
+      margin-bottom: 6px;
+      color: #2a3d56;
+      font-weight: 500;
+    }
+    .modal-content input[type="text"],
+    .modal-content input[type="number"],
+    .modal-content input[type="file"],
+    .modal-content textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1.5px solid #e1e7f0;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      font-size: 1rem;
+      background: #f8f9fb;
+      transition: border 0.2s;
+    }
+    .modal-content input[type="text"]:focus,
+    .modal-content input[type="number"]:focus,
+    .modal-content textarea:focus {
+      border: 1.5px solid #2a3d56;
+      outline: none;
+      background: #fff;
+    }
+    .modal-content button[type="submit"] {
+      width: 100%;
+      background: linear-gradient(90deg,#2a3d56 70%,#1a75ff 100%);
+      color: #fff;
+      padding: 12px 0;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      font-size: 1.1rem;
+      cursor: pointer;
+      margin-top: 8px;
+      box-shadow: 0 2px 8px rgba(42,61,86,0.08);
+      transition: background 0.2s;
+    }
+    .modal-content button[type="submit"]:hover {
+      background: linear-gradient(90deg,#1a75ff 70%,#2a3d56 100%);
+    }
+    .modal-content .close {
+      position: absolute;
+      top: 18px;
+      right: 22px;
+      font-size: 2rem;
+      color: #aaa;
+      cursor: pointer;
+      font-weight: 400;
+      transition: color 0.2s;
+    }
+    .modal-content .close:hover { color: #2a3d56; }
+    .modal-content .current-images {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .modal-content .current-images img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(42,61,86,0.06);
+      border: 1.5px solid #e1e7f0;
+    }
+    .edit-btn {
+      background: #ffd600;
+      color: #333;
+      border: none;
+      border-radius: 6px; /* Matches .sold-btn, .delete-btn */
+      padding: 8px 0;
+      font-weight: 600;
+      font-size: 1rem;
+      margin-top: 3px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(42,61,86,0.07);
+      transition: background 0.2s;
+      border: 1.5px solid #ffe066;
+      letter-spacing: 0.5px;
+    }
+    .edit-btn:hover {
+      background: #ffe066;
+      color: #222;
+    }
+    .current-images {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .current-images .img-wrap {
+      position: relative;
+      display: inline-block;
+    }
+    .current-images img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(42,61,86,0.06);
+      border: 1.5px solid #e1e7f0;
+      display: block;
+    }
+    .current-images .remove-img {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #dc3545;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.13);
+      transition: background 0.2s;
+      padding: 0;
+    }
+    .current-images .remove-img:hover {
+      background: #b02a37;
+    }
+
     .modal-content {
       background-color: #fefefe;
       margin: 15% auto;
@@ -199,6 +354,92 @@
       max-width: 400px;
       border-radius: 8px;
     }
+    /* Modern Edit Profile Modal Styles */
+    .profile-edit-modal {
+      display: none;
+      position: fixed;
+      z-index: 10001;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.5);
+      transition: opacity 0.2s;
+    }
+    .profile-edit-content {
+      background: #fff;
+      margin: 60px auto;
+      padding: 40px 32px 32px 32px;
+      border-radius: 22px;
+      box-shadow: 0 10px 40px rgba(42,61,86,0.16);
+      width: 95%;
+      max-width: 420px;
+      max-height: 88vh;
+      overflow-y: auto;
+      position: relative;
+      animation: modalPop 0.22s cubic-bezier(.4,2,.6,1);
+    }
+    .profile-edit-content h2 {
+      margin-bottom: 18px;
+      color: #2a3d56;
+      font-size: 1.35rem;
+      font-weight: 700;
+      text-align: center;
+    }
+    .profile-edit-content label {
+      display: block;
+      margin-bottom: 7px;
+      color: #2a3d56;
+      font-weight: 500;
+    }
+    .profile-edit-content input[type="text"],
+    .profile-edit-content input[type="email"],
+    .profile-edit-content input[type="number"],
+    .profile-edit-content textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.7px solid #e1e7f0;
+      border-radius: 7px;
+      margin-bottom: 18px;
+      font-size: 1rem;
+      background: #f8f9fb;
+      transition: border 0.2s;
+    }
+    .profile-edit-content input:focus,
+    .profile-edit-content textarea:focus {
+      border: 1.7px solid #1a75ff;
+      outline: none;
+      background: #fff;
+    }
+    .profile-edit-content button[type="submit"] {
+      width: 100%;
+      background: linear-gradient(90deg,#2a3d56 70%,#1a75ff 100%);
+      color: #fff;
+      padding: 12px 0;
+      border-radius: 10px;
+      border: none;
+      font-weight: 600;
+      font-size: 1.08rem;
+      cursor: pointer;
+      margin-top: 8px;
+      box-shadow: 0 2px 8px rgba(42,61,86,0.08);
+      transition: background 0.2s;
+    }
+    .profile-edit-content button[type="submit"]:hover {
+      background: linear-gradient(90deg,#1a75ff 70%,#2a3d56 100%);
+    }
+    .profile-edit-content .close {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      font-size: 2rem;
+      color: #aaa;
+      cursor: pointer;
+      font-weight: 400;
+      transition: color 0.2s;
+    }
+    .profile-edit-content .close:hover { color: #2a3d56; }
     .close {
       color: #aaa;
       float: right;
@@ -511,9 +752,53 @@ button, select {
               
               <h3>My Notes</h3>
               <ul id="listedNotesList"></ul>
+
+<!-- Edit Note Modal -->
+<div id="editNoteModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeEditNoteModal()">&times;</span>
+    <h2>Edit Note</h2>
+    <form id="editNoteForm">
+      <input type="hidden" id="editNoteId">
+      <label for="editNoteTitle">Title:</label>
+      <input type="text" id="editNoteTitle" required>
+      <label for="editNoteSubject">Subject:</label>
+      <input type="text" id="editNoteSubject" required>
+      <label for="editNoteDescription">Description:</label>
+      <textarea id="editNoteDescription" rows="3"></textarea>
+      <label>Current Image:</label>
+      <div class="current-images" id="currentNoteImage"></div>
+      <label for="editNoteImage">Change Image:</label>
+      <input type="file" id="editNoteImage" accept="image/*">
+      <button type="submit">Save Changes</button>
+    </form>
+  </div>
+</div>
               
               <h3>My Room Listings</h3>
               <ul id="listedRoomsList"></ul>
+
+<!-- Edit Room Modal -->
+<div id="editRoomModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeEditRoomModal()">&times;</span>
+    <h2>Edit Room Listing</h2>
+    <form id="editRoomForm">
+      <input type="hidden" id="editRoomId">
+      <label for="editRoomTitle">Title:</label>
+      <input type="text" id="editRoomTitle" required>
+      <label for="editRoomRent">Rent/Month:</label>
+      <input type="number" id="editRoomRent" required>
+      <label for="editRoomDescription">Description:</label>
+      <textarea id="editRoomDescription" rows="3"></textarea>
+      <label>Current Images:</label>
+      <div class="current-images" id="currentRoomImages"></div>
+      <label for="editRoomImages">Change Images:</label>
+      <input type="file" id="editRoomImages" accept="image/*" multiple>
+      <button type="submit">Save Changes</button>
+    </form>
+  </div>
+</div>
           </div>
           
           <div class="sold-items">
@@ -670,55 +955,31 @@ button, select {
     async function loadListedItems() {
       try {
         document.getElementById('listedItemsList').innerHTML = '<li>Loading your items...</li>';
-        
+        // Get current userId from localStorage
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        const userId = currentUser?.id;
+        if (!userId) throw new Error('User not authenticated');
         // Make sure Supabase client is initialized
         if (!window.supabaseClient) {
           if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
             window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-            // 
-            // console.log('Supabase client initialized in loadListedItems');
           } else {
             throw new Error('Supabase client not available');
           }
         }
-        
-        // 
-        // console.log('Fetching all products from database...');
-        
-        // Simple approach: just fetch all products
-        const { data: allProducts, error: fetchError } = await window.supabaseClient
+        // Fetch all products where seller_id = userId and not sold
+        const { data: myProducts, error: fetchError } = await window.supabaseClient
           .from('products')
-          .select('*');
-          
-        if (fetchError) {
-          // 
-          // console.error('Error fetching products:', fetchError);
-          throw new Error(fetchError.message);
+          .select('*')
+          .eq('seller_id', userId)
+          .eq('is_sold', false);
+        if (fetchError) throw new Error(fetchError.message);
+        if (myProducts && myProducts.length > 0) {
+          renderListedItems(myProducts);
+          return;
         }
-        
-        // 
-        // console.log('Total products in database:', allProducts?.length || 0);
-        
-        if (allProducts && allProducts.length > 0) {
-          // Log the first product to see its structure
-          // 
-          // console.log('Sample product:', allProducts[0]);
-          
-          // Filter for unsold products only
-          const listedProducts = allProducts.filter(product => !product.is_sold);
-          // 
-          // console.log('Unsold products:', listedProducts.length);
-          
-          if (listedProducts.length > 0) {
-            renderListedItems(listedProducts);
-            return;
-          }
-        }
-        
         document.getElementById('listedItemsList').innerHTML = '<li>No items found in the database.</li>';
       } catch (error) {
-        // 
-        // console.error('Error loading listed items:', error);
         document.getElementById('listedItemsList').innerHTML = `<li>Failed to load your listed items: ${error.message}</li>`;
       }
     }
@@ -756,6 +1017,7 @@ button, select {
             <div class="item-actions" onclick="event.stopPropagation();">
               <button class="delete-btn" onclick="deleteItem('${product.id}')">Remove</button>
               <button class="sold-btn" onclick="handleSold('${product.id}')">Mark as Sold</button>
+              <button class="edit-btn" onclick="openEditProductModal(event, '${product.id}')">Edit</button>
             </div>
           </li>
         `;
@@ -766,51 +1028,29 @@ button, select {
     async function loadSoldItems() {
       try {
         document.getElementById('soldItemsList').innerHTML = '<li>Loading your sold items...</li>';
-        
-        // Make sure Supabase client is initialized
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        const userId = currentUser?.id;
+        if (!userId) throw new Error('User not authenticated');
         if (!window.supabaseClient) {
           if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
             window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-            // 
-            // console.log('Supabase client initialized in loadSoldItems');
           } else {
             throw new Error('Supabase client not available');
           }
         }
-        
-        // 
-        // console.log('Fetching all products from database for sold items...');
-        
-        // Simple approach: just fetch all products
-        const { data: allProducts, error: fetchError } = await window.supabaseClient
+        // Fetch all sold products for this user
+        const { data: soldProducts, error: fetchError } = await window.supabaseClient
           .from('products')
-          .select('*');
-          
-        if (fetchError) {
-          // 
-          // console.error('Error fetching products for sold items:', fetchError);
-          throw new Error(fetchError.message);
+          .select('*')
+          .eq('seller_id', userId)
+          .eq('is_sold', true);
+        if (fetchError) throw new Error(fetchError.message);
+        if (soldProducts && soldProducts.length > 0) {
+          renderSoldItems(soldProducts);
+          return;
         }
-        
-        // 
-        // console.log('Total products in database:', allProducts?.length || 0);
-        
-        if (allProducts && allProducts.length > 0) {
-          // Filter for sold products only
-          const soldProducts = allProducts.filter(product => product.is_sold === true);
-          // 
-          // console.log('Sold products:', soldProducts.length);
-          
-          if (soldProducts.length > 0) {
-            renderSoldItems(soldProducts);
-            return;
-          }
-        }
-        
         document.getElementById('soldItemsList').innerHTML = '<li>No sold items found in the database.</li>';
       } catch (error) {
-        // 
-        // console.error('Error loading sold items:', error);
         document.getElementById('soldItemsList').innerHTML = `<li>Failed to load your sold items: ${error.message}</li>`;
       }
     }
@@ -956,43 +1196,28 @@ button, select {
     async function loadNotes() {
       try {
         document.getElementById('listedNotesList').innerHTML = '<li>Loading your notes...</li>';
-        
-        // Make sure Supabase client is initialized
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        const userId = currentUser?.id;
+        if (!userId) throw new Error('User not authenticated');
         if (!window.supabaseClient) {
           if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
             window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-            // 
-            // console.log('Supabase client initialized in loadNotes');
           } else {
             throw new Error('Supabase client not available');
           }
         }
-        
-        // 
-        // console.log('Fetching all notes from database...');
-        
-        // Fetch all notes
-        const { data: allNotes, error: fetchError } = await window.supabaseClient
+        // Fetch all notes for this user
+        const { data: myNotes, error: fetchError } = await window.supabaseClient
           .from('notes')
-          .select('*');
-          
-        if (fetchError) {
-          // 
-          // console.error('Error fetching notes:', fetchError);
-          throw new Error(fetchError.message);
-        }
-        
-        // 
-        // console.log('Total notes in database:', allNotes?.length || 0);
-        
-        if (allNotes && allNotes.length > 0) {
-          renderNotes(allNotes);
+          .select('*')
+          .eq('seller_id', userId);
+        if (fetchError) throw new Error(fetchError.message);
+        if (myNotes && myNotes.length > 0) {
+          renderNotes(myNotes);
         } else {
           document.getElementById('listedNotesList').innerHTML = '<li>No notes found in the database.</li>';
         }
       } catch (error) {
-        // 
-        // console.error('Error loading notes:', error);
         document.getElementById('listedNotesList').innerHTML = `<li>Failed to load your notes: ${error.message}</li>`;
       }
     }
@@ -1019,19 +1244,20 @@ button, select {
       // console.log('Rendering unique notes:', uniqueNotes.length);
         
       document.getElementById('listedNotesList').innerHTML = uniqueNotes.map(note => {
-        return `
-          <li class="listed-item" onclick="window.location.href='notes_interface.html?id=${note.id}'" style="cursor: pointer;">
-            <img src="${note.image || 'note-placeholder.jpg'}" class="item-image" alt="${note.title || 'Note'}">
-            <div class="item-details">
-              <h3>${note.title || 'Untitled Note'}</h3>
-              <p><small>Subject: ${note.subject || 'General'}</small></p>
-            </div>
-            <div class="item-actions" onclick="event.stopPropagation();">
-              <button class="delete-btn" onclick="deleteNote('${note.id}')">Remove</button>
-            </div>
-          </li>
-        `;
-      }).join('');
+  return `
+    <li class="listed-item" onclick="window.location.href='notes_interface.html?id=${note.id}'" style="cursor: pointer;">
+      <img src="${note.image || 'note-placeholder.jpg'}" class="item-image" alt="${note.title || 'Note'}">
+      <div class="item-details">
+        <h3>${note.title || 'Untitled Note'}</h3>
+        <p><small>Subject: ${note.subject || 'General'}</small></p>
+      </div>
+      <div class="item-actions" onclick="event.stopPropagation();">
+        <button class="delete-btn" onclick="deleteNote('${note.id}')">Remove</button>
+        <button class="edit-btn" onclick="openEditNoteModal(event, '${note.id}')">Edit</button>
+      </div>
+    </li>
+  `;
+}).join('');
     }
     
     // Delete a note
@@ -1077,43 +1303,28 @@ button, select {
     async function loadRooms() {
       try {
         document.getElementById('listedRoomsList').innerHTML = '<li>Loading your room listings...</li>';
-        
-        // Make sure Supabase client is initialized
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        const userId = currentUser?.id;
+        if (!userId) throw new Error('User not authenticated');
         if (!window.supabaseClient) {
           if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
             window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-            // 
-            // console.log('Supabase client initialized in loadRooms');
           } else {
             throw new Error('Supabase client not available');
           }
         }
-        
-        // 
-        // console.log('Fetching all rooms from database...');
-        
-        // Fetch all rooms
-        const { data: allRooms, error: fetchError } = await window.supabaseClient
+        // Fetch all rooms for this user
+        const { data: myRooms, error: fetchError } = await window.supabaseClient
           .from('rooms')
-          .select('*');
-          
-        if (fetchError) {
-          // 
-          // console.error('Error fetching rooms:', fetchError);
-          throw new Error(fetchError.message);
-        }
-        
-        // 
-        // console.log('Total rooms in database:', allRooms?.length || 0);
-        
-        if (allRooms && allRooms.length > 0) {
-          renderRooms(allRooms);
+          .select('*')
+          .eq('seller_id', userId);
+        if (fetchError) throw new Error(fetchError.message);
+        if (myRooms && myRooms.length > 0) {
+          renderRooms(myRooms);
         } else {
           document.getElementById('listedRoomsList').innerHTML = '<li>No room listings found in the database.</li>';
         }
       } catch (error) {
-        // 
-        // console.error('Error loading rooms:', error);
         document.getElementById('listedRoomsList').innerHTML = `<li>Failed to load your room listings: ${error.message}</li>`;
       }
     }
@@ -1140,19 +1351,20 @@ button, select {
       // console.log('Rendering unique rooms:', uniqueRooms.length);
         
       document.getElementById('listedRoomsList').innerHTML = uniqueRooms.map(room => {
-        return `
-          <li class="listed-item" onclick="window.location.href='room-details.html?id=${room.id}'" style="cursor: pointer;">
-            <img src="${room.images?.[0] || room.image || 'room-placeholder.jpg'}" class="item-image" alt="${room.title || 'Room'}">
-            <div class="item-details">
-              <h3>${room.title || 'Room for Rent'}</h3>
-              <p class="price">₹${room.rent || room.price || '0'}/month</p>
-            </div>
-            <div class="item-actions" onclick="event.stopPropagation();">
-              <button class="delete-btn" onclick="deleteRoom('${room.id}')">Remove</button>
-            </div>
-          </li>
-        `;
-      }).join('');
+  return `
+    <li class="listed-item" onclick="window.location.href='room-details.html?id=${room.id}'" style="cursor: pointer;">
+      <img src="${room.images?.[0] || room.image || 'room-placeholder.jpg'}" class="item-image" alt="${room.title || 'Room'}">
+      <div class="item-details">
+        <h3>${room.title || 'Room for Rent'}</h3>
+        <p class="price">₹${room.rent || room.price || '0'}/month</p>
+      </div>
+      <div class="item-actions" onclick="event.stopPropagation();">
+        <button class="delete-btn" onclick="deleteRoom('${room.id}')">Remove</button>
+        <button class="edit-btn" onclick="openEditRoomModal(event, '${room.id}')">Edit</button>
+      </div>
+    </li>
+  `;
+}).join('');
     }
     
     // Delete a room listing
@@ -1387,5 +1599,350 @@ button, select {
       }
     });
   </script>
+<!-- Edit Product Modal -->
+<div id="editProductModal" class="modal" style="z-index:10000;">
+  <div class="modal-content" style="max-height:80vh; overflow-y:auto; width:95%; max-width:500px;">
+    <span class="close" onclick="closeEditProductModal()">&times;</span>
+    <h2>Edit Product</h2>
+    <form id="editProductForm">
+      <input type="hidden" id="editProductId" name="id">
+      <div style="margin-bottom:12px;">
+        <label for="editProductTitle">Title:</label>
+        <input type="text" id="editProductTitle" name="title" required style="width:100%;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label for="editProductPrice">Price:</label>
+        <input type="number" id="editProductPrice" name="price" required style="width:100%;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label for="editProductCategory">Category:</label>
+        <input type="text" id="editProductCategory" name="category" required style="width:100%;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label for="editProductDescription">Description:</label>
+        <textarea id="editProductDescription" name="description" rows="3" style="width:100%;"></textarea>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label>Current Images:</label>
+        <div id="currentProductImages" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px;"></div>
+        <label for="editProductImages">Change Images:</label>
+        <input type="file" id="editProductImages" name="images" accept="image/*" multiple style="width:100%;">
+      </div>
+      <button type="submit" style="width:100%;background:#2a3d56;color:white;padding:10px 0;border-radius:6px;">Save Changes</button>
+    </form>
+  </div>
+</div>
+
+<script>
+// Open edit modal and populate form
+function openEditProductModal(e, productId) {
+  e.stopPropagation();
+  document.getElementById('editProductModal').style.display = 'block';
+  // Clear previous images
+  document.getElementById('currentProductImages').innerHTML = '';
+  // Fetch product info from Supabase
+  if (!window.supabaseClient && window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+    window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+  }
+  window.supabaseClient
+    .from('products')
+    .select('*')
+    .eq('id', productId)
+    .single()
+    .then(({ data: product, error }) => {
+      if (error || !product) {
+        alert('Failed to fetch product info.');
+        closeEditProductModal();
+        return;
+      }
+      document.getElementById('editProductId').value = product.id;
+      document.getElementById('editProductTitle').value = product.title || '';
+      document.getElementById('editProductPrice').value = product.price || '';
+      document.getElementById('editProductCategory').value = product.category || '';
+      document.getElementById('editProductDescription').value = product.description || '';
+      // Show current images
+      const imgDiv = document.getElementById('currentProductImages');
+      imgDiv.innerHTML = '';
+      let images = product.images || product.image || [];
+      if (typeof images === 'string') {
+        try { images = JSON.parse(images); } catch { images = [images]; }
+      }
+      if (!Array.isArray(images)) images = [images];
+      images.forEach((src, idx) => {
+        if (src) {
+          const wrap = document.createElement('div');
+          wrap.className = 'img-wrap';
+          const img = document.createElement('img');
+          img.src = src;
+          img.setAttribute('data-idx', idx);
+          const btn = document.createElement('button');
+          btn.className = 'remove-img';
+          btn.type = 'button';
+          btn.innerHTML = '&times;';
+          btn.onclick = function(ev) {
+            ev.stopPropagation();
+            img.parentNode.remove();
+          };
+          wrap.appendChild(img);
+          wrap.appendChild(btn);
+          imgDiv.appendChild(wrap);
+        }
+      });
+    });
+}
+function closeEditProductModal() {
+  document.getElementById('editProductModal').style.display = 'none';
+}
+// Handle form submit
+const editProductForm = document.getElementById('editProductForm');
+if (editProductForm) {
+  editProductForm.onsubmit = async function(e) {
+    e.preventDefault();
+    const productId = document.getElementById('editProductId').value;
+    const title = document.getElementById('editProductTitle').value.trim();
+    const price = parseFloat(document.getElementById('editProductPrice').value);
+    const category = document.getElementById('editProductCategory').value.trim();
+    const description = document.getElementById('editProductDescription').value.trim();
+    const imagesInput = document.getElementById('editProductImages');
+    let imageUrls = [];
+    // If new images selected, upload to Supabase Storage (assumes 'product-images' bucket)
+    if (imagesInput.files && imagesInput.files.length > 0) {
+      imageUrls = [];
+      for (let i = 0; i < imagesInput.files.length; i++) {
+        const file = imagesInput.files[i];
+        const fileName = `${productId}_${Date.now()}_${file.name}`;
+        const { data, error } = await window.supabaseClient.storage.from('product-images').upload(fileName, file, { upsert: true });
+        if (error) {
+          alert('Failed to upload image: ' + error.message);
+          return;
+        }
+        const { data: { publicUrl } } = window.supabaseClient.storage.from('product-images').getPublicUrl(fileName);
+        imageUrls.push(publicUrl);
+      }
+    } else {
+      // Use current images if no new ones selected
+      const imgDiv = document.getElementById('currentProductImages');
+      imageUrls = Array.from(imgDiv.querySelectorAll('img')).map(img => img.src);
+    }
+    // Update product in Supabase
+    const updates = {
+      title,
+      price,
+      category,
+      description,
+      images: imageUrls
+    };
+    const { error } = await window.supabaseClient
+      .from('products')
+      .update(updates)
+      .eq('id', productId);
+    if (error) {
+      alert('Failed to update product: ' + error.message);
+      return;
+    }
+    alert('Product updated successfully!');
+    closeEditProductModal();
+    if (typeof loadListedItems === 'function') loadListedItems();
+  };
+}
+// -------- Edit Note Modal Logic --------
+function openEditNoteModal(e, noteId) {
+  e.stopPropagation();
+  document.getElementById('editNoteModal').style.display = 'block';
+  document.getElementById('currentNoteImage').innerHTML = '';
+  if (!window.supabaseClient && window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+    window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+  }
+  window.supabaseClient
+    .from('notes')
+    .select('*')
+    .eq('id', noteId)
+    .single()
+    .then(({ data: note, error }) => {
+      if (error || !note) {
+        alert('Failed to fetch note info.');
+        closeEditNoteModal();
+        return;
+      }
+      document.getElementById('editNoteId').value = note.id;
+      document.getElementById('editNoteTitle').value = note.title || '';
+      document.getElementById('editNoteSubject').value = note.subject || '';
+      document.getElementById('editNoteDescription').value = note.description || '';
+      // Show current image
+      const imgDiv = document.getElementById('currentNoteImage');
+      imgDiv.innerHTML = '';
+      let image = note.image || '';
+      if (image) {
+        const wrap = document.createElement('div');
+        wrap.className = 'img-wrap';
+        const img = document.createElement('img');
+        img.src = image;
+        img.setAttribute('data-idx', 0);
+        const btn = document.createElement('button');
+        btn.className = 'remove-img';
+        btn.type = 'button';
+        btn.innerHTML = '&times;';
+        btn.onclick = function(ev) {
+          ev.stopPropagation();
+          img.parentNode.remove();
+        };
+        wrap.appendChild(img);
+        wrap.appendChild(btn);
+        imgDiv.appendChild(wrap);
+      }
+    });
+}
+function closeEditNoteModal() {
+  document.getElementById('editNoteModal').style.display = 'none';
+}
+const editNoteForm = document.getElementById('editNoteForm');
+if (editNoteForm) {
+  editNoteForm.onsubmit = async function(e) {
+    e.preventDefault();
+    const noteId = document.getElementById('editNoteId').value;
+    const title = document.getElementById('editNoteTitle').value.trim();
+    const subject = document.getElementById('editNoteSubject').value.trim();
+    const description = document.getElementById('editNoteDescription').value.trim();
+    const imageInput = document.getElementById('editNoteImage');
+    let imageUrl = '';
+    if (imageInput.files && imageInput.files.length > 0) {
+      const file = imageInput.files[0];
+      const fileName = `${noteId}_${Date.now()}_${file.name}`;
+      const { data, error } = await window.supabaseClient.storage.from('note-images').upload(fileName, file, { upsert: true });
+      if (error) {
+        alert('Failed to upload image: ' + error.message);
+        return;
+      }
+      const { data: { publicUrl } } = window.supabaseClient.storage.from('note-images').getPublicUrl(fileName);
+      imageUrl = publicUrl;
+    } else {
+      // Use current image if no new one selected
+      const imgDiv = document.getElementById('currentNoteImage');
+      const img = imgDiv.querySelector('img');
+      imageUrl = img ? img.src : '';
+    }
+    const updates = {
+      title,
+      subject,
+      description,
+      image: imageUrl
+    };
+    const { error } = await window.supabaseClient
+      .from('notes')
+      .update(updates)
+      .eq('id', noteId);
+    if (error) {
+      alert('Failed to update note: ' + error.message);
+      return;
+    }
+    alert('Note updated successfully!');
+    closeEditNoteModal();
+    if (typeof loadNotes === 'function') loadNotes();
+  };
+}
+// -------- Edit Room Modal Logic --------
+function openEditRoomModal(e, roomId) {
+  e.stopPropagation();
+  document.getElementById('editRoomModal').style.display = 'block';
+  document.getElementById('currentRoomImages').innerHTML = '';
+  if (!window.supabaseClient && window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+    window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+  }
+  window.supabaseClient
+    .from('rooms')
+    .select('*')
+    .eq('id', roomId)
+    .single()
+    .then(({ data: room, error }) => {
+      if (error || !room) {
+        alert('Failed to fetch room info.');
+        closeEditRoomModal();
+        return;
+      }
+      document.getElementById('editRoomId').value = room.id;
+      document.getElementById('editRoomTitle').value = room.title || '';
+      document.getElementById('editRoomRent').value = room.rent || room.price || '';
+      document.getElementById('editRoomDescription').value = room.description || '';
+      // Show current images
+      const imgDiv = document.getElementById('currentRoomImages');
+      imgDiv.innerHTML = '';
+      let images = room.images || room.image || [];
+      if (typeof images === 'string') {
+        try { images = JSON.parse(images); } catch { images = [images]; }
+      }
+      if (!Array.isArray(images)) images = [images];
+      images.forEach((src, idx) => {
+        if (src) {
+          const wrap = document.createElement('div');
+          wrap.className = 'img-wrap';
+          const img = document.createElement('img');
+          img.src = src;
+          img.setAttribute('data-idx', idx);
+          const btn = document.createElement('button');
+          btn.className = 'remove-img';
+          btn.type = 'button';
+          btn.innerHTML = '&times;';
+          btn.onclick = function(ev) {
+            ev.stopPropagation();
+            img.parentNode.remove();
+          };
+          wrap.appendChild(img);
+          wrap.appendChild(btn);
+          imgDiv.appendChild(wrap);
+        }
+      });
+    });
+}
+function closeEditRoomModal() {
+  document.getElementById('editRoomModal').style.display = 'none';
+}
+const editRoomForm = document.getElementById('editRoomForm');
+if (editRoomForm) {
+  editRoomForm.onsubmit = async function(e) {
+    e.preventDefault();
+    const roomId = document.getElementById('editRoomId').value;
+    const title = document.getElementById('editRoomTitle').value.trim();
+    const rent = parseFloat(document.getElementById('editRoomRent').value);
+    const description = document.getElementById('editRoomDescription').value.trim();
+    const imagesInput = document.getElementById('editRoomImages');
+    let imageUrls = [];
+    if (imagesInput.files && imagesInput.files.length > 0) {
+      imageUrls = [];
+      for (let i = 0; i < imagesInput.files.length; i++) {
+        const file = imagesInput.files[i];
+        const fileName = `${roomId}_${Date.now()}_${file.name}`;
+        const { data, error } = await window.supabaseClient.storage.from('room-images').upload(fileName, file, { upsert: true });
+        if (error) {
+          alert('Failed to upload image: ' + error.message);
+          return;
+        }
+        const { data: { publicUrl } } = window.supabaseClient.storage.from('room-images').getPublicUrl(fileName);
+        imageUrls.push(publicUrl);
+      }
+    } else {
+      // Use current images if no new ones selected
+      const imgDiv = document.getElementById('currentRoomImages');
+      imageUrls = Array.from(imgDiv.querySelectorAll('img')).map(img => img.src);
+    }
+    const updates = {
+      title,
+      rent,
+      images: imageUrls,
+      description
+    };
+    const { error } = await window.supabaseClient
+      .from('rooms')
+      .update(updates)
+      .eq('id', roomId);
+    if (error) {
+      alert('Failed to update room: ' + error.message);
+      return;
+    }
+    alert('Room updated successfully!');
+    closeEditRoomModal();
+    if (typeof loadRooms === 'function') loadRooms();
+  };
+}
+</script>
 </body>
 </html>

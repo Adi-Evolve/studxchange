@@ -1214,91 +1214,30 @@ function wireProductActionButtons(product) {
     if (contactBtn) {
         contactBtn.addEventListener('click', async function() {
             try {
-                // First check if we already have the seller phone in the product object
-                let phone = product.sellerPhone || '';
-                let sellerId = product.owner_id || product.seller_id || '';
-                
-                // console.log('Product data:', product);
-                // console.log('Initial phone value:', phone);
-                // console.log('Seller ID to use:', sellerId);
-                
-                // If we don't have the phone yet, try to fetch it
-                if (!phone && sellerId) {
-                    // console.log('Fetching seller phone number for ID:', sellerId);
-                    
-                    // Try to fetch the phone number from the users table
-                    const { data: user, error: userErr } = await window.supabaseClient
-                        .from('users')
-                        .select('*')
-                        .eq('id', sellerId)
-                        .single();
-                    
-                    // console.log('Full seller data:', user);
-                    // console.log('Error:', userErr);
-                    
-                    if (!userErr && user) {
-                        // Check if phone exists in user data
-                        if (user.phone) {
-                            phone = user.phone;
-                            // console.log('Found phone in user data:', phone);
-                        }
-                    }
-                }
-                
-                // If we still don't have a phone number, try to fetch by email
-                if (!phone && product.sellerEmail) {
-                    // console.log('Trying to fetch user by email:', product.sellerEmail);
-                    
-                    const { data: userByEmail, error: emailErr } = await window.supabaseClient
-                        .from('users')
-                        .select('*')
-                        .eq('email', product.sellerEmail)
-                        .single();
-                    
-                    if (!emailErr && userByEmail && userByEmail.phone) {
-                        phone = userByEmail.phone;
-                        // console.log('Found phone by email lookup:', phone);
-                    }
-                }
-                
-                // Last resort - try to find the seller by name if we have it
-                if (!phone && product.sellerName) {
-                    // console.log('Trying to fetch user by name:', product.sellerName);
-                    
-                    const { data: usersByName, error: nameErr } = await window.supabaseClient
-                        .from('users')
-                        .select('*')
-                        .eq('name', product.sellerName);
-                    
-                    if (!nameErr && usersByName && usersByName.length > 0 && usersByName[0].phone) {
-                        phone = usersByName[0].phone;
-                        // console.log('Found phone by name lookup:', phone);
-                    }
-                }
-                
-                if (!phone) {
-                    alert('Seller phone number not available. Please try contacting through other means.');
+                let sellerId = product.seller_id;
+                if (!sellerId) {
+                    alert('Seller information not available.');
                     return;
                 }
-                
-                // Format phone number for WhatsApp - remove non-digits
-                let phoneNum = phone.replace(/\D/g, '');
-                // console.log('Cleaned phone number:', phoneNum);
-                
-                // Add country code if missing (assuming India +91)
-                if (phoneNum.length === 10) {
-                    phoneNum = '91' + phoneNum;
-                    // console.log('Added country code, final number:', phoneNum);
+                // Fetch phone from users table using seller_id
+                const { data: user, error } = await window.supabaseClient
+                    .from('users')
+                    .select('phone')
+                    .eq('id', sellerId)
+                    .single();
+                let phone = user && user.phone ? user.phone.trim() : '';
+                if (!phone) {
+                    alert('Seller phone number not available.');
+                    return;
                 }
-                
-                // Create WhatsApp message with product details
+                // Format phone: add +91 if not present and remove non-digits except +
+                phone = phone.replace(/\D/g, '');
+                if (phone.length === 10) {
+                    phone = '91' + phone;
+                }
                 const msg = encodeURIComponent(`Hi, I am interested in buying the ${product.title} (₹${product.price}) listed on StudXchange.`);
-                
-                // Open WhatsApp web or app
-                // console.log('Opening WhatsApp with phone:', phoneNum);
-                window.open(`https://wa.me/${phoneNum}?text=${msg}`, '_blank');
+                window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
             } catch (err) {
-                // console.error('Error contacting seller:', err);
                 alert('Failed to contact seller. Please try again later.');
             }
         });
@@ -1356,7 +1295,7 @@ function wireProductActionButtons(product) {
                         // console.log('Product details for seller info:', p);
                         
                         // Determine seller ID (try both owner_id and seller_id)
-                        let sellerId = p.owner_id || p.seller_id;
+                        let sellerId = p.seller_id || p.owner_id;
                         
                         if (!sellerId) {
                             document.getElementById('sellerInfoDetails').innerHTML = '<div style="color:red;padding:10px;">Seller information not available.</div>';

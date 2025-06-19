@@ -239,6 +239,79 @@ function renderNotesForm() {
     ${renderCollegeSelector()}
     <label for="title">Notes Title</label>
     <input type="text" id="title" name="title" required maxlength="100">
+    <label for="forYear">For Year</label>
+    <select id="forYear" name="forYear" required>
+      <option value="">Select Year</option>
+      <option value="pre_nursery">Pre-Nursery</option>
+      <option value="nursery">Nursery</option>
+      <option value="lkg">LKG (Lower Kindergarten)</option>
+      <option value="ukg">UKG (Upper Kindergarten)</option>
+      <option value="1st">1st Grade / Class 1</option>
+      <option value="2nd">2nd Grade / Class 2</option>
+      <option value="3rd">3rd Grade / Class 3</option>
+      <option value="4th">4th Grade / Class 4</option>
+      <option value="5th">5th Grade / Class 5</option>
+      <option value="6th">6th Grade / Class 6</option>
+      <option value="7th">7th Grade / Class 7</option>
+      <option value="8th">8th Grade / Class 8</option>
+      <option value="9th">9th Grade / Class 9</option>
+      <option value="10th">10th Grade / Class 10 (Secondary)</option>
+      <option value="11th">11th Grade / Class 11 (Higher Secondary)</option>
+      <option value="12th">12th Grade / Class 12 (Senior Secondary)</option>
+      <option value="diploma">Diploma (After 10th/12th)</option>
+      <option value="certificate">Certificate Course</option>
+      <option value="first_year">First Year (UG)</option>
+      <option value="second_year">Second Year (UG)</option>
+      <option value="third_year">Third Year (UG)</option>
+      <option value="fourth_year">Fourth Year (UG)</option>
+      <option value="fifth_year">Fifth Year (UG)</option>
+      <option value="masters">Masters (PG)</option>
+      <option value="mphil">M.Phil</option>
+      <option value="phd">PhD</option>
+      <option value="postdoc">Postdoctoral</option>
+    </select>
+    <label for="subjectCourse">Subject/Course</label>
+    <select id="subjectCourse" name="subjectCourse" required>
+      <option value="">Select Subject/Course</option>
+      <option value="mathematics">Mathematics</option>
+      <option value="physics">Physics</option>
+      <option value="chemistry">Chemistry</option>
+      <option value="biology">Biology</option>
+      <option value="english">English</option>
+      <option value="hindi">Hindi</option>
+      <option value="computer_science">Computer Science</option>
+      <option value="electronics">Electronics</option>
+      <option value="mechanical_engineering">Mechanical Engineering</option>
+      <option value="civil_engineering">Civil Engineering</option>
+      <option value="electrical_engineering">Electrical Engineering</option>
+      <option value="chemical_engineering">Chemical Engineering</option>
+      <option value="information_technology">Information Technology</option>
+      <option value="commerce">Commerce</option>
+      <option value="economics">Economics</option>
+      <option value="business_studies">Business Studies</option>
+      <option value="accountancy">Accountancy</option>
+      <option value="history">History</option>
+      <option value="geography">Geography</option>
+      <option value="political_science">Political Science</option>
+      <option value="psychology">Psychology</option>
+      <option value="sociology">Sociology</option>
+      <option value="law">Law</option>
+      <option value="medicine">Medicine</option>
+      <option value="pharmacy">Pharmacy</option>
+      <option value="architecture">Architecture</option>
+      <option value="mba">MBA</option>
+      <option value="bba">BBA</option>
+      <option value="bcom">B.Com</option>
+      <option value="ba">BA</option>
+      <option value="bsc">B.Sc</option>
+      <option value="msc">M.Sc</option>
+      <option value="ma">MA</option>
+      <option value="mtech">M.Tech</option>
+      <option value="btech">B.Tech</option>
+      <option value="mca">MCA</option>
+      <option value="bca">BCA</option>
+      <option value="other">Other</option>
+    </select>
     <label for="price">Set Price (INR)</label>
     <input type="number" id="price" name="price" required min="0">
     <label for="notesImages">Upload Images (max 5)</label>
@@ -885,6 +958,8 @@ async function handleSellSubmit(e) {
       payload = {
         college: formData.get('college'),
         title: formData.get('title'),
+        note_year: formData.get('forYear'),
+        note_subject: formData.get('subjectCourse'),
         price: formData.get('price'),
         description: formData.get('description'),
       };

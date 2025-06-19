@@ -175,31 +175,37 @@ function renderMap(location) {
 
 // Contact Seller for Room (WhatsApp)
 async function contactRoomSeller() {
-    if (!window.currentItem) return;
     const item = window.currentItem;
     let phone = '';
     if (item._type === 'product') {
-        // Always use seller_id from product to fetch seller info
+        // Only use seller_id from product to fetch seller phone
         const sellerId = item.seller_id;
-        if ((!item.sellerPhone || !item.sellerEmail || !item.sellerName) && sellerId) {
+        console.log('contactRoomSeller - sellerId:', sellerId);
+        if (sellerId) {
             try {
                 const supabase = window.supabaseClient;
-                const { data: user, error } = await supabase.from('users').select('*').eq('id', sellerId).single();
-                if (!error && user) {
-                    item.sellerName = user.name || '';
-                    item.sellerEmail = user.email || '';
-                    item.sellerPhone = user.phone || '';
-                    item.sellerCollege = user.college || '';
+                const { data: user, error } = await supabase.from('users').select('phone').eq('id', sellerId).single();
+                console.log('contactRoomSeller - Supabase user fetch result:', user, 'error:', error);
+                if (!error && user && user.phone) {
+                    phone = user.phone.trim();
                 }
-            } catch {}
+            } catch (e) {
+                console.error('contactRoomSeller - Exception during Supabase fetch:', e);
+            }
         }
-        phone = item.sellerPhone || '';
     } else {
-        phone = item.sellerPhone || item.sellerContact || '';
+        // For non-product types, fallback to existing logic
+        phone = item.sellerContact || '';
     }
     if (!phone) return alert('Seller phone not available');
-    const msg = encodeURIComponent(`Hi, I am interested in renting the room: ${item.title}`);
-    window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
+    // Format phone: remove non-digits, add country code if 10 digits
+    phone = phone.replace(/\D/g, '');
+    if (phone.length === 10) {
+        phone = '91' + phone;
+    }
+    phone = phone.replace(/(?!^\+)\D/g, '');
+    const msg = encodeURIComponent(`Hi, I am interested in your product: ${item.title}`);
+    window.open(`https://wa.me/${phone.replace('+','')}?text=${msg}`, '_blank');
 }
 // Room Rating Submission
 function submitRoomRating(roomId) {
